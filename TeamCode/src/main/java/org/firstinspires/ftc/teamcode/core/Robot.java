@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.core;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.core.subsystems.Chassis;
+import org.firstinspires.ftc.teamcode.core.subsystems.ChassisTank;
 import org.firstinspires.ftc.teamcode.core.subsystems.Climber;
 import org.firstinspires.ftc.teamcode.core.subsystems.Elevator;
 import org.firstinspires.ftc.teamcode.core.subsystems.IntakeFlipper;
@@ -19,7 +19,7 @@ public class Robot
 {
     public static boolean initialized = false;
 
-    public static Chassis chassis;
+    public static ChassisTank chassis;
     public static Elevator elevator;
     public static IntakeFlipper intakeFlipper;
     public static LiftFlipper liftFlipper;
@@ -35,7 +35,7 @@ public class Robot
      */
     public Robot(HardwareMap hwMap)
     {
-        chassis = new Chassis(hwMap);
+        chassis = new ChassisTank(hwMap);
         elevator = new Elevator(hwMap);
         intakeFlipper = new IntakeFlipper(hwMap);
         liftFlipper = new LiftFlipper(hwMap);

@@ -20,7 +20,7 @@ import org.firstinspires.ftc.teamcode.core.Robot;
 import org.firstinspires.ftc.teamcode.util.Constants;
 import org.firstinspires.ftc.teamcode.util.Util;
 
-public class Chassis extends Subsystem
+public class ChassisTank extends Subsystem
 {
     public DcMotor leftDrive, rightDrive;
     int constru = 0;
@@ -33,7 +33,7 @@ public class Chassis extends Subsystem
      *
      * @param hw
      */
-    public Chassis(HardwareMap hw)
+    public ChassisTank(HardwareMap hw)
     {
         super(hw);
 
