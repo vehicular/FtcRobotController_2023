@@ -39,12 +39,12 @@ public class ChassisTank extends Subsystem
 
         leftDrive = hardwaremap.dcMotor.get(Constants.leftDrive);
         rightDrive = hardwaremap.dcMotor.get(Constants.rightDrive);
-        leftDrive.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightDrive.setDirection(DcMotorSimple.Direction.FORWARD);
+        leftDrive.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         constru++;
         leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        gyro = (BNO055IMU) hardwaremap.get("gyro");
+        //gyro = (BNO055IMU) hardwaremap.get("gyro");
         // setupGyro();
     }
 
@@ -97,7 +97,7 @@ public class ChassisTank extends Subsystem
 
     public void startAccelerationIntegration()
     {
-        gyro.startAccelerationIntegration(null, null, 250);
+        //gyro.startAccelerationIntegration(null, null, 250);
     }
 
     /**
@@ -134,7 +134,7 @@ public class ChassisTank extends Subsystem
 //        s+= "[Left Drive]" + leftDrive.toString() + "\t[Right Drive: " +rightDrive.toString();
         //   s+= "Heading: " +gyro.getAngularOrientation().toString();
 //        s+= "Displacement: " + gyro.getPosition().toString();
-        s += "Velocity " + gyro.getVelocity().toString();
+        //s += "Velocity " + gyro.getVelocity().toString();
         s += "left drive reversed: " + leftDrive.getDirection() + "\n";
         s += "rightDrive reversed: " + rightDrive.getDirection();
         s += "Left Drive Position: " + leftDrive.getCurrentPosition() + "\n";

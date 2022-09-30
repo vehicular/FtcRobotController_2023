@@ -64,10 +64,10 @@ public class ChassisMecanum{
         //hatz=MediaPlayer.create(oldHardMap.appContext,R.raw.hatzz);
 
 
-        motor_bl = hardMap.get(DcMotor.class, "wheel_bl");
-        motor_br = hardMap.get(DcMotor.class, "wheel_br");
-        motor_fl = hardMap.get(DcMotor.class, "wheel_fl");
-        motor_fr = hardMap.get(DcMotor.class, "wheel_fr");
+        motor_bl = hardMap.get(DcMotor.class, "LBMotor");
+        motor_br = hardMap.get(DcMotor.class, "RBMotor");
+        motor_fl = hardMap.get(DcMotor.class, "LFMotor");
+        motor_fr = hardMap.get(DcMotor.class, "RFMotor");
         sensorGyro = hardMap.gyroSensor.get("gyro");
         myGyro=(ModernRoboticsI2cGyro) sensorGyro;
 

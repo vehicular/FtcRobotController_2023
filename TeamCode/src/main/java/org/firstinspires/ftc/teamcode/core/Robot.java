@@ -36,19 +36,19 @@ public class Robot
     public Robot(HardwareMap hwMap)
     {
         chassis = new ChassisTank(hwMap);
-        elevator = new Elevator(hwMap);
-        intakeFlipper = new IntakeFlipper(hwMap);
-        liftFlipper = new LiftFlipper(hwMap);
-        intakeMotor = new IntakeMotor(hwMap);
-        climber = new Climber(hwMap);
+        //elevator = new Elevator(hwMap);
+        //intakeFlipper = new IntakeFlipper(hwMap);
+        //liftFlipper = new LiftFlipper(hwMap);
+        //intakeMotor = new IntakeMotor(hwMap);
+        //climber = new Climber(hwMap);
 
 
         modules.add(chassis);
-        modules.add(elevator);
-        modules.add(intakeFlipper);
-        modules.add(liftFlipper);
-        modules.add(intakeMotor);
-        modules.add(climber);
+        //modules.add(elevator);
+        //modules.add(intakeFlipper);
+        //modules.add(liftFlipper);
+        //modules.add(intakeMotor);
+        //modules.add(climber);
 
         initialized = true;
     }

@@ -1,8 +1,9 @@
-package org.firstinspires.ftc.teamcode.core;
+package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.core.Robot;
 import org.firstinspires.ftc.teamcode.core.subsystems.Subsystem;
 
 @TeleOp(name="teleop",group="")
@@ -17,7 +18,7 @@ public class Teleop extends OpMode
         new Robot(hardwareMap);
         Robot.chassis.startAccelerationIntegration();
         Robot.chassis.teleopInit();
-        Robot.climber.teleopInit();
+        //Robot.climber.teleopInit();
     }
 
     /**

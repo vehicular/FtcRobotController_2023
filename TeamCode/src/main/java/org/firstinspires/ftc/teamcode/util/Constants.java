@@ -11,8 +11,8 @@ public class Constants
     public static String intakeFlipper = "intakeflipper";
     public static String liftFlipper = "liftflipper";
     public static String intakeMotor = "intakemotor";
-    public static String leftDrive = "leftdrive";
-    public static String rightDrive = "rightdrive";
+    public static String leftDrive = "LFMotor";
+    public static String rightDrive = "RFMotor";
     public static String climber = "climber";
     public static double TICKS_TO_INCHES = 1;
     public static int topClimber = -25000;
