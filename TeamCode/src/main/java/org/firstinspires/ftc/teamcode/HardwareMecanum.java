@@ -32,7 +32,7 @@ public class HardwareMecanum {
         LBMotor = hwMap.get(DcMotor.class, "LBMotor");
         RBMotor = hwMap.get(DcMotor.class, "RBMotor");
 
-        RFMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        RFMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         LFMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         LBMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         RBMotor.setDirection(DcMotorSimple.Direction.REVERSE);
