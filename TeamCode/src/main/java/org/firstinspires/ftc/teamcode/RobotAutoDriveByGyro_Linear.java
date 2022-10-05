@@ -402,8 +402,6 @@ public class RobotAutoDriveByGyro_Linear extends LinearOpMode {
         if (straight) {
             telemetry.addData("Motion", "Drive Straight");
             telemetry.addData("Target Pos L:R",  "%7d:%7d",      leftTarget,  rightTarget);
-            telemetry.addData("Actual Pos L:R",  "%7d:%7d",      leftDrive.getCurrentPosition(),
-                    rightDrive.getCurrentPosition());
         } else {
             telemetry.addData("Motion", "Turning");
         }
@@ -411,6 +409,8 @@ public class RobotAutoDriveByGyro_Linear extends LinearOpMode {
         telemetry.addData("Angle Target:Current", "%5.2f:%5.0f", targetHeading, robotHeading);
         telemetry.addData("Error:Steer",  "%5.1f:%5.1f", headingError, turnSpeed);
         telemetry.addData("Wheel Speeds L:R.", "%5.2f : %5.2f", leftSpeed, rightSpeed);
+        telemetry.addData("Wheel Positions L:R",  "%7d:%7d",      leftDrive.getCurrentPosition(),
+                rightDrive.getCurrentPosition());
         telemetry.update();
     }
 
