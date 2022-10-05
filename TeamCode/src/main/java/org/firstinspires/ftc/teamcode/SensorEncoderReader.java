@@ -56,8 +56,8 @@ import java.util.Locale;
  *
  * @see <a href="http://www.adafruit.com/products/2472">Adafruit IMU</a>
  */
-@TeleOp(name = "Sensor: IMU Monitoring", group = "Sensor")
-@Disabled                            // Comment this out to add to the opmode list
+@TeleOp(name = "Sensor: Encoder Reader", group = "Sensor")
+//@Disabled                            // Comment this out to add to the opmode list
 public class SensorEncoderReader extends LinearOpMode
     {
     //----------------------------------------------------------------------------------------------
@@ -74,6 +74,9 @@ public class SensorEncoderReader extends LinearOpMode
     DcMotor arm;
     DcMotor slider;
 
+    int rotatorPosition;
+    int armPosition;
+
     // The IMU sensor object
     BNO055IMU imu;
 
@@ -87,45 +90,51 @@ public class SensorEncoderReader extends LinearOpMode
 
     @Override public void runOpMode() {
 
-        frontLeft = hardwareMap.get(DcMotor.class, "LFMotor");
-        frontRight = hardwareMap.get(DcMotor.class, "RFMotor");
+        //frontLeft = hardwareMap.get(DcMotor.class, "LFMotor");
+        //frontRight = hardwareMap.get(DcMotor.class, "RFMotor");
         backLeft = hardwareMap.get(DcMotor.class, "LBMotor");
         backRight = hardwareMap.get(DcMotor.class, "RBMotor");
 
-        frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        frontLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+        //frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        //frontLeft.setDirection(DcMotorSimple.Direction.FORWARD);
         backLeft.setDirection(DcMotorSimple.Direction.FORWARD);
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        lifter = hardwareMap.get(DcMotor.class, "lifterM");
-        rotator = hardwareMap.get(DcMotor.class, "rotatorM");
-        arm = hardwareMap.get(DcMotor.class, "armM");
-        slider = hardwareMap.get(DcMotor.class, "sliderM");
+        //lifter = hardwareMap.get(DcMotor.class, "lifterM");
+        rotator = hardwareMap.get(DcMotor.class, "LFMotor");
+        arm = hardwareMap.get(DcMotor.class, "RFMotor");//""armM");
+        //slider = hardwareMap.get(DcMotor.class, "sliderM");
 
-        lifter.setDirection(DcMotorSimple.Direction.REVERSE);
+        //lifter.setDirection(DcMotorSimple.Direction.REVERSE);
         rotator.setDirection(DcMotorSimple.Direction.REVERSE);
         arm.setDirection(DcMotorSimple.Direction.REVERSE);
-        slider.setDirection(DcMotorSimple.Direction.REVERSE);
+        //slider.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        lifter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //lifter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rotator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        lifter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //lifter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rotator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        rotator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        rotatorPosition = 0;
+        armPosition = 0;
 
         // Set up the parameters with which we will use our IMU. Note that integration
         // algorithm here just reports accelerations to the logcat log; it doesn't actually
@@ -155,6 +164,20 @@ public class SensorEncoderReader extends LinearOpMode
 
         // Loop and update the dashboard
         while (opModeIsActive()) {
+            backLeft.setPower(gamepad1.left_stick_x);
+            backRight.setPower(gamepad1.right_stick_x);
+
+            rotator.setPower(gamepad1.left_stick_y);
+            arm.setPower(gamepad1.right_stick_y);
+
+            telemetry.addLine().addData("Arm Currently at ",  "%7d : %7d",
+                    rotatorPosition,
+                    armPosition);
+
+            telemetry.addLine().addData("Back Drive Pos L:R ",  "%7d : %7d",
+                    backLeft.getCurrentPosition(),
+                    backRight.getCurrentPosition());
+
             telemetry.update();
         }
     }
@@ -174,6 +197,8 @@ public class SensorEncoderReader extends LinearOpMode
                 // three times the necessary expense.
                 angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
                 gravity  = imu.getGravity();
+                    rotatorPosition = rotator.getCurrentPosition();
+                    armPosition = arm.getCurrentPosition();
                 }
             });
 
@@ -220,9 +245,6 @@ public class SensorEncoderReader extends LinearOpMode
                                     + gravity.zAccel*gravity.zAccel));
                     }
                 });
-
-        telemetry.addData("Currently at",  " at %7d :%7d",
-                rotator.getCurrentPosition(), arm.getCurrentPosition());
     }
 
     //----------------------------------------------------------------------------------------------
