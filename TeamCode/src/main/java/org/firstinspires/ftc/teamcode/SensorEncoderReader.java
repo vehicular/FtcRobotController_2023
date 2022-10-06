@@ -36,6 +36,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
@@ -162,23 +163,50 @@ public class SensorEncoderReader extends LinearOpMode
         // Start the logging of measured acceleration
         imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
 
+        ElapsedTime runtime = new ElapsedTime();
+        int newLeftTarget = arm.getCurrentPosition();
         // Loop and update the dashboard
         while (opModeIsActive()) {
+
+            double armPower = 0.4;
+            if(gamepad1.right_stick_y > 0.1  || gamepad1.right_stick_y < -0.1)
+            {
+                newLeftTarget += (int)(gamepad1.right_stick_y*50);
+                //if(gamepad1.right_stick_y > 0.1 )
+                if(gamepad1.right_stick_y < -0.1)
+                    armPower = 0.2;
+            }
+            arm.setTargetPosition(newLeftTarget);
+            arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            runtime.reset();
+            arm.setPower(armPower);//Math.max(0.2,gamepad1.right_stick_y));
+            while (opModeIsActive() &&
+                    (runtime.seconds() < 2) &&
+                    (arm.isBusy() )) {
+
+            }
+
+
             backLeft.setPower(gamepad1.left_stick_x);
             backRight.setPower(gamepad1.right_stick_x);
 
-            rotator.setPower(gamepad1.left_stick_y);
-            arm.setPower(gamepad1.right_stick_y);
+            rotator.setPower(gamepad1.left_stick_y*0.3);
 
-            telemetry.addLine().addData("Arm Currently at ",  "%7d : %7d",
-                    rotatorPosition,
+
+            telemetry.addLine().addData("Arm Position at ",  "%7d : %7d",
+                    newLeftTarget,
                     armPosition);
+
+            telemetry.addLine().addData("Rotator Currently at ",  "%7d",
+                    rotatorPosition);
 
             telemetry.addLine().addData("Back Drive Pos L:R ",  "%7d : %7d",
                     backLeft.getCurrentPosition(),
                     backRight.getCurrentPosition());
 
             telemetry.update();
+
+            //sleep(250);   // optional pause after each move.
         }
     }
 
