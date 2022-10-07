@@ -168,20 +168,21 @@ public class SensorEncoderReader extends LinearOpMode
         // Loop and update the dashboard
         while (opModeIsActive()) {
 
-            double armPower = 0.4;
+            double armPower = 0.35;
             if(gamepad1.right_stick_y > 0.1  || gamepad1.right_stick_y < -0.1)
             {
                 newLeftTarget += (int)(gamepad1.right_stick_y*50);
+                armPower *= Math.abs(gamepad1.right_stick_y);
                 //if(gamepad1.right_stick_y > 0.1 )
-                if(gamepad1.right_stick_y < -0.1)
-                    armPower = 0.2;
+                if(gamepad1.right_stick_y < -0.1) // move arm down (need to check after 180 degrees)
+                    armPower = 0.1*Math.abs(gamepad1.right_stick_y);
             }
             arm.setTargetPosition(newLeftTarget);
             arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             runtime.reset();
             arm.setPower(armPower);//Math.max(0.2,gamepad1.right_stick_y));
             while (opModeIsActive() &&
-                    (runtime.seconds() < 2) &&
+                    (runtime.seconds() < 1) &&
                     (arm.isBusy() )) {
 
             }
@@ -190,7 +191,7 @@ public class SensorEncoderReader extends LinearOpMode
             backLeft.setPower(gamepad1.left_stick_x);
             backRight.setPower(gamepad1.right_stick_x);
 
-            rotator.setPower(gamepad1.left_stick_y*0.3);
+            rotator.setPower(gamepad1.left_stick_y*0.2);
 
 
             telemetry.addLine().addData("Arm Position at ",  "%7d : %7d",
