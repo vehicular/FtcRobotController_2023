@@ -85,6 +85,8 @@ public class SensorEncoderReader extends LinearOpMode
     Orientation angles;
     Acceleration gravity;
 
+        final double TRIGGER_THRESHOLD  = 0.75;     // Squeeze more than 3/4 to get rumble.
+
     //----------------------------------------------------------------------------------------------
     // Main logic
     //----------------------------------------------------------------------------------------------
@@ -111,9 +113,9 @@ public class SensorEncoderReader extends LinearOpMode
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        //lifter = hardwareMap.get(DcMotor.class, "lifterM");
-        rotator = hardwareMap.get(DcMotor.class, "LFMotor");
-        arm = hardwareMap.get(DcMotor.class, "RFMotor");//""armM");
+        lifter = hardwareMap.get(DcMotor.class, "liftermotor");
+        rotator = hardwareMap.get(DcMotor.class, "rotatormotor");
+        arm = hardwareMap.get(DcMotor.class, "armmotor");//""armM");
         //slider = hardwareMap.get(DcMotor.class, "sliderM");
 
         //lifter.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -165,6 +167,10 @@ public class SensorEncoderReader extends LinearOpMode
 
         ElapsedTime runtime = new ElapsedTime();
         int newLeftTarget = arm.getCurrentPosition();
+
+        boolean highLevel = false;
+        int lifterZero = lifter.getCurrentPosition();
+
         // Loop and update the dashboard
         while (opModeIsActive()) {
 
@@ -187,19 +193,52 @@ public class SensorEncoderReader extends LinearOpMode
 
             }
 
+            if (gamepad1.right_trigger > TRIGGER_THRESHOLD) {
+                if (!highLevel) {
+                    highLevel = true;  // Hold off any more triggers
+                    lifter.setTargetPosition(lifter.getCurrentPosition()+100);
+                    lifter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    runtime.reset();
+                    lifter.setPower(0.2);
+                    while (opModeIsActive() &&
+                            (runtime.seconds() < 1) &&
+                            (lifter.isBusy() )) {
 
-            backLeft.setPower(gamepad1.left_stick_x);
-            backRight.setPower(gamepad1.right_stick_x);
+                    }
+                    gamepad1.rumble(0.9, 0, 200);  // 200 mSec burst on left motor.
+                }
+            } else {
+                highLevel = false;  // We can trigger again now.
+            }
+
+            if (gamepad1.left_trigger > TRIGGER_THRESHOLD) {
+                lifter.setTargetPosition(lifter.getCurrentPosition()-100);
+                lifter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                runtime.reset();
+                lifter.setPower(0.2);
+                while (opModeIsActive() &&
+                        (runtime.seconds() < 1) &&
+                        (lifter.isBusy() )) {
+
+                }
+            }
+
+
+            backLeft.setPower(gamepad1.left_stick_x*0.5);
+            backRight.setPower(gamepad1.right_stick_x*.5);
 
             rotator.setPower(gamepad1.left_stick_y*0.2);
 
 
-            telemetry.addLine().addData("Arm Position at ",  "%7d : %7d",
-                    newLeftTarget,
-                    armPosition);
+            telemetry.addLine().addData("Lifter Position at ",  "%7d",
+                    lifter.getCurrentPosition());
 
             telemetry.addLine().addData("Rotator Currently at ",  "%7d",
                     rotatorPosition);
+
+            telemetry.addLine().addData("Arm Position at ",  "%7d : %7d",
+                    newLeftTarget,
+                    armPosition);
 
             telemetry.addLine().addData("Back Drive Pos L:R ",  "%7d : %7d",
                     backLeft.getCurrentPosition(),
