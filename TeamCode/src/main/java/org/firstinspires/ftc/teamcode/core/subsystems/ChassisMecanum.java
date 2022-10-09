@@ -4,7 +4,10 @@ package org.firstinspires.ftc.teamcode.core.subsystems;
 
 import android.media.MediaPlayer;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 
 
@@ -20,18 +23,27 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.teamcode.util.Constants;
 
 import com.qualcomm.ftcrobotcontroller.R;
 
 
-public class ChassisMecanum{
+public class ChassisMecanum extends Subsystem{
 
+    int constru = 0;
+
+    boolean isAutonomous = false;
 
     private DcMotor motor_bl = null; private DcMotor motor_br = null;
     private DcMotor motor_fl = null; private DcMotor motor_fr = null;
 
-    private ModernRoboticsI2cGyro myGyro= null;// Additional Gyro device
-    private GyroSensor sensorGyro=null;
+    //private ModernRoboticsI2cGyro myGyro= null;// Additional Gyro device
+    //private GyroSensor sensorGyro=null;
+    private BNO055IMU imu         = null;      // Control/Expansion Hub IMU
 
 
     private HardwareMap hardMap = null;
@@ -45,7 +57,7 @@ public class ChassisMecanum{
 
 
     private static final double DRIVE_GEAR_REDUCTION = 1;
-    private static final double TICKS_PER_REV=537.6;
+    private static final double TICKS_PER_REV=537.7; // eg: GoBILDA 312 RPM Yellow Jacket;
     private static final double WHEEL_DIAMETER_INCHES=4;
     private static final double COUNTS_PER_INCH = (TICKS_PER_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * Math.PI);
     private static final double P_DRIVE_COEFF = 0.15;     // Larger is more responsive, but also less stable
@@ -55,35 +67,30 @@ public class ChassisMecanum{
     //int zAcummulated,
     int heading,xVal,yVal,zVal;
 
+    double LFMotorMultiplier = 0.5;
+    double RFMotorMultiplier = 0.5;
+    double LBMotorMultiplier = 0.5;
+    double RBMotorMultiplier = 0.5;
 
+    public ChassisMecanum(HardwareMap hw)
+    {
+        super(hw);
 
-    public void init(HardwareMap oldHardMap, Telemetry oldTelemetry, boolean isAutonomous) {
-        hardMap = oldHardMap;
-        telemetry = oldTelemetry;
-
-        //hatz=MediaPlayer.create(oldHardMap.appContext,R.raw.hatzz);
-
-
+        //leftDrive = hardwaremap.dcMotor.get(Constants.leftDrive);
+        //rightDrive = hardwaremap.dcMotor.get(Constants.rightDrive);
         motor_bl = hardMap.get(DcMotor.class, "LBMotor");
         motor_br = hardMap.get(DcMotor.class, "RBMotor");
         motor_fl = hardMap.get(DcMotor.class, "LFMotor");
         motor_fr = hardMap.get(DcMotor.class, "RFMotor");
-        sensorGyro = hardMap.gyroSensor.get("gyro");
-        myGyro=(ModernRoboticsI2cGyro) sensorGyro;
 
-        myGyro.calibrate();
-        while (myGyro.isCalibrating())  {
-            telemetry.addData(">", "Calibrating Gyro");    //
-            telemetry.addData(">", "Robot Heading = %d", myGyro.getHeading());
-            telemetry.update();
-        }
-        myGyro.resetZAxisIntegrator();
+        //leftDrive.setDirection(DcMotorSimple.Direction.FORWARD);
+        //rightDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+        motor_bl.setDirection(DcMotorSimple.Direction.REVERSE);
+        motor_br.setDirection(DcMotorSimple.Direction.FORWARD);
+        motor_fl.setDirection(DcMotorSimple.Direction.REVERSE);
+        motor_fr.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        motor_bl.setDirection(DcMotorSimple.Direction.FORWARD);
-        motor_br.setDirection(DcMotorSimple.Direction.REVERSE);
-        motor_fl.setDirection(DcMotorSimple.Direction.FORWARD);
-        motor_fr.setDirection(DcMotorSimple.Direction.REVERSE);
-
+        constru++;
         if (isAutonomous) {
             //sleep(250);
             motor_bl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -101,19 +108,97 @@ public class ChassisMecanum{
             motor_fl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             motor_fr.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
+
         motor_bl.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motor_br.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motor_fl.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motor_fr.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        imu = hardMap.get(BNO055IMU.class, "imu");
 
+        // Set up the parameters with which we will use our IMU. Note that integration
+        // algorithm here just reports accelerations to the logcat log; it doesn't actually
+        // provide positional information.
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled      = true;
+        parameters.loggingTag          = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
-        telemetry.addData(">", "Robot Ready.");    //
-        telemetry.update();
-        // Wait for the game to start (Display Gyro value), and reset gyro before we move..
-
+        imu.initialize(parameters);
     }
 
+    /**
+     * Drives the robot with a basic tank drive.
+     *
+     * @param gamepad1
+     * @param gamepad2
+     */
+    @Override
+    public void teleopControls(Gamepad gamepad1, Gamepad gamepad2)
+    {
+        double x = -gamepad1.left_stick_x; // Remember, this is reversed!
+        double y = gamepad1.left_stick_y * 1.1; // Counteract imperfect strafing
+        double rx = -gamepad1.right_stick_x;
+
+        // Read inverse IMU heading, as the IMU heading is CW positive
+        double botHeading = -imu.getAngularOrientation().firstAngle;
+
+        //the translation joystick values need to be rotated by the robot heading
+        double rotX = x * Math.cos(botHeading) - y * Math.sin(botHeading);
+        double rotY = x * Math.sin(botHeading) + y * Math.cos(botHeading);
+
+
+        // Denominator is the largest motor power (absolute value) or 1
+        // This ensures all the powers maintain the same ratio, but only when
+        // at least one is out of the range [-1, 1]
+        double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
+        double frontLeftPower = (rotY + rotX + rx) / denominator;
+        double backLeftPower = (rotY - rotX + rx) / denominator;
+        double frontRightPower = (rotY - rotX - rx) / denominator;
+        double backRightPower = (rotY + rotX - rx) / denominator;
+
+        motor_fl.setPower(frontLeftPower*LFMotorMultiplier);
+        motor_bl.setPower(backLeftPower*LBMotorMultiplier);
+        motor_fr.setPower(frontRightPower*RFMotorMultiplier);
+        motor_br.setPower(backRightPower*RBMotorMultiplier);
+    }
+
+    /**
+     * Sets power to motors to zero. Always call when done using this class for safety.
+     */
+    @Override
+    public void stop()
+    {
+        motor_bl.setPower(0);
+        motor_br.setPower(0);
+        motor_fl.setPower(0);
+        motor_fr.setPower(0);
+    }
+
+    /**
+     * Called during op modes to provide information aobut this subsystem.
+     *
+     * @return Returns the text to add to the bottom of the  driver station.
+     */
+    @Override
+    public String addTelemetry()
+    {
+        String s = "Chassis \n";
+//        s+= "[Left Drive]" + leftDrive.toString() + "\t[Right Drive: " +rightDrive.toString();
+        //   s+= "Heading: " +gyro.getAngularOrientation().toString();
+//        s+= "Displacement: " + gyro.getPosition().toString();
+        //s += "Velocity " + gyro.getVelocity().toString();
+        s += "left drive reversed: " + motor_bl.getDirection() + "\n";
+        s += "rightDrive reversed: " + motor_br.getDirection();
+        s += "Left Drive Position: " + motor_bl.getCurrentPosition() + "\n";
+        s += "Right Drive Position: " + motor_br.getCurrentPosition() + "\n";
+        s += "constructor ran #: " + constru;
+
+        return s;
+    }
 
     public void analog_control(double x, double y, double rotation,boolean key_invert,boolean bmp1,boolean bmp2,boolean dpad1,boolean dpad2,boolean dpad3,boolean dpad4) {
 
@@ -226,6 +311,14 @@ public class ChassisMecanum{
 
     }
 
+    /**
+     * read the raw (un-offset Gyro heading) directly from the IMU
+     */
+    public double getRawHeading() {
+        Orientation angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        return angles.firstAngle;
+    }
+
     public  void DriveStraight(double Inches, double maxSpeed, int timeoutInSeconds, double target)  {
 
 
@@ -252,15 +345,15 @@ public class ChassisMecanum{
                 // Display it for the driver.
 
                 if(Inches>0) {
-                    motor_fl.setPower(Range.clip(maxSpeed + (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                    motor_bl.setPower(Range.clip(maxSpeed + (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                    motor_br.setPower(Range.clip(maxSpeed - (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                    motor_fr.setPower(Range.clip(maxSpeed - (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
+                    motor_fl.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                    motor_bl.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                    motor_br.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                    motor_fr.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
                 } else {
-                    motor_fl.setPower(Range.clip(maxSpeed - (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                    motor_bl.setPower(Range.clip(maxSpeed - (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                    motor_br.setPower(Range.clip(maxSpeed + (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                    motor_fr.setPower(Range.clip(maxSpeed + (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
+                    motor_fl.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                    motor_bl.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                    motor_br.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                    motor_fr.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
                 }
             }
 
@@ -309,15 +402,15 @@ public class ChassisMecanum{
             // Display it for the driver.
 
             if(Inches<0) {
-                motor_fl.setPower(Range.clip(maxSpeed - (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                motor_bl.setPower(Range.clip(maxSpeed + (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                motor_br.setPower(Range.clip(maxSpeed + (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                motor_fr.setPower(Range.clip(maxSpeed - (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
+                motor_fl.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                motor_bl.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                motor_br.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                motor_fr.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
             }else {
-                motor_fl.setPower(Range.clip(maxSpeed + (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                motor_bl.setPower(Range.clip(maxSpeed - (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                motor_br.setPower(Range.clip(maxSpeed - (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                motor_fr.setPower(Range.clip(maxSpeed + (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
+                motor_fl.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                motor_bl.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                motor_br.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                motor_fr.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
             }
         }
 
@@ -358,11 +451,11 @@ public class ChassisMecanum{
             // Display it for the driver.
 
             if(Inches>0) {
-                motor_fl.setPower(Range.clip(maxSpeed + (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                motor_br.setPower(Range.clip(maxSpeed - (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
+                motor_fl.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                motor_br.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
             }else {
-                motor_fl.setPower(Range.clip(maxSpeed - (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                motor_br.setPower(Range.clip(maxSpeed + (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
+                motor_fl.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                motor_br.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
             }
         }
         motor_fl.setPower(0);
@@ -391,11 +484,11 @@ public class ChassisMecanum{
             // Display it for the driver.
 
             if(Inches>0) {
-                motor_fr.setPower(Range.clip(maxSpeed - (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                motor_bl.setPower(Range.clip(maxSpeed + (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
+                motor_fr.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                motor_bl.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
             }else {
-                motor_fr.setPower(Range.clip(maxSpeed + (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
-                motor_bl.setPower(Range.clip(maxSpeed - (myGyro.getIntegratedZValue() - target) / 100, -1, 1));
+                motor_fr.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                motor_bl.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
             }
         }
         motor_fr.setPower(0);

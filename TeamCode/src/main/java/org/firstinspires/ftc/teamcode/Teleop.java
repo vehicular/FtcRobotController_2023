@@ -11,6 +11,7 @@ import org.firstinspires.ftc.teamcode.core.subsystems.Subsystem;
 @Disabled
 public class Teleop extends OpMode
 {
+    private int StateMachine = GameState.RUN;
     /**
      * Initialize any subsystems that need initializing before the game starts.
      */
@@ -29,14 +30,15 @@ public class Teleop extends OpMode
     @Override
     public void loop()
     {
-        for(Subsystem system: Robot.modules)
-        {
-            system.teleopControls(gamepad1, gamepad2);
+        if( StateMachine == GameState.RUN) {
+            for (Subsystem system : Robot.modules) {
+                system.teleopControls(gamepad1, gamepad2);
 
-            telemetry.addData(system.toString(), system.addTelemetry() + "\n\n");
+                telemetry.addData(system.toString(), system.addTelemetry() + "\n\n");
 
-            telemetry.addData("left_stick_y" ,gamepad1.left_stick_y);
-            telemetry.addData("right_stick_y" ,gamepad1.right_stick_y);
+                telemetry.addData("left_stick_y", gamepad1.left_stick_y);
+                telemetry.addData("right_stick_y", gamepad1.right_stick_y);
+            }
         }
     }
 
