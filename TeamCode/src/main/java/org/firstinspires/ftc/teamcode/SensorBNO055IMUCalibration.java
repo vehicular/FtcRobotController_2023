@@ -42,6 +42,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
+import org.firstinspires.ftc.teamcode.util.Constants;
 
 import java.io.File;
 import java.util.Locale;
@@ -133,7 +134,7 @@ public class SensorBNO055IMUCalibration extends LinearOpMode
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.loggingEnabled = true;
         parameters.loggingTag     = "IMU";
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu = hardwareMap.get(BNO055IMU.class, Constants.imu);
         imu.initialize(parameters);
 
         composeTelemetry();

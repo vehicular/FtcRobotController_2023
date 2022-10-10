@@ -46,6 +46,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.teamcode.core.subsystems.Hand;
+import org.firstinspires.ftc.teamcode.util.Constants;
 
 import java.util.Locale;
 
@@ -70,10 +71,9 @@ public class SensorValueReader extends LinearOpMode
     public DcMotor backLeft;
     public DcMotor backRight;
 
-    DcMotor lifter;
-    DcMotor rotator;
-    DcMotor arm;
-    DcMotor slider;
+    DcMotor lifterMotor;
+    DcMotor rotatorMotor;
+    DcMotor armMotor;
 
     int rotatorPosition;
     int armPosition;
@@ -97,8 +97,8 @@ public class SensorValueReader extends LinearOpMode
 
         //frontLeft = hardwareMap.get(DcMotor.class, "LFMotor");
         //frontRight = hardwareMap.get(DcMotor.class, "RFMotor");
-        backLeft = hardwareMap.get(DcMotor.class, "LBMotor");
-        backRight = hardwareMap.get(DcMotor.class, "RBMotor");
+        backLeft = hardwareMap.get(DcMotor.class, Constants.leftbackMotor);
+        backRight = hardwareMap.get(DcMotor.class, Constants.rightbackMotor);
 
         //frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         //frontLeft.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -115,28 +115,27 @@ public class SensorValueReader extends LinearOpMode
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        lifter = hardwareMap.get(DcMotor.class, "liftermotor");
-        rotator = hardwareMap.get(DcMotor.class, "rotatormotor");
-        arm = hardwareMap.get(DcMotor.class, "armmotor");//""armM");
-        //slider = hardwareMap.get(DcMotor.class, "sliderM");
+        lifterMotor = hardwareMap.get(DcMotor.class, Constants.lifterMotor);
+        rotatorMotor = hardwareMap.get(DcMotor.class, Constants.rotatorMotor);
+        armMotor = hardwareMap.get(DcMotor.class, Constants.armMotor);
 
         //lifter.setDirection(DcMotorSimple.Direction.REVERSE);
-        rotator.setDirection(DcMotorSimple.Direction.REVERSE);
-        arm.setDirection(DcMotorSimple.Direction.REVERSE);
+        rotatorMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         //slider.setDirection(DcMotorSimple.Direction.REVERSE);
 
         //lifter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rotator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rotatorMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         //slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         //lifter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rotator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rotatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         //slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        rotator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rotatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         rotatorPosition = 0;
         armPosition = 0;
@@ -155,10 +154,10 @@ public class SensorValueReader extends LinearOpMode
         // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
         // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
         // and named "imu".
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu = hardwareMap.get(BNO055IMU.class, Constants.imu);
         imu.initialize(parameters);
 
-        hand = new Hand(hardwareMap);
+        //hand = new Hand(hardwareMap);
 
         // Set up our telemetry dashboard
         composeTelemetry();
@@ -170,10 +169,10 @@ public class SensorValueReader extends LinearOpMode
         imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
 
         ElapsedTime runtime = new ElapsedTime();
-        int newLeftTarget = arm.getCurrentPosition();
+        int newLeftTarget = armMotor.getCurrentPosition();
 
         boolean highLevel = false;
-        int lifterZero = lifter.getCurrentPosition();
+        int lifterZero = lifterMotor.getCurrentPosition();
 
         // Loop and update the dashboard
         while (opModeIsActive()) {
@@ -187,26 +186,26 @@ public class SensorValueReader extends LinearOpMode
                 if(gamepad1.right_stick_y < -0.1) // move arm down (need to check after 180 degrees)
                     armPower = 0.1*Math.abs(gamepad1.right_stick_y);
             }
-            arm.setTargetPosition(newLeftTarget);
-            arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            armMotor.setTargetPosition(newLeftTarget);
+            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             runtime.reset();
-            arm.setPower(armPower);//Math.max(0.2,gamepad1.right_stick_y));
+            armMotor.setPower(armPower);//Math.max(0.2,gamepad1.right_stick_y));
             while (opModeIsActive() &&
                     (runtime.seconds() < 1) &&
-                    (arm.isBusy() )) {
+                    (armMotor.isBusy() )) {
 
             }
 
             if (gamepad1.right_trigger > TRIGGER_THRESHOLD) {
                 if (!highLevel) {
                     highLevel = true;  // Hold off any more triggers
-                    lifter.setTargetPosition(lifter.getCurrentPosition()+100);
-                    lifter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition()+100);
+                    lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     runtime.reset();
-                    lifter.setPower(0.2);
+                    lifterMotor.setPower(0.2);
                     while (opModeIsActive() &&
                             (runtime.seconds() < 1) &&
-                            (lifter.isBusy() )) {
+                            (lifterMotor.isBusy() )) {
 
                     }
                     gamepad1.rumble(0.9, 0, 200);  // 200 mSec burst on left motor.
@@ -216,13 +215,13 @@ public class SensorValueReader extends LinearOpMode
             }
 
             if (gamepad1.left_trigger > TRIGGER_THRESHOLD) {
-                lifter.setTargetPosition(lifter.getCurrentPosition()-100);
-                lifter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition()-100);
+                lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 runtime.reset();
-                lifter.setPower(0.2);
+                lifterMotor.setPower(0.2);
                 while (opModeIsActive() &&
                         (runtime.seconds() < 1) &&
-                        (lifter.isBusy() )) {
+                        (lifterMotor.isBusy() )) {
 
                 }
             }
@@ -231,13 +230,13 @@ public class SensorValueReader extends LinearOpMode
             backLeft.setPower(gamepad1.left_stick_x*0.5);
             backRight.setPower(gamepad1.right_stick_x*.5);
 
-            rotator.setPower(gamepad1.left_stick_y*0.2);
+            rotatorMotor.setPower(gamepad1.left_stick_y*0.2);
 
-            hand.teleopControls(gamepad1, gamepad2);
+            //hand.teleopControls(gamepad1, gamepad2);
 
 
             telemetry.addLine().addData("Lifter Position at ",  "%7d",
-                    lifter.getCurrentPosition());
+                    lifterMotor.getCurrentPosition());
 
             telemetry.addLine().addData("Rotator Currently at ",  "%7d",
                     rotatorPosition);
@@ -273,8 +272,8 @@ public class SensorValueReader extends LinearOpMode
                 // three times the necessary expense.
                 angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
                 gravity  = imu.getGravity();
-                    rotatorPosition = rotator.getCurrentPosition();
-                    armPosition = arm.getCurrentPosition();
+                    rotatorPosition = rotatorMotor.getCurrentPosition();
+                    armPosition = armMotor.getCurrentPosition();
                 }
             });
 

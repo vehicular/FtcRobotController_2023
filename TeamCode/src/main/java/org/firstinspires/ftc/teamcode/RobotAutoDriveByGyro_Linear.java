@@ -42,6 +42,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.teamcode.util.Constants;
 
 /**
  *  This file illustrates the concept of driving an autonomous path based on Gyro heading and encoder counts.
@@ -144,8 +145,8 @@ public class RobotAutoDriveByGyro_Linear extends LinearOpMode {
     public void runOpMode() {
 
         // Initialize the drive system variables.
-        leftDrive  = hardwareMap.get(DcMotor.class, "LBMotor");
-        rightDrive = hardwareMap.get(DcMotor.class, "RBMotor");
+        leftDrive  = hardwareMap.get(DcMotor.class, Constants.leftbackMotor);
+        rightDrive = hardwareMap.get(DcMotor.class, Constants.rightbackMotor);
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
@@ -156,7 +157,7 @@ public class RobotAutoDriveByGyro_Linear extends LinearOpMode {
         // define initialization values for IMU, and then initialize it.
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit            = BNO055IMU.AngleUnit.DEGREES;
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu = hardwareMap.get(BNO055IMU.class, Constants.imu);
         imu.initialize(parameters);
 
         // Ensure the robot is stationary.  Reset the encoders and set the motors to BRAKE mode

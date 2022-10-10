@@ -13,7 +13,7 @@ public class LifterMotor //extends Subsystem
     public LifterMotor(HardwareMap map)
     {
         //super(map);
-        upAndDown = map.dcMotor.get(Constants.elevatorMotor);
+        //upAndDown = map.dcMotor.get(Constants.elevatorMotor);
         upAndDown.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 

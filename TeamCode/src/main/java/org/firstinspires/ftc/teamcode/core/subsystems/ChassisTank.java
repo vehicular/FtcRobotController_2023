@@ -31,8 +31,8 @@ public class ChassisTank extends Subsystem
     {
         super(hw);
 
-        leftDrive = hw.dcMotor.get(Constants.leftbackmotor);
-        rightDrive = hw.dcMotor.get(Constants.rightbackmotor);
+        leftDrive = hw.dcMotor.get(Constants.leftbackMotor);
+        rightDrive = hw.dcMotor.get(Constants.rightbackMotor);
         leftDrive.setDirection(DcMotorSimple.Direction.FORWARD);
         rightDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         constru++;

@@ -21,6 +21,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.core.Subsystem;
+import org.firstinspires.ftc.teamcode.util.Constants;
 
 
 public class ChassisMecanum extends Subsystem {
@@ -29,8 +30,8 @@ public class ChassisMecanum extends Subsystem {
 
     boolean isAutonomous = false;
 
-    private DcMotor motor_bl = null; private DcMotor motor_br = null;
-    private DcMotor motor_fl = null; private DcMotor motor_fr = null;
+    private DcMotor backLeft = null; private DcMotor backRight = null;
+    private DcMotor frontLeft = null; private DcMotor frontRight = null;
 
     //private ModernRoboticsI2cGyro myGyro= null;// Additional Gyro device
     //private GyroSensor sensorGyro=null;
@@ -65,49 +66,45 @@ public class ChassisMecanum extends Subsystem {
     double LBMotorMultiplier = 0.5;
     double RBMotorMultiplier = 0.5;
 
-    public ChassisMecanum(HardwareMap hw)
+    public ChassisMecanum(HardwareMap hardwareMap, boolean isTankDrive)
     {
-        super(hw);
+        super(hardwareMap);
+        frontLeft = hardwareMap.get(DcMotor.class, Constants.leftfrontMotor);
+        frontRight = hardwareMap.get(DcMotor.class, Constants.rightfrontMotor);
+        backLeft = hardwareMap.get(DcMotor.class, Constants.leftbackMotor);
+        backRight = hardwareMap.get(DcMotor.class, Constants.rightbackMotor);
 
-        //leftDrive = hardwaremap.dcMotor.get(Constants.leftDrive);
-        //rightDrive = hardwaremap.dcMotor.get(Constants.rightDrive);
-        motor_bl = hardMap.get(DcMotor.class, "LBMotor");
-        motor_br = hardMap.get(DcMotor.class, "RBMotor");
-        motor_fl = hardMap.get(DcMotor.class, "LFMotor");
-        motor_fr = hardMap.get(DcMotor.class, "RFMotor");
 
-        //leftDrive.setDirection(DcMotorSimple.Direction.FORWARD);
-        //rightDrive.setDirection(DcMotorSimple.Direction.REVERSE);
-        motor_bl.setDirection(DcMotorSimple.Direction.REVERSE);
-        motor_br.setDirection(DcMotorSimple.Direction.FORWARD);
-        motor_fl.setDirection(DcMotorSimple.Direction.REVERSE);
-        motor_fr.setDirection(DcMotorSimple.Direction.FORWARD);
+        frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+        backLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+        backRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         constru++;
         if (isAutonomous) {
             //sleep(250);
-            motor_bl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            motor_br.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            motor_fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            motor_fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            motor_bl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            motor_br.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            motor_fl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            motor_fr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             //if autonomous
         } else {
-            motor_bl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            motor_br.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            motor_fl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            motor_fr.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
 
-        motor_bl.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        motor_br.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        motor_fl.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        motor_fr.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        /*backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);*/
 
-        imu = hardMap.get(BNO055IMU.class, "imu");
+        imu = hardwareMap.get(BNO055IMU.class, Constants.imu);
 
         // Set up the parameters with which we will use our IMU. Note that integration
         // algorithm here just reports accelerations to the logcat log; it doesn't actually
@@ -153,10 +150,10 @@ public class ChassisMecanum extends Subsystem {
         double frontRightPower = (rotY - rotX - rx) / denominator;
         double backRightPower = (rotY + rotX - rx) / denominator;
 
-        motor_fl.setPower(frontLeftPower*LFMotorMultiplier);
-        motor_bl.setPower(backLeftPower*LBMotorMultiplier);
-        motor_fr.setPower(frontRightPower*RFMotorMultiplier);
-        motor_br.setPower(backRightPower*RBMotorMultiplier);
+        frontLeft.setPower(frontLeftPower*LFMotorMultiplier);
+        backLeft.setPower(backLeftPower*LBMotorMultiplier);
+        frontRight.setPower(frontRightPower*RFMotorMultiplier);
+        backRight.setPower(backRightPower*RBMotorMultiplier);
     }
 
     /**
@@ -165,10 +162,10 @@ public class ChassisMecanum extends Subsystem {
     @Override
     public void stop()
     {
-        motor_bl.setPower(0);
-        motor_br.setPower(0);
-        motor_fl.setPower(0);
-        motor_fr.setPower(0);
+        backLeft.setPower(0);
+        backRight.setPower(0);
+        frontLeft.setPower(0);
+        frontRight.setPower(0);
     }
 
     @Override
@@ -194,10 +191,10 @@ public class ChassisMecanum extends Subsystem {
         //   s+= "Heading: " +gyro.getAngularOrientation().toString();
 //        s+= "Displacement: " + gyro.getPosition().toString();
         //s += "Velocity " + gyro.getVelocity().toString();
-        s += "left drive reversed: " + motor_bl.getDirection() + "\n";
-        s += "rightDrive reversed: " + motor_br.getDirection();
-        s += "Left Drive Position: " + motor_bl.getCurrentPosition() + "\n";
-        s += "Right Drive Position: " + motor_br.getCurrentPosition() + "\n";
+        s += "left Front Wheel: " + frontLeft.getCurrentPosition() + "\n";
+        s += "Left Back Wheel: " + backLeft.getCurrentPosition();
+        s += "Right Front Wheel: " + frontRight.getCurrentPosition() + "\n";
+        s += "Right Back Wheel: " + backRight.getCurrentPosition() + "\n";
         s += "constructor ran #: " + constru;
 
         return s;
@@ -247,15 +244,15 @@ public class ChassisMecanum extends Subsystem {
         wheelSpeed[2]*=speedmodifier;
         wheelSpeed[3]*=speedmodifier;
         if(!inv) {
-            motor_bl.setPower(Range.clip(wheelSpeed[0],-1,1));
-            motor_br.setPower(Range.clip(wheelSpeed[1],-1,1));
-            motor_fl.setPower(Range.clip(wheelSpeed[2],-1,1));
-            motor_fr.setPower(Range.clip(wheelSpeed[3],-1,1));
+            backLeft.setPower(Range.clip(wheelSpeed[0],-1,1));
+            backRight.setPower(Range.clip(wheelSpeed[1],-1,1));
+            frontLeft.setPower(Range.clip(wheelSpeed[2],-1,1));
+            frontRight.setPower(Range.clip(wheelSpeed[3],-1,1));
         } else {
-            motor_bl.setPower(Range.clip(-wheelSpeed[3],-1,1));
-            motor_br.setPower(Range.clip(-wheelSpeed[2],-1,1));
-            motor_fl.setPower(Range.clip(-wheelSpeed[1],-1,1));
-            motor_fr.setPower(Range.clip(-wheelSpeed[0],-1,1));
+            backLeft.setPower(Range.clip(-wheelSpeed[3],-1,1));
+            backRight.setPower(Range.clip(-wheelSpeed[2],-1,1));
+            frontLeft.setPower(Range.clip(-wheelSpeed[1],-1,1));
+            frontRight.setPower(Range.clip(-wheelSpeed[0],-1,1));
         }
     }
 
@@ -266,51 +263,51 @@ public class ChassisMecanum extends Subsystem {
 
         int a, b, c, d;
 
-        a = motor_fr.getCurrentPosition() + (int) (frontRightInches * COUNTS_PER_INCH);
-        b = motor_fl.getCurrentPosition() + (int) (frontLeftInches * COUNTS_PER_INCH);
-        c = motor_br.getCurrentPosition() + (int) (backRightInches * COUNTS_PER_INCH);
-        d = motor_bl.getCurrentPosition() + (int) (backLeftInches * COUNTS_PER_INCH);
+        a = frontRight.getCurrentPosition() + (int) (frontRightInches * COUNTS_PER_INCH);
+        b = frontLeft.getCurrentPosition() + (int) (frontLeftInches * COUNTS_PER_INCH);
+        c = backRight.getCurrentPosition() + (int) (backRightInches * COUNTS_PER_INCH);
+        d = backLeft.getCurrentPosition() + (int) (backLeftInches * COUNTS_PER_INCH);
 
 
-        motor_fr.setTargetPosition(a);
-        motor_fl.setTargetPosition(b);
-        motor_br.setTargetPosition(c);
-        motor_bl.setTargetPosition(d);
+        frontRight.setTargetPosition(a);
+        frontLeft.setTargetPosition(b);
+        backRight.setTargetPosition(c);
+        backLeft.setTargetPosition(d);
 
         ElapsedTime runtime = new ElapsedTime();
 
-        motor_fr.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motor_fl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motor_br.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motor_bl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        motor_fl.setPower(maxSpeed);
-        motor_bl.setPower(maxSpeed);
-        motor_br.setPower(maxSpeed);
-        motor_fr.setPower(maxSpeed);
+        frontLeft.setPower(maxSpeed);
+        backLeft.setPower(maxSpeed);
+        backRight.setPower(maxSpeed);
+        frontRight.setPower(maxSpeed);
 
 
-        while ((runtime.seconds() < timeoutInSeconds) && (motor_bl.isBusy() || motor_fr.isBusy() || motor_br.isBusy() || motor_fl.isBusy())) {
+        while ((runtime.seconds() < timeoutInSeconds) && (backLeft.isBusy() || frontRight.isBusy() || backRight.isBusy() || frontLeft.isBusy())) {
             // Display it for the driver.
 
         }
 
 
-        motor_fr.setPower(0);
-        motor_fl.setPower(0);
-        motor_br.setPower(0);
-        motor_bl.setPower(0);
+        frontRight.setPower(0);
+        frontLeft.setPower(0);
+        backRight.setPower(0);
+        backLeft.setPower(0);
 
 
-        motor_bl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motor_br.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motor_fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motor_fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        motor_bl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        motor_br.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        motor_fl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        motor_fr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
     }
 
@@ -326,45 +323,45 @@ public class ChassisMecanum extends Subsystem {
 
 
             int a, b, c, d;
-            a = motor_fr.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
-            b = motor_fl.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
-            c = motor_br.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
-            d = motor_bl.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
+            a = frontRight.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
+            b = frontLeft.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
+            c = backRight.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
+            d = backLeft.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
 
 
-            motor_fr.setTargetPosition(a);
-            motor_fl.setTargetPosition(b);
-            motor_br.setTargetPosition(c);
-            motor_bl.setTargetPosition(d);
+            frontRight.setTargetPosition(a);
+            frontLeft.setTargetPosition(b);
+            backRight.setTargetPosition(c);
+            backLeft.setTargetPosition(d);
 
 
-            motor_fr.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            motor_fl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            motor_br.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            motor_bl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             ElapsedTime runtime = new ElapsedTime();
-            while ((runtime.seconds() < timeoutInSeconds) && motor_bl.isBusy() && motor_fr.isBusy() && motor_br.isBusy() && motor_fl.isBusy()) {
+            while ((runtime.seconds() < timeoutInSeconds) && backLeft.isBusy() && frontRight.isBusy() && backRight.isBusy() && frontLeft.isBusy()) {
                 // Display it for the driver.
 
                 if(Inches>0) {
-                    motor_fl.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
-                    motor_bl.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
-                    motor_br.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
-                    motor_fr.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                    frontLeft.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                    backLeft.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                    backRight.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                    frontRight.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
                 } else {
-                    motor_fl.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
-                    motor_bl.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
-                    motor_br.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
-                    motor_fr.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                    frontLeft.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                    backLeft.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                    backRight.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                    frontRight.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
                 }
             }
 
 
-            motor_fr.setPower(0);
-            motor_fl.setPower(0);
-            motor_br.setPower(0);
-            motor_bl.setPower(0);
+            frontRight.setPower(0);
+            frontLeft.setPower(0);
+            backRight.setPower(0);
+            backLeft.setPower(0);
 
 
           //  motor_bl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -372,10 +369,10 @@ public class ChassisMecanum extends Subsystem {
             //motor_fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             //motor_fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-            motor_bl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            motor_br.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            motor_fl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            motor_fr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         }
 
@@ -383,45 +380,45 @@ public class ChassisMecanum extends Subsystem {
 
         int a, b, c, d;
 
-        a = motor_fr.getCurrentPosition() - (int) (Inches * COUNTS_PER_INCH);
-        b = motor_fl.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
-        c = motor_br.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
-        d = motor_bl.getCurrentPosition() - (int) (Inches * COUNTS_PER_INCH);
+        a = frontRight.getCurrentPosition() - (int) (Inches * COUNTS_PER_INCH);
+        b = frontLeft.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
+        c = backRight.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
+        d = backLeft.getCurrentPosition() - (int) (Inches * COUNTS_PER_INCH);
 
 
-        motor_fr.setTargetPosition(a);
-        motor_fl.setTargetPosition(b);
-        motor_br.setTargetPosition(c);
-        motor_bl.setTargetPosition(d);
+        frontRight.setTargetPosition(a);
+        frontLeft.setTargetPosition(b);
+        backRight.setTargetPosition(c);
+        backLeft.setTargetPosition(d);
 
 
-        motor_fr.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motor_fl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motor_br.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motor_bl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         ElapsedTime runtime = new ElapsedTime();
-        while ((runtime.seconds() < timeoutInSeconds) && motor_bl.isBusy() && motor_fr.isBusy() && motor_br.isBusy() && motor_fl.isBusy()) {
+        while ((runtime.seconds() < timeoutInSeconds) && backLeft.isBusy() && frontRight.isBusy() && backRight.isBusy() && frontLeft.isBusy()) {
             // Display it for the driver.
 
             if(Inches<0) {
-                motor_fl.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
-                motor_bl.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
-                motor_br.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
-                motor_fr.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                frontLeft.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                backLeft.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                backRight.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                frontRight.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
             }else {
-                motor_fl.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
-                motor_bl.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
-                motor_br.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
-                motor_fr.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                frontLeft.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                backLeft.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                backRight.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                frontRight.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
             }
         }
 
 
-        motor_fr.setPower(0);
-        motor_fl.setPower(0);
-        motor_br.setPower(0);
-        motor_bl.setPower(0);
+        frontRight.setPower(0);
+        frontLeft.setPower(0);
+        backRight.setPower(0);
+        backLeft.setPower(0);
 
 
         //motor_bl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -429,10 +426,10 @@ public class ChassisMecanum extends Subsystem {
         //motor_fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         //motor_fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        motor_bl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        motor_br.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        motor_fl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        motor_fr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
     }
 
@@ -440,32 +437,32 @@ public class ChassisMecanum extends Subsystem {
 
         int b, c;
 
-        b = motor_fl.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
-        c = motor_br.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
+        b = frontLeft.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
+        c = backRight.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
 
-        motor_fl.setTargetPosition(b);
-        motor_br.setTargetPosition(c);
+        frontLeft.setTargetPosition(b);
+        backRight.setTargetPosition(c);
 
-        motor_fl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motor_br.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         ElapsedTime runtime = new ElapsedTime();
-        while ((runtime.seconds() < timeoutInSeconds) && motor_br.isBusy() && motor_fl.isBusy()) {
+        while ((runtime.seconds() < timeoutInSeconds) && backRight.isBusy() && frontLeft.isBusy()) {
             // Display it for the driver.
 
             if(Inches>0) {
-                motor_fl.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
-                motor_br.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                frontLeft.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                backRight.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
             }else {
-                motor_fl.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
-                motor_br.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                frontLeft.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                backRight.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
             }
         }
-        motor_fl.setPower(0);
-        motor_br.setPower(0);
+        frontLeft.setPower(0);
+        backRight.setPower(0);
 
-        motor_br.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        motor_fl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
     }
 
@@ -473,45 +470,45 @@ public class ChassisMecanum extends Subsystem {
 
         int b, c;
 
-        b = motor_fr.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
-        c = motor_bl.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
+        b = frontRight.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
+        c = backLeft.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
 
-        motor_fr.setTargetPosition(b);
-        motor_bl.setTargetPosition(c);
+        frontRight.setTargetPosition(b);
+        backLeft.setTargetPosition(c);
 
-        motor_fr.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motor_bl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         ElapsedTime runtime = new ElapsedTime();
-        while ((runtime.seconds() < timeoutInSeconds) && motor_bl.isBusy() && motor_fr.isBusy()) {
+        while ((runtime.seconds() < timeoutInSeconds) && backLeft.isBusy() && frontRight.isBusy()) {
             // Display it for the driver.
 
             if(Inches>0) {
-                motor_fr.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
-                motor_bl.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                frontRight.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                backLeft.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
             }else {
-                motor_fr.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
-                motor_bl.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                frontRight.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                backLeft.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
             }
         }
-        motor_fr.setPower(0);
-        motor_bl.setPower(0);
+        frontRight.setPower(0);
+        backLeft.setPower(0);
 
-        motor_fr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        motor_bl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
     }
 
     public void debug() {
         telemetry.addData("Wheels Encoders:"," ");
-        telemetry.addData("motor_bl",motor_bl.getCurrentPosition());
-        telemetry.addData("motor_br",motor_br.getCurrentPosition());
-        telemetry.addData("motor_fl",motor_fl.getCurrentPosition());
-        telemetry.addData("motor_fr",motor_fr.getCurrentPosition());
-        telemetry.addData("motor_bl power",motor_bl.getPower());
-        telemetry.addData("motor_br pw",motor_br.getPower());
-        telemetry.addData("motor_fl pw",motor_fl.getPower());
-        telemetry.addData("motor_fr pw ",motor_fr.getPower());
+        telemetry.addData("motor_bl", backLeft.getCurrentPosition());
+        telemetry.addData("motor_br", backRight.getCurrentPosition());
+        telemetry.addData("motor_fl", frontLeft.getCurrentPosition());
+        telemetry.addData("motor_fr", frontRight.getCurrentPosition());
+        telemetry.addData("motor_bl power", backLeft.getPower());
+        telemetry.addData("motor_br pw", backRight.getPower());
+        telemetry.addData("motor_fl pw", frontLeft.getPower());
+        telemetry.addData("motor_fr pw ", frontRight.getPower());
     }
 
     public void play_john(boolean bt1,boolean bt2) {

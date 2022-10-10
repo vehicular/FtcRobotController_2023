@@ -8,10 +8,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.teamcode.core.subsystems.MecanumDrivetrain;
+import org.firstinspires.ftc.teamcode.util.Constants;
 
-/**
- * Created by Michaela on 1/3/2018.
- */
 
 //@Disabled
 @TeleOp(name = "JD Manual Drive", group = "sample")
@@ -39,10 +37,10 @@ public class MecanumRobotTeleop extends OpMode {
      */
     @Override
     public void init() {
-        frontLeft = hardwareMap.get(DcMotor.class, "LFMotor");
-        frontRight = hardwareMap.get(DcMotor.class, "RFMotor");
-        backLeft = hardwareMap.get(DcMotor.class, "LBMotor");
-        backRight = hardwareMap.get(DcMotor.class, "RBMotor");
+        frontLeft = hardwareMap.get(DcMotor.class, Constants.leftfrontMotor);
+        frontRight = hardwareMap.get(DcMotor.class, Constants.rightfrontMotor);
+        backLeft = hardwareMap.get(DcMotor.class, Constants.leftbackMotor);
+        backRight = hardwareMap.get(DcMotor.class, Constants.rightbackMotor);
 
 
         frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -53,7 +51,7 @@ public class MecanumRobotTeleop extends OpMode {
         //drivetrain = new MecanumDrivetrain(new DcMotor[]{frontLeft, frontRight, backLeft, backRight});
 
         // Retrieve the IMU from the hardware map
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu = hardwareMap.get(BNO055IMU.class, Constants.imu);
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         // Technically this is the default, however specifying it is clearer
         parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
