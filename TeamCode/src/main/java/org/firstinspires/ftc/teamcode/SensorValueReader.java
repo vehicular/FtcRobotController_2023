@@ -31,7 +31,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -46,20 +45,21 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+import org.firstinspires.ftc.teamcode.core.subsystems.Hand;
 
 import java.util.Locale;
 
 /**
- * {@link SensorEncoderReader} gives a short demo on how to use the BNO055 Inertial Motion Unit (IMU) from AdaFruit.
+ * {@link SensorValueReader} gives a short demo on how to use the BNO055 Inertial Motion Unit (IMU) from AdaFruit.
  *
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  *
  * @see <a href="http://www.adafruit.com/products/2472">Adafruit IMU</a>
  */
-@TeleOp(name = "Sensor: Encoder Reader", group = "Sensor")
+@TeleOp(name = "JD Sensor Reader", group = "Sensor")
 //@Disabled                            // Comment this out to add to the opmode list
-public class SensorEncoderReader extends LinearOpMode
+public class SensorValueReader extends LinearOpMode
     {
     //----------------------------------------------------------------------------------------------
     // State
@@ -86,6 +86,8 @@ public class SensorEncoderReader extends LinearOpMode
     Acceleration gravity;
 
         final double TRIGGER_THRESHOLD  = 0.75;     // Squeeze more than 3/4 to get rumble.
+
+        Hand hand;
 
     //----------------------------------------------------------------------------------------------
     // Main logic
@@ -155,6 +157,8 @@ public class SensorEncoderReader extends LinearOpMode
         // and named "imu".
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
+
+        hand = new Hand(hardwareMap);
 
         // Set up our telemetry dashboard
         composeTelemetry();
@@ -229,6 +233,8 @@ public class SensorEncoderReader extends LinearOpMode
 
             rotator.setPower(gamepad1.left_stick_y*0.2);
 
+            hand.teleopControls(gamepad1, gamepad2);
+
 
             telemetry.addLine().addData("Lifter Position at ",  "%7d",
                     lifter.getCurrentPosition());
@@ -239,6 +245,8 @@ public class SensorEncoderReader extends LinearOpMode
             telemetry.addLine().addData("Arm Position at ",  "%7d : %7d",
                     newLeftTarget,
                     armPosition);
+
+            telemetry.addLine(hand.addTelemetry());
 
             telemetry.addLine().addData("Back Drive Pos L:R ",  "%7d : %7d",
                     backLeft.getCurrentPosition(),

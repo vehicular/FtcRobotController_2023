@@ -5,23 +5,25 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.core.Robot;
-import org.firstinspires.ftc.teamcode.core.subsystems.Subsystem;
+import org.firstinspires.ftc.teamcode.core.Subsystem;
 
-@TeleOp(name="teleop",group="")
-@Disabled
+@TeleOp(name="JD Robot",group="")
+//@Disabled
 public class Teleop extends OpMode
 {
     private int StateMachine = GameState.RUN;
+
+    private Robot myRobot;
     /**
      * Initialize any subsystems that need initializing before the game starts.
      */
     @Override
     public void init()
     {
-        new Robot(hardwareMap);
-        Robot.chassis.startAccelerationIntegration();
-        Robot.chassis.teleopInit();
-        //Robot.climber.teleopInit();
+        myRobot = new Robot(hardwareMap);
+        for (Subsystem system : myRobot.modules) {
+            system.teleopInit();
+        }
     }
 
     /**
@@ -31,7 +33,7 @@ public class Teleop extends OpMode
     public void loop()
     {
         if( StateMachine == GameState.RUN) {
-            for (Subsystem system : Robot.modules) {
+            for (Subsystem system : myRobot.modules) {
                 system.teleopControls(gamepad1, gamepad2);
 
                 telemetry.addData(system.toString(), system.addTelemetry() + "\n\n");
@@ -48,7 +50,7 @@ public class Teleop extends OpMode
     @Override
     public void stop()
     {
-        for(Subsystem system: Robot.modules)
+        for(Subsystem system: myRobot.modules)
         {
             system.stop();
         }

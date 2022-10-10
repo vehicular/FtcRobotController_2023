@@ -8,17 +8,19 @@ package org.firstinspires.ftc.teamcode.util;
 public class Constants
 {
     public static String elevatorMotor = "liftmotor";
-    public static String intakeFlipper = "intakeflipper";
+    public static String fingerServo = "fingerservo";
     public static String liftFlipper = "liftflipper";
     public static String intakeMotor = "intakemotor";
-    public static String leftDrive = "LFMotor";
-    public static String rightDrive = "RFMotor";
+    public static String leftbackmotor = "LBMotor";
+    public static String rightbackmotor = "RBMotor";
     public static String climber = "climber";
+    public static String imu = "imu";
     public static double TICKS_TO_INCHES = 1;
     public static int topClimber = -25000;
     public static int bottomClimber= 25000;
     public static int landingNumber = 5000;
-    public static int middleClimber = 0;
+
+
 
     /**
      * To wirelessly connect to phone,

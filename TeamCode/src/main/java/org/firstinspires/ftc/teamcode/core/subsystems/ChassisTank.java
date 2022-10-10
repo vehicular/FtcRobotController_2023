@@ -5,18 +5,12 @@ package org.firstinspires.ftc.teamcode.core.subsystems;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
-import com.qualcomm.hardware.bosch.NaiveAccelerationIntegrator;
-import com.qualcomm.hardware.motors.RevRoboticsHdHexMotor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
-import org.firstinspires.ftc.teamcode.core.Robot;
+import org.firstinspires.ftc.teamcode.core.Subsystem;
 import org.firstinspires.ftc.teamcode.util.Constants;
 import org.firstinspires.ftc.teamcode.util.Util;
 
@@ -37,15 +31,15 @@ public class ChassisTank extends Subsystem
     {
         super(hw);
 
-        leftDrive = hardwaremap.dcMotor.get(Constants.leftDrive);
-        rightDrive = hardwaremap.dcMotor.get(Constants.rightDrive);
+        leftDrive = hw.dcMotor.get(Constants.leftbackmotor);
+        rightDrive = hw.dcMotor.get(Constants.rightbackmotor);
         leftDrive.setDirection(DcMotorSimple.Direction.FORWARD);
         rightDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         constru++;
         leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //gyro = (BNO055IMU) hardwaremap.get("gyro");
-        // setupGyro();
+        gyro = hw.get(BNO055IMU.class, Constants.imu);
+
     }
 
     /**
@@ -61,7 +55,7 @@ public class ChassisTank extends Subsystem
         parameters.loggingTag = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
-        gyro = hardwaremap.get(BNO055IMU.class, "imu");
+
         gyro.initialize(parameters);
     }
 
@@ -165,6 +159,7 @@ public class ChassisTank extends Subsystem
     @Override
     public void teleopInit()
     {
+        setupGyro();
         leftDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -179,8 +174,10 @@ public class ChassisTank extends Subsystem
     /**
      *
      */
+    @Override
     public void autoInit()
     {
+        setupGyro();
         leftDrive.setDirection(DcMotorSimple.Direction.FORWARD);
         leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);

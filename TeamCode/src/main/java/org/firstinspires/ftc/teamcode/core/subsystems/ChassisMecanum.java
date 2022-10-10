@@ -2,24 +2,17 @@ package org.firstinspires.ftc.teamcode.core.subsystems;
 
 
 
-import android.media.MediaPlayer;
-
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
-import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.GyroSensor;
-
 
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-
-
 
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -27,12 +20,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.teamcode.util.Constants;
-
-import com.qualcomm.ftcrobotcontroller.R;
+import org.firstinspires.ftc.teamcode.core.Subsystem;
 
 
-public class ChassisMecanum extends Subsystem{
+public class ChassisMecanum extends Subsystem {
 
     int constru = 0;
 
@@ -45,6 +36,8 @@ public class ChassisMecanum extends Subsystem{
     //private GyroSensor sensorGyro=null;
     private BNO055IMU imu         = null;      // Control/Expansion Hub IMU
 
+    /** The colorSensor field will contain a reference to our color sensor hardware object */
+    private NormalizedColorSensor colorSensor;
 
     private HardwareMap hardMap = null;
     private Telemetry telemetry = null;
@@ -176,6 +169,16 @@ public class ChassisMecanum extends Subsystem{
         motor_br.setPower(0);
         motor_fl.setPower(0);
         motor_fr.setPower(0);
+    }
+
+    @Override
+    public void autoInit() {
+
+    }
+
+    @Override
+    public void teleopInit() {
+
     }
 
     /**
@@ -520,6 +523,7 @@ public class ChassisMecanum extends Subsystem{
             hatz.start();
         }*/
     }
+
 }
 
 

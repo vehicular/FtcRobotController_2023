@@ -1,22 +1,20 @@
-package org.firstinspires.ftc.teamcode.core.subsystems;
+package org.firstinspires.ftc.teamcode.core.subsystems.compound;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.teamcode.util.Constants;
-
-public class LiftFlipper extends Subsystem
+public class WristServo //extends Subsystem
 {
     //private double pos = flipper.setPosition(0);
     private Servo flipper;
     private double pos;
     private boolean altControl;
 
-    public LiftFlipper(HardwareMap map)
+    public WristServo(HardwareMap map)
     {
-        super(map);
-        flipper = hardwaremap.servo.get(Constants.liftFlipper);
+        //super(map);
+        //flipper = hardwaremap.servo.get(Constants.liftFlipper);
         pos = 0;
         altControl = false;
     }
@@ -29,7 +27,7 @@ public class LiftFlipper extends Subsystem
      * @param gamepad1
      * @param gamepad2
      */
-    @Override
+    //@Override
     public void teleopControls(Gamepad gamepad1, Gamepad gamepad2)
     {
         if (gamepad2.left_bumper) altControl = !altControl;
@@ -47,7 +45,7 @@ public class LiftFlipper extends Subsystem
         }
     }
 
-    @Override
+    //@Override
     public String addTelemetry()
     {
         String s = "Lift flipper \n\t" + flipper.getPosition();
@@ -55,7 +53,7 @@ public class LiftFlipper extends Subsystem
         return s;
     }
 
-    @Override
+    //@Override
     public void stop()
     {
 

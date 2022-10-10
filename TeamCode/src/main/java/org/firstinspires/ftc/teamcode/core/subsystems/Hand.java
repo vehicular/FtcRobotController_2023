@@ -1,21 +1,31 @@
 package org.firstinspires.ftc.teamcode.core.subsystems;
 
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.core.Subsystem;
 import org.firstinspires.ftc.teamcode.util.Constants;
 
-public class IntakeFlipper extends Subsystem
+public class Hand extends Subsystem
 {
     private double pos = 0;
-    private Servo flipper;
+
+    private DcMotor lifterMotor;
+    private DcMotor rotatorMotor;
+    private DcMotor armMotor;
+    private Servo wristServo;
+    private Servo palmServo;
+    private Servo knukcleSevo;
+    private Servo finger;
+
     private boolean altControl;
 
-    public IntakeFlipper(HardwareMap map)
+    public Hand(HardwareMap map)
     {
         super(map);
-        flipper = hardwaremap.servo.get(Constants.intakeFlipper);
+        finger = map.servo.get(Constants.fingerServo);
         pos = 0;
         altControl = false;
     }
@@ -31,24 +41,25 @@ public class IntakeFlipper extends Subsystem
     @Override
     public void teleopControls(Gamepad gamepad1, Gamepad gamepad2)
     {
-        if (gamepad2.right_bumper) altControl = !altControl;
+        if (gamepad1.right_bumper) altControl = !altControl;
         if (altControl)
         {
-            if (gamepad2.a) pos += 0.05;
-            else if (gamepad2.y) pos -= 0.05;
-            flipper.setPosition(pos);
+            if (gamepad1.a) pos += 0.05;
+            else if (gamepad1.y) pos -= 0.05;
+            finger.setPosition(pos);
         } else
         {
-            if (gamepad2.a) flipper.setPosition(0);
-            else if (gamepad2.b) flipper.setPosition(0.5);
-            else if (gamepad2.y) flipper.setPosition(1);
+            if (gamepad1.a) finger.setPosition(0);
+            else if (gamepad1.b) finger.setPosition(0.5);
+            else if (gamepad1.y) finger.setPosition(1);
         }
     }
 
     @Override
     public String addTelemetry()
     {
-        return "";
+        String s = "Finger Position: \t" + finger.getPosition();
+        return s;
     }
 
     @Override
@@ -56,7 +67,7 @@ public class IntakeFlipper extends Subsystem
     {
 
     }
-
+    @Override
     public void autoInit()
     {
 
@@ -64,6 +75,8 @@ public class IntakeFlipper extends Subsystem
 
     public void setTargetPosition(int position)
     {
-        flipper.setPosition(position);
+        finger.setPosition(position);
     }
+@Override
+    public void teleopInit(){}
 }

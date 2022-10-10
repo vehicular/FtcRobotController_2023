@@ -1,35 +1,33 @@
-package org.firstinspires.ftc.teamcode.core.subsystems;
+package org.firstinspires.ftc.teamcode.core.subsystems.compound;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.util.Constants;
-
-public class IntakeMotor extends Subsystem
+public class RotatorMotor //extends Subsystem
 {
     private DcMotor motor;
 
-    public IntakeMotor(HardwareMap map)
+    public RotatorMotor(HardwareMap map)
     {
-        super(map);
-        motor = hardwaremap.dcMotor.get(Constants.intakeMotor);
+        //super(map);
+        //motor = hardwaremap.dcMotor.get(Constants.intakeMotor);
         motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
-    @Override
+    //@Override
     public void teleopControls(Gamepad gamepad1, Gamepad gamepad2)
     {
         motor.setPower(7 * gamepad2.left_stick_y);
     }
 
-    @Override
+    //@Override
     public String addTelemetry()
     {
         return "";
     }
 
-    @Override
+    //@Override
     public void stop()
     {
 

@@ -1,25 +1,24 @@
-package org.firstinspires.ftc.teamcode.core.subsystems;
+package org.firstinspires.ftc.teamcode.core.subsystems.compound;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 //import org.firstinspires.ftc.teamcode.core.commands.RaiseLift;
-import org.firstinspires.ftc.teamcode.util.Constants;
 
-public class Climber extends Subsystem
+
+public class ArmMotor
 {
     public DcMotor motor;
 
-    public Climber(HardwareMap map)
+    public ArmMotor(HardwareMap map)
     {
-        super(map);
-        this.motor = hardwaremap.dcMotor.get(Constants.climber);
+        //super(map);
+        //this.motor = hardwaremap.dcMotor.get(Constants.climber);
         motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
-    @Override
+    //@Override
     public void teleopControls(Gamepad gamepad1, Gamepad gamepad2)
     {
         if (gamepad1.left_trigger > 0)
@@ -39,7 +38,7 @@ public class Climber extends Subsystem
         }
     }
 
-    @Override
+    //@Override
     public String addTelemetry()
     {
         return "Climber: " +
@@ -49,7 +48,7 @@ public class Climber extends Subsystem
                 + "\n Is Finished: " + this.reachedTargetPosition();
     }
 
-    @Override
+    //@Override
     public void stop()
     {
         motor.setPower(0);
@@ -63,13 +62,13 @@ public class Climber extends Subsystem
     /**
      * Sets the runmode to position.
      */
-    @Override
+    //@Override
     public void autoInit()
     {
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
-    @Override
+    //@Override
     public void teleopInit()
     {
         motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);

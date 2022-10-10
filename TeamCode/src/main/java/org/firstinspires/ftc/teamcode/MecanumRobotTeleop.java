@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.core.subsystems.MecanumDrivetrain;
  */
 
 //@Disabled
-@TeleOp(name = "JD Mecanum Robot Tele-op", group = "sample")
+@TeleOp(name = "JD Manual Drive", group = "sample")
 
 public class MecanumRobotTeleop extends OpMode {
     public DcMotor frontLeft;

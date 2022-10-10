@@ -3,12 +3,7 @@ package org.firstinspires.ftc.teamcode.core;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.core.subsystems.ChassisTank;
-import org.firstinspires.ftc.teamcode.core.subsystems.Climber;
-import org.firstinspires.ftc.teamcode.core.subsystems.Elevator;
-import org.firstinspires.ftc.teamcode.core.subsystems.IntakeFlipper;
-import org.firstinspires.ftc.teamcode.core.subsystems.IntakeMotor;
-import org.firstinspires.ftc.teamcode.core.subsystems.LiftFlipper;
-import org.firstinspires.ftc.teamcode.core.subsystems.Subsystem;
+import org.firstinspires.ftc.teamcode.core.subsystems.Hand;
 
 import java.util.ArrayList;
 
@@ -17,16 +12,12 @@ import java.util.ArrayList;
  */
 public class Robot
 {
-    public static boolean initialized = false;
+    public boolean initialized = false;
 
-    public static ChassisTank chassis;
-    public static Elevator elevator;
-    public static IntakeFlipper intakeFlipper;
-    public static LiftFlipper liftFlipper;
-    public static IntakeMotor intakeMotor;
-    public static Climber climber;
+    public ChassisTank chassis;
+    public Hand hand;
 
-    public static ArrayList<Subsystem> modules = new ArrayList<Subsystem>();
+    public ArrayList<Subsystem> modules = new ArrayList<Subsystem>();
 
     /**
      * Initialize subsystems and add them to the modules list.
@@ -36,19 +27,14 @@ public class Robot
     public Robot(HardwareMap hwMap)
     {
         chassis = new ChassisTank(hwMap);
-        //elevator = new Elevator(hwMap);
-        //intakeFlipper = new IntakeFlipper(hwMap);
-        //liftFlipper = new LiftFlipper(hwMap);
-        //intakeMotor = new IntakeMotor(hwMap);
-        //climber = new Climber(hwMap);
+        hand = new Hand(hwMap);
 
+        //Robot.chassis.startAccelerationIntegration();
+        //Robot.chassis.teleopInit();
+        //Robot.hand.teleopInit();
 
         modules.add(chassis);
-        //modules.add(elevator);
-        //modules.add(intakeFlipper);
-        //modules.add(liftFlipper);
-        //modules.add(intakeMotor);
-        //modules.add(climber);
+        modules.add(hand);
 
         initialized = true;
     }
