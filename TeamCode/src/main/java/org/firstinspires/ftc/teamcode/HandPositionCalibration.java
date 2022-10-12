@@ -37,6 +37,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -48,7 +49,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
-import org.firstinspires.ftc.teamcode.core.subsystems.Hand;
 import org.firstinspires.ftc.teamcode.util.Constants;
 import org.firstinspires.ftc.teamcode.util.MotorPositionCal;
 import org.json.JSONObject;
@@ -57,20 +57,17 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.util.ArrayList;
 import java.util.Locale;
 
 /**
- * {@link HandPositionCalibration} gives a short demo on how to use the BNO055 Inertial Motion Unit (IMU) from AdaFruit.
+ * {@link HandPositionCalibration} Set Motors' Predefined Position
  * <p>
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  *
- * @see <a href="http://www.adafruit.com/products/2472">Adafruit IMU</a>
  */
 @TeleOp(name = "JD Motor Position Cal", group = "Calibration")
 //@Disabled                            // Comment this out to add to the opmode list
-public class HandPositionCalibration extends LinearOpMode {
+public class HandPositionCalibration extends LinearOpMode
+{
     //----------------------------------------------------------------------------------------------
     // State
     //----------------------------------------------------------------------------------------------
@@ -88,23 +85,20 @@ public class HandPositionCalibration extends LinearOpMode {
     private Servo knukcleServo;
     private Servo fingerServo;
 
-    int rotatorPosition;
-    int armPosition;
-
     // The IMU sensor object
     BNO055IMU imu;
 
     // State used for updating telemetry
     Orientation angles;
     Acceleration gravity;
-
-    final double TRIGGER_THRESHOLD = 0.75;     // Squeeze more than 3/4 to get rumble.
+    int armPosition;
 
     MotorPositionCal PredefinedPosition = new MotorPositionCal();
 
     String directoryPath = Environment.getExternalStorageDirectory().getPath() + "/MOTORS";
 
-    private void SavePositonsToFile(String fileName, MotorPositionCal.StepPosition positions) {
+    private void SavePositonsToFile(String fileName, MotorPositionCal.StepPosition positions)
+    {
         JSONObject InitData = new JSONObject();
         try {
             InitData.put(MotorPositionCal.LifterMotorStr, positions.LifterMotor);
@@ -131,7 +125,8 @@ public class HandPositionCalibration extends LinearOpMode {
         }
     }
 
-    private String[] ReadPositionFromFile(String fileName) {
+    private String[] ReadPositionFromFile(String fileName)
+    {
         String[] data = new String[7];
         try {
             FileReader fileReader = new FileReader(
@@ -148,13 +143,13 @@ public class HandPositionCalibration extends LinearOpMode {
             String responce = stringBuilder.toString();
 
             JSONObject jsonObject = new JSONObject(responce);
-            data[0] = ((jsonObject.get(MotorPositionCal.LifterMotorStr).toString()));
-            data[1] = ((jsonObject.get(MotorPositionCal.RotatorMotorStr).toString()));
-            data[2] = ((jsonObject.get(MotorPositionCal.ArmMotorStr).toString()));
-            data[3] = ((jsonObject.get(MotorPositionCal.WristServoStr).toString()));
-            data[4] = ((jsonObject.get(MotorPositionCal.PalmServoStr).toString()));
-            data[5] = ((jsonObject.get(MotorPositionCal.KnuckleServoStr).toString()));
-            data[6] = ((jsonObject.get(MotorPositionCal.FingerServoStr).toString()));
+            data[MotorPositionCal.LifterMotorInt] = ((jsonObject.get(MotorPositionCal.LifterMotorStr).toString()));
+            data[MotorPositionCal.RotatorMotorInt] = ((jsonObject.get(MotorPositionCal.RotatorMotorStr).toString()));
+            data[MotorPositionCal.ArmMotorInt] = ((jsonObject.get(MotorPositionCal.ArmMotorStr).toString()));
+            data[MotorPositionCal.WristServoInt] = ((jsonObject.get(MotorPositionCal.WristServoStr).toString()));
+            data[MotorPositionCal.PalmServoInt] = ((jsonObject.get(MotorPositionCal.PalmServoStr).toString()));
+            data[MotorPositionCal.KnuckleServoInt] = ((jsonObject.get(MotorPositionCal.KnuckleServoStr).toString()));
+            data[MotorPositionCal.FingerServoInt] = ((jsonObject.get(MotorPositionCal.FingerServoStr).toString()));
 
         } catch (Exception e) {
             telemetry.addLine("Read " + fileName + " Error..." + e.toString());
@@ -173,10 +168,7 @@ public class HandPositionCalibration extends LinearOpMode {
     // Main logic
     //----------------------------------------------------------------------------------------------
 
-    boolean keylock_crossup = false;
-    boolean keylock_crossdown = false;
-    boolean keylock_crossleft = false;
-    boolean keylock_crossright = false;
+
 
     @Override
     public void runOpMode() {
@@ -220,11 +212,8 @@ public class HandPositionCalibration extends LinearOpMode {
         armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         //slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        //rotatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        //armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        rotatorPosition = 0;
-        armPosition = 0;
+        rotatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         fingerServo = hardwareMap.servo.get(Constants.fingerServo);
         wristServo = hardwareMap.servo.get(Constants.wristServo);
@@ -295,11 +284,49 @@ public class HandPositionCalibration extends LinearOpMode {
         PredefinedPosition.Pickup_right.KnuckleServo = 0.1;
         PredefinedPosition.Pickup_right.FingerServo = 0.8;
 
+        PredefinedPosition.Drop_A_1.LifterMotor = lifterMotor.getCurrentPosition();
+        PredefinedPosition.Drop_A_1.RotatorMotor = rotatorMotor.getCurrentPosition();
+        PredefinedPosition.Drop_A_1.ArmMotor = armMotor.getCurrentPosition();
+        PredefinedPosition.Drop_A_1.WristServo = 0.3;
+        PredefinedPosition.Drop_A_1.PalmServo = 0.5;
+        PredefinedPosition.Drop_A_1.KnuckleServo = 0.1;
+        PredefinedPosition.Drop_A_1.FingerServo = 0.8;
+
+        PredefinedPosition.Drop_B_2.LifterMotor = lifterMotor.getCurrentPosition();
+        PredefinedPosition.Drop_B_2.RotatorMotor = rotatorMotor.getCurrentPosition();
+        PredefinedPosition.Drop_B_2.ArmMotor = armMotor.getCurrentPosition();
+        PredefinedPosition.Drop_B_2.WristServo = 0.3;
+        PredefinedPosition.Drop_B_2.PalmServo = 0.5;
+        PredefinedPosition.Drop_B_2.KnuckleServo = 0.1;
+        PredefinedPosition.Drop_B_2.FingerServo = 0.8;
+
+        PredefinedPosition.Drop_X_3.LifterMotor = lifterMotor.getCurrentPosition();
+        PredefinedPosition.Drop_X_3.RotatorMotor = rotatorMotor.getCurrentPosition();
+        PredefinedPosition.Drop_X_3.ArmMotor = armMotor.getCurrentPosition();
+        PredefinedPosition.Drop_X_3.WristServo = 0.3;
+        PredefinedPosition.Drop_X_3.PalmServo = 0.5;
+        PredefinedPosition.Drop_X_3.KnuckleServo = 0.1;
+        PredefinedPosition.Drop_X_3.FingerServo = 0.8;
+
+        PredefinedPosition.Drop_Y_4.LifterMotor = lifterMotor.getCurrentPosition();
+        PredefinedPosition.Drop_Y_4.RotatorMotor = rotatorMotor.getCurrentPosition();
+        PredefinedPosition.Drop_Y_4.ArmMotor = armMotor.getCurrentPosition();
+        PredefinedPosition.Drop_Y_4.WristServo = 0.3;
+        PredefinedPosition.Drop_Y_4.PalmServo = 0.5;
+        PredefinedPosition.Drop_Y_4.KnuckleServo = 0.1;
+        PredefinedPosition.Drop_Y_4.FingerServo = 0.8;
+
         SavePositonsToFile("InitMotorsPosition.json", PredefinedPosition.InitPosition);
+
         SavePositonsToFile("PickupUpMotorsPosition.json", PredefinedPosition.Pickup_up);
         SavePositonsToFile("PickupDownMotorsPosition.json", PredefinedPosition.Pickup_down);
         SavePositonsToFile("PickupLeftMotorsPosition.json", PredefinedPosition.Pickup_left);
         SavePositonsToFile("PickupRightMotorsPosition.json", PredefinedPosition.Pickup_right);
+
+        SavePositonsToFile("DropA1MotorsPosition.json", PredefinedPosition.Drop_A_1);
+        SavePositonsToFile("DropB2MotorsPosition.json", PredefinedPosition.Drop_B_2);
+        SavePositonsToFile("DropX3MotorsPosition.json", PredefinedPosition.Drop_X_3);
+        SavePositonsToFile("DropY4MotorsPosition.json", PredefinedPosition.Drop_Y_4);
 // End of Saving
 
 
@@ -308,6 +335,10 @@ public class HandPositionCalibration extends LinearOpMode {
         PredefinedPosition.Pickup_down.SetValue(ReadPositionFromFile("PickupDownMotorsPosition.json"));
         PredefinedPosition.Pickup_left.SetValue(ReadPositionFromFile("PickupLeftMotorsPosition.json"));
         PredefinedPosition.Pickup_right.SetValue(ReadPositionFromFile("PickupRightMotorsPosition.json"));
+        PredefinedPosition.Drop_A_1.SetValue(ReadPositionFromFile("DropA1MotorsPosition.json"));
+        PredefinedPosition.Drop_B_2.SetValue(ReadPositionFromFile("DropB2MotorsPosition.json"));
+        PredefinedPosition.Drop_X_3.SetValue(ReadPositionFromFile("DropX3MotorsPosition.json"));
+        PredefinedPosition.Drop_Y_4.SetValue(ReadPositionFromFile("DropY4MotorsPosition.json"));
 
 
         telemetry.addLine("Init Position at: " +
@@ -324,108 +355,14 @@ public class HandPositionCalibration extends LinearOpMode {
         // Start the logging of measured acceleration
         imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
 
-        ElapsedTime runtime = new ElapsedTime();
-        int newLeftTarget = armMotor.getCurrentPosition();
-
-        boolean highLevel = false;
-        int lifterZero = lifterMotor.getCurrentPosition();
+        armPosition =armMotor.getCurrentPosition();
 
         // Loop and update the dashboard
-        while (opModeIsActive()) {
-/* disable all controls
+        while (opModeIsActive())
+        {
+            ManualAdjustHandMotors(gamepad2);
 
-            double armPower = 0.35;
-            if(gamepad1.right_stick_y > 0.1  || gamepad1.right_stick_y < -0.1)
-            {
-                newLeftTarget += (int)(gamepad1.right_stick_y*50);
-                armPower *= Math.abs(gamepad1.right_stick_y);
-                //if(gamepad1.right_stick_y > 0.1 )
-                if(gamepad1.right_stick_y < -0.1) // move arm down (need to check after 180 degrees)
-                    armPower = 0.1*Math.abs(gamepad1.right_stick_y);
-            }
-            armMotor.setTargetPosition(newLeftTarget);
-            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            runtime.reset();
-            armMotor.setPower(armPower);//Math.max(0.2,gamepad1.right_stick_y));
-            while (opModeIsActive() &&
-                    (runtime.seconds() < 1) &&
-                    (armMotor.isBusy() )) {
-
-            }
-
-            if (gamepad1.right_trigger > TRIGGER_THRESHOLD) {
-                if (!highLevel) {
-                    highLevel = true;  // Hold off any more triggers
-                    lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition()+100);
-                    lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    runtime.reset();
-                    lifterMotor.setPower(0.2);
-                    while (opModeIsActive() &&
-                            (runtime.seconds() < 1) &&
-                            (lifterMotor.isBusy() )) {
-
-                    }
-                    gamepad1.rumble(0.9, 0, 200);  // 200 mSec burst on left motor.
-                }
-            } else {
-                highLevel = false;  // We can trigger again now.
-            }
-
-            if (gamepad1.left_trigger > TRIGGER_THRESHOLD) {
-                lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition()-100);
-                lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                runtime.reset();
-                lifterMotor.setPower(0.2);
-                while (opModeIsActive() &&
-                        (runtime.seconds() < 1) &&
-                        (lifterMotor.isBusy() )) {
-
-                }
-            }
-
-
-            backLeft.setPower(gamepad1.left_stick_x*0.5);
-            backRight.setPower(gamepad1.right_stick_x*.5);
-
-            rotatorMotor.setPower(gamepad1.left_stick_y*0.2);
-*/
-            //hand.teleopControls(gamepad1, gamepad2);
-
-            if (gamepad1.dpad_up) {
-                if (!keylock_crossup) {
-                    keylock_crossup = true;
-                    SetMotorsPosition(PredefinedPosition.Pickup_up);
-                }
-            } else {
-                keylock_crossup = false;
-            }
-
-            if (gamepad1.dpad_down) {
-                if (!keylock_crossdown) {
-                    keylock_crossdown = true;
-                    SetMotorsPosition(PredefinedPosition.Pickup_down);
-                }
-            } else {
-                keylock_crossdown = false;
-            }
-
-            if (gamepad1.dpad_left) {
-                if (!keylock_crossleft) {
-                    keylock_crossleft = true;
-                    SetMotorsPosition(PredefinedPosition.Pickup_left);
-                }
-            } else {
-                keylock_crossleft = false;
-            }
-
-            if (gamepad1.dpad_right) {
-                if (!keylock_crossright) {
-                    keylock_crossright = true;
-                    SetMotorsPosition(PredefinedPosition.Pickup_right);
-                }
-            } else {
-                keylock_crossright = false;
-            }
+            SetPredefinedHandMotors(gamepad1);
 
             telemetry.addLine().addData("Lifter Position at ", "%7d",
                     lifterMotor.getCurrentPosition());
@@ -448,8 +385,6 @@ public class HandPositionCalibration extends LinearOpMode {
             telemetry.addLine().addData("fingerServo Currently at ", "%7f",
                     fingerServo.getPosition());
 
-            //telemetry.addLine(hand.addTelemetry());
-
             telemetry.addLine().addData("Back Drive Pos L:R ", "%7d : %7d",
                     backLeft.getCurrentPosition(),
                     backRight.getCurrentPosition());
@@ -457,6 +392,239 @@ public class HandPositionCalibration extends LinearOpMode {
             telemetry.update();
 
             //sleep(250);   // optional pause after each move.
+        }
+    }
+
+    final double TRIGGER_THRESHOLD = 0.75;     // Squeeze more than 3/4 to get rumble.
+    private boolean wristServoRightLock = false;
+    private boolean wristServoLeftLock = false;
+    private boolean palmServoLock = false;
+    private boolean knuckleServoLock = false;
+    private boolean highLevel = false;
+    private boolean lowLevel = false;
+    ElapsedTime runtime = new ElapsedTime();
+    private void ManualAdjustHandMotors(Gamepad gamepad)
+    {
+        //Wrist Servo
+        if (gamepad.right_trigger > TRIGGER_THRESHOLD) {
+            if (!wristServoRightLock) {
+                wristServoRightLock = true;  // Hold off any more triggers
+                wristServo.setPosition(wristServo.getPosition()+0.05);
+            }
+        } else {
+            wristServoRightLock = false;  // We can trigger again now.
+        }
+
+        if (gamepad.left_trigger > TRIGGER_THRESHOLD) {
+            if (!wristServoLeftLock) {
+                wristServoLeftLock = true;  // Hold off any more triggers
+                wristServo.setPosition(wristServo.getPosition()-0.05);
+            }
+        } else {
+            wristServoLeftLock = false;  // We can trigger again now.
+        }
+
+        // palm servo
+        if (gamepad.right_bumper)
+        {
+            if(!palmServoLock) {
+                palmServoLock = true;
+                double palmCurPosition = palmServo.getPosition();
+                if (palmCurPosition > 0.5) {
+                    palmCurPosition = 0.2;
+                } else {
+                    palmCurPosition = 0.8;
+                }
+                palmServo.setPosition(palmCurPosition);
+            }
+        }
+        else
+        {
+            palmServoLock = false;
+        }
+
+        // Knuckle servo
+        if (gamepad.left_bumper)
+        {
+            if(!knuckleServoLock) {
+                knuckleServoLock = true;
+                double knuckleCurPosition = knukcleServo.getPosition();
+                if (knuckleCurPosition > 0.7) {
+                    knuckleCurPosition = 0.1;
+                } else if (knuckleCurPosition > 0.3) {
+                    knuckleCurPosition = 0.9;
+                } else {
+                    knuckleCurPosition = 0.5;
+                }
+                knukcleServo.setPosition(knuckleCurPosition);
+            }
+        }
+        else
+        {
+            knuckleServoLock = false;
+        }
+
+        // finger servo
+        if (gamepad.x) { //open
+            fingerServo.setPosition(1);
+        }
+        if (gamepad.b) { // close
+            fingerServo.setPosition(0);
+        }
+
+        // arm motor
+        double armPower = 0.35;
+        if(gamepad.dpad_up)
+        {
+            armPosition += 50;
+        }else if(gamepad.dpad_down)
+        {
+            armPosition -= 50;
+            armPower = 0.1;
+        }
+        armMotor.setTargetPosition(armPosition);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        runtime.reset();
+        armMotor.setPower(armPower);
+        while ((runtime.seconds() < 1) &&
+                (armMotor.isBusy() )) {
+        }
+
+        // rotator motor
+        if(gamepad.dpad_left) {
+            rotatorMotor.setPower(0.2);
+        }
+        else if(gamepad.dpad_right)
+        {
+            rotatorMotor.setPower(-0.2);
+        }
+        else
+        {
+            rotatorMotor.setPower(0);
+        }
+
+        //lifter motor
+        if (gamepad.y) {//up
+            if (!highLevel) {
+                highLevel = true;  // Hold off any more triggers
+                if(lifterMotor.getCurrentPosition()<2000) { // max high limit
+                    lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition() + 100);
+                    lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    runtime.reset();
+                    lifterMotor.setPower(0.2);
+                    while ((runtime.seconds() < 1) &&
+                            (lifterMotor.isBusy())) {
+                    }
+                }
+                //gamepad1.rumble(0.9, 0, 200);  // 200 mSec burst on left motor.
+            }
+        } else {
+            highLevel = false;  // We can trigger again now.
+        }
+
+        if (gamepad.a) {//down
+            if(!lowLevel) {
+                lowLevel = true;
+                if(lifterMotor.getCurrentPosition()>100) // min low limit
+                {
+                    lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition() - 100);
+                    lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    runtime.reset();
+                    lifterMotor.setPower(0.2);
+                    while ((runtime.seconds() < 1) &&
+                            (lifterMotor.isBusy())) {
+                    }
+                }
+            }
+        }
+        else
+        {
+            lowLevel = false;
+        }
+    }
+
+
+    boolean keylock_crossup = false;
+    boolean keylock_crossdown = false;
+    boolean keylock_crossleft = false;
+    boolean keylock_crossright = false;
+
+    boolean keylock_a = false;
+    boolean keylock_b = false;
+    boolean keylock_x = false;
+    boolean keylock_y = false;
+    public void SetPredefinedHandMotors(Gamepad gamepad)
+    {
+        if (gamepad.dpad_up) {
+            if (!keylock_crossup) {
+                keylock_crossup = true;
+                SetMotorsPosition(PredefinedPosition.Pickup_up);
+            }
+        } else {
+            keylock_crossup = false;
+        }
+
+        if (gamepad.dpad_down) {
+            if (!keylock_crossdown) {
+                keylock_crossdown = true;
+                SetMotorsPosition(PredefinedPosition.Pickup_down);
+            }
+        } else {
+            keylock_crossdown = false;
+        }
+
+        if (gamepad.dpad_left) {
+            if (!keylock_crossleft) {
+                keylock_crossleft = true;
+                SetMotorsPosition(PredefinedPosition.Pickup_left);
+            }
+        } else {
+            keylock_crossleft = false;
+        }
+
+        if (gamepad.dpad_right) {
+            if (!keylock_crossright) {
+                keylock_crossright = true;
+                SetMotorsPosition(PredefinedPosition.Pickup_right);
+            }
+        } else {
+            keylock_crossright = false;
+        }
+
+        if (gamepad.a) {
+            if (!keylock_a) {
+                keylock_a = true;
+                SetMotorsPosition(PredefinedPosition.Drop_A_1);
+            }
+        } else {
+            keylock_a = false;
+        }
+
+        if (gamepad.b) {
+            if (!keylock_b) {
+                keylock_b = true;
+                SetMotorsPosition(PredefinedPosition.Drop_B_2);
+            }
+        } else {
+            keylock_b = false;
+        }
+
+        if (gamepad.x) {
+            if (!keylock_x) {
+                keylock_x = true;
+                SetMotorsPosition(PredefinedPosition.Drop_X_3);
+            }
+        } else {
+            keylock_x = false;
+        }
+
+        if (gamepad.y) {
+            if (!keylock_y) {
+                keylock_y = true;
+                SetMotorsPosition(PredefinedPosition.Drop_Y_4);
+            }
+        } else {
+            keylock_y = false;
         }
     }
 

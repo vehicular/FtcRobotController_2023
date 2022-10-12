@@ -14,6 +14,14 @@ public class MotorPositionCal
     public final static String KnuckleServoStr = "KnuckleServo";
     public final static String FingerServoStr = "FingerServo";
 
+    public final static int LifterMotorInt = 0;
+    public final static int RotatorMotorInt = 1;
+    public final static int ArmMotorInt = 2;
+    public final static int WristServoInt = 3;
+    public final static int PalmServoInt = 4;
+    public final static int KnuckleServoInt = 5;
+    public final static int FingerServoInt = 6;
+
     public class StepPosition {
         public int LifterMotor;
         public int RotatorMotor;
@@ -41,19 +49,19 @@ public class MotorPositionCal
         public void SetValue(String[] data)
         {
             LifterMotor =
-                    Integer.parseInt(data[0]);
+                    Integer.parseInt(data[LifterMotorInt]);
             RotatorMotor =
-                    Integer.parseInt(data[1]);
+                    Integer.parseInt(data[RotatorMotorInt]);
             ArmMotor =
-                    Integer.parseInt(data[2]);
+                    Integer.parseInt(data[ArmMotorInt]);
             WristServo =
-                    Double.parseDouble(data[3]);
+                    Double.parseDouble(data[WristServoInt]);
             PalmServo =
-                    Double.parseDouble(data[4]);
+                    Double.parseDouble(data[PalmServoInt]);
             KnuckleServo =
-                    Double.parseDouble(data[5]);
+                    Double.parseDouble(data[KnuckleServoInt]);
             FingerServo =
-                    Double.parseDouble(data[6]);
+                    Double.parseDouble(data[FingerServoInt]);
         }
     }
 
@@ -64,10 +72,10 @@ public class MotorPositionCal
     public StepPosition Pickup_left = new StepPosition();
     public StepPosition Pickup_right = new StepPosition();
 
-    public StepPosition Drop_A = new StepPosition();
-    public StepPosition Drop_B = new StepPosition();
-    public StepPosition Drop_X = new StepPosition();
-    public StepPosition Drop_y = new StepPosition();
+    public StepPosition Drop_A_1 = new StepPosition(); // 0-10 inches
+    public StepPosition Drop_B_2 = new StepPosition(); // 10-20 inches
+    public StepPosition Drop_X_3 = new StepPosition(); // 20-30 inches
+    public StepPosition Drop_Y_4 = new StepPosition(); // 30-40 inches
 
     public MotorPositionCal()
     {}
