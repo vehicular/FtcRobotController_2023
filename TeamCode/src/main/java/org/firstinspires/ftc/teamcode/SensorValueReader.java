@@ -29,12 +29,16 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.os.Environment;
+
+import com.google.gson.JsonObject;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Func;
@@ -47,7 +51,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.teamcode.core.subsystems.Hand;
 import org.firstinspires.ftc.teamcode.util.Constants;
+import org.firstinspires.ftc.teamcode.util.MotorPosition;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.Locale;
 
 /**
@@ -74,6 +85,10 @@ public class SensorValueReader extends LinearOpMode
     DcMotor lifterMotor;
     DcMotor rotatorMotor;
     DcMotor armMotor;
+    private Servo wristServo;
+    private Servo palmServo;
+    private Servo knukcleServo;
+    private Servo fingerServo;
 
     int rotatorPosition;
     int armPosition;
@@ -134,11 +149,16 @@ public class SensorValueReader extends LinearOpMode
         armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         //slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        rotatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        //rotatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        //armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         rotatorPosition = 0;
         armPosition = 0;
+
+        fingerServo = hardwareMap.servo.get(Constants.fingerServo);
+        wristServo = hardwareMap.servo.get(Constants.wristServo);
+        palmServo = hardwareMap.servo.get(Constants.palmServo);
+        knukcleServo = hardwareMap.servo.get(Constants.knuckleServo);
 
         // Set up the parameters with which we will use our IMU. Note that integration
         // algorithm here just reports accelerations to the logcat log; it doesn't actually
@@ -162,6 +182,75 @@ public class SensorValueReader extends LinearOpMode
         // Set up our telemetry dashboard
         composeTelemetry();
 
+        String directoryPath = Environment.getExternalStorageDirectory().getPath()+"/MOTORS";
+
+        /*
+        JSONObject InitData = new JSONObject();
+        try {
+            InitData.put(MotorPosition.LifterMotorStr, lifterMotor.getCurrentPosition());
+            InitData.put(MotorPosition.RotatorMotorStr, rotatorMotor.getCurrentPosition());
+            InitData.put(MotorPosition.ArmMotorStr, armMotor.getCurrentPosition());
+            InitData.put(MotorPosition.WristServoStr, wristServo.getPosition());
+            InitData.put(MotorPosition.PalmServoStr, palmServo.getPosition());
+            InitData.put(MotorPosition.KnuckleServoStr, knukcleServo.getPosition());
+            InitData.put(MotorPosition.FingerServoStr, fingerServo.getPosition());
+
+            // Convert JsonObject to String Format
+            String userString = InitData.toString();
+            //telemetry.addLine(userString);
+            // Define the File Path and its Name
+            File directory = new File(directoryPath);
+            directory.mkdir();
+            FileWriter fileWriter = new FileWriter(
+                    directoryPath+"/"+"InitMotorsPosition.json");
+
+            fileWriter.write(userString);
+            fileWriter.close();
+        }catch (Exception e)
+        {
+            telemetry.addLine("Save Init Motor Position Exception..."+e.toString());
+        }
+*/
+
+        try {
+            FileReader fileReader = new FileReader(
+                    directoryPath+"/"+"InitMotorsPosition.json");
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            StringBuilder stringBuilder = new StringBuilder();
+            String line = bufferedReader.readLine();
+            while (line != null) {
+                stringBuilder.append(line).append("\n");
+                line = bufferedReader.readLine();
+            }
+            bufferedReader.close();
+            // This responce will have Json Format String
+            String responce = stringBuilder.toString();
+            //telemetry.addLine(responce);
+
+
+            JSONObject jsonObject = new JSONObject(responce);
+            int a = Integer.parseInt(jsonObject.get(MotorPosition.LifterMotorStr).toString());
+            int b = Integer.parseInt(jsonObject.get(MotorPosition.RotatorMotorStr).toString());
+            int c = Integer.parseInt(jsonObject.get(MotorPosition.ArmMotorStr).toString());
+            double d = Double.parseDouble(jsonObject.get(MotorPosition.WristServoStr).toString());
+            double e = Double.parseDouble(jsonObject.get(MotorPosition.PalmServoStr).toString());
+            double f = Double.parseDouble(jsonObject.get(MotorPosition.KnuckleServoStr).toString());
+            double g = Double.parseDouble(jsonObject.get(MotorPosition.FingerServoStr).toString());
+
+            //Java Object
+            MotorPosition javaObject = new MotorPosition(a,b,c,d,e,f,g);
+
+            telemetry.addLine().addData("Init Position at: ",
+                    "%7d:%7d:%7d:%7f:%7f:%7f:%7f",
+                    a,b,c,d,e,f,g);
+        }
+        catch (Exception e)
+        {
+            telemetry.addLine("Read Init Motor Position Exception..."+e.toString());
+        }
+
+        telemetry.update();
+
         // Wait until we're told to go
         waitForStart();
 
@@ -176,6 +265,7 @@ public class SensorValueReader extends LinearOpMode
 
         // Loop and update the dashboard
         while (opModeIsActive()) {
+/* disable all controls
 
             double armPower = 0.35;
             if(gamepad1.right_stick_y > 0.1  || gamepad1.right_stick_y < -0.1)
@@ -231,7 +321,7 @@ public class SensorValueReader extends LinearOpMode
             backRight.setPower(gamepad1.right_stick_x*.5);
 
             rotatorMotor.setPower(gamepad1.left_stick_y*0.2);
-
+*/
             //hand.teleopControls(gamepad1, gamepad2);
 
 
@@ -239,13 +329,24 @@ public class SensorValueReader extends LinearOpMode
                     lifterMotor.getCurrentPosition());
 
             telemetry.addLine().addData("Rotator Currently at ",  "%7d",
-                    rotatorPosition);
+                    rotatorMotor.getCurrentPosition());
 
-            telemetry.addLine().addData("Arm Position at ",  "%7d : %7d",
-                    newLeftTarget,
-                    armPosition);
+            telemetry.addLine().addData("Arm Position at ",  "%7d",
+                    armMotor.getCurrentPosition());
 
-            telemetry.addLine(hand.addTelemetry());
+            telemetry.addLine().addData("wristServo Currently at ",  "%7f",
+                    wristServo.getPosition());
+
+            telemetry.addLine().addData("palmServo Currently at ",  "%7f",
+                    palmServo.getPosition());
+
+            telemetry.addLine().addData("knukcleServo Currently at ",  "%7f",
+                    knukcleServo.getPosition());
+
+            telemetry.addLine().addData("fingerServo Currently at ",  "%7f",
+                    fingerServo.getPosition());
+
+            //telemetry.addLine(hand.addTelemetry());
 
             telemetry.addLine().addData("Back Drive Pos L:R ",  "%7d : %7d",
                     backLeft.getCurrentPosition(),
@@ -272,8 +373,8 @@ public class SensorValueReader extends LinearOpMode
                 // three times the necessary expense.
                 angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
                 gravity  = imu.getGravity();
-                    rotatorPosition = rotatorMotor.getCurrentPosition();
-                    armPosition = armMotor.getCurrentPosition();
+                    //rotatorPosition = rotatorMotor.getCurrentPosition();
+                    //armPosition = armMotor.getCurrentPosition();
                 }
             });
 
