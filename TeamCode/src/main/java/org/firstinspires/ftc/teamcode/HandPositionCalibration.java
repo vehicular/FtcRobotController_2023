@@ -57,20 +57,20 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.Locale;
 
 /**
- * {@link SensorValueReader} gives a short demo on how to use the BNO055 Inertial Motion Unit (IMU) from AdaFruit.
- *
+ * {@link HandPositionCalibration} gives a short demo on how to use the BNO055 Inertial Motion Unit (IMU) from AdaFruit.
+ * <p>
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  *
  * @see <a href="http://www.adafruit.com/products/2472">Adafruit IMU</a>
  */
-@TeleOp(name = "JD Sensor Reader", group = "Sensor")
+@TeleOp(name = "JD Motor Position Cal", group = "Calibration")
 //@Disabled                            // Comment this out to add to the opmode list
-public class SensorValueReader extends LinearOpMode
-    {
+public class HandPositionCalibration extends LinearOpMode {
     //----------------------------------------------------------------------------------------------
     // State
     //----------------------------------------------------------------------------------------------
@@ -98,15 +98,88 @@ public class SensorValueReader extends LinearOpMode
     Orientation angles;
     Acceleration gravity;
 
-        final double TRIGGER_THRESHOLD  = 0.75;     // Squeeze more than 3/4 to get rumble.
+    final double TRIGGER_THRESHOLD = 0.75;     // Squeeze more than 3/4 to get rumble.
 
-        Hand hand;
+    MotorPositionCal PredefinedPosition = new MotorPositionCal();
 
+    String directoryPath = Environment.getExternalStorageDirectory().getPath() + "/MOTORS";
+
+    private void SavePositonsToFile(String fileName, MotorPositionCal.StepPosition positions) {
+        JSONObject InitData = new JSONObject();
+        try {
+            InitData.put(MotorPositionCal.LifterMotorStr, positions.LifterMotor);
+            InitData.put(MotorPositionCal.RotatorMotorStr, positions.RotatorMotor);
+            InitData.put(MotorPositionCal.ArmMotorStr, positions.ArmMotor);
+            InitData.put(MotorPositionCal.WristServoStr, positions.WristServo);
+            InitData.put(MotorPositionCal.PalmServoStr, positions.PalmServo);
+            InitData.put(MotorPositionCal.KnuckleServoStr, positions.KnuckleServo);
+            InitData.put(MotorPositionCal.FingerServoStr, positions.FingerServo);
+
+            // Convert JsonObject to String Format
+            String userString = InitData.toString();
+            //telemetry.addLine(userString);
+            // Define the File Path and its Name
+            File directory = new File(directoryPath);
+            directory.mkdir();
+            FileWriter fileWriter = new FileWriter(
+                    directoryPath + "/" + fileName);
+
+            fileWriter.write(userString);
+            fileWriter.close();
+        } catch (Exception e) {
+            telemetry.addLine("Save " + fileName + " Error..." + e.toString());
+        }
+    }
+
+    private String[] ReadPositionFromFile(String fileName) {
+        String[] data = new String[7];
+        try {
+            FileReader fileReader = new FileReader(
+                    directoryPath + "/" + fileName);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            StringBuilder stringBuilder = new StringBuilder();
+            String line = bufferedReader.readLine();
+            while (line != null) {
+                stringBuilder.append(line).append("\n");
+                line = bufferedReader.readLine();
+            }
+            bufferedReader.close();
+            // This responce will have Json Format String
+            String responce = stringBuilder.toString();
+
+            JSONObject jsonObject = new JSONObject(responce);
+            data[0] = ((jsonObject.get(MotorPositionCal.LifterMotorStr).toString()));
+            data[1] = ((jsonObject.get(MotorPositionCal.RotatorMotorStr).toString()));
+            data[2] = ((jsonObject.get(MotorPositionCal.ArmMotorStr).toString()));
+            data[3] = ((jsonObject.get(MotorPositionCal.WristServoStr).toString()));
+            data[4] = ((jsonObject.get(MotorPositionCal.PalmServoStr).toString()));
+            data[5] = ((jsonObject.get(MotorPositionCal.KnuckleServoStr).toString()));
+            data[6] = ((jsonObject.get(MotorPositionCal.FingerServoStr).toString()));
+
+        } catch (Exception e) {
+            telemetry.addLine("Read " + fileName + " Error..." + e.toString());
+        }
+        return data;
+    }
+
+    private void SetMotorsPosition(MotorPositionCal.StepPosition positions)
+    {
+        wristServo.setPosition(positions.WristServo);
+        palmServo.setPosition(positions.PalmServo);
+        knukcleServo.setPosition(positions.KnuckleServo);
+        fingerServo.setPosition(positions.FingerServo);
+    }
     //----------------------------------------------------------------------------------------------
     // Main logic
     //----------------------------------------------------------------------------------------------
 
-    @Override public void runOpMode() {
+    boolean keylock_crossup = false;
+    boolean keylock_crossdown = false;
+    boolean keylock_crossleft = false;
+    boolean keylock_crossright = false;
+
+    @Override
+    public void runOpMode() {
 
         //frontLeft = hardwareMap.get(DcMotor.class, "LFMotor");
         //frontRight = hardwareMap.get(DcMotor.class, "RFMotor");
@@ -162,11 +235,11 @@ public class SensorValueReader extends LinearOpMode
         // algorithm here just reports accelerations to the logcat log; it doesn't actually
         // provide positional information.
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
-        parameters.loggingEnabled      = true;
-        parameters.loggingTag          = "IMU";
+        parameters.loggingEnabled = true;
+        parameters.loggingTag = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
         // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
@@ -180,78 +253,70 @@ public class SensorValueReader extends LinearOpMode
         // Set up our telemetry dashboard
         composeTelemetry();
 
-        String directoryPath = Environment.getExternalStorageDirectory().getPath()+"/MOTORS";
 
-        MotorPositionCal PredefinedPosition = new MotorPositionCal();
+// Start to Save files
+        PredefinedPosition.InitPosition.LifterMotor = lifterMotor.getCurrentPosition();
+        PredefinedPosition.InitPosition.RotatorMotor = rotatorMotor.getCurrentPosition();
+        PredefinedPosition.InitPosition.ArmMotor = armMotor.getCurrentPosition();
+        PredefinedPosition.InitPosition.WristServo = 0.4;
+        PredefinedPosition.InitPosition.PalmServo = 0.4;
+        PredefinedPosition.InitPosition.KnuckleServo = 0.6;
+        PredefinedPosition.InitPosition.FingerServo = 0.1;
 
-        JSONObject InitData = new JSONObject();
-        try {
-            InitData.put(MotorPositionCal.LifterMotorStr, lifterMotor.getCurrentPosition());
-            InitData.put(MotorPositionCal.RotatorMotorStr, rotatorMotor.getCurrentPosition());
-            InitData.put(MotorPositionCal.ArmMotorStr, armMotor.getCurrentPosition());
-            InitData.put(MotorPositionCal.WristServoStr, 0.5);
-            InitData.put(MotorPositionCal.PalmServoStr, 0.4);
-            InitData.put(MotorPositionCal.KnuckleServoStr, 0.6);
-            InitData.put(MotorPositionCal.FingerServoStr, 0.1);
+        PredefinedPosition.Pickup_up.LifterMotor = lifterMotor.getCurrentPosition();
+        PredefinedPosition.Pickup_up.RotatorMotor = rotatorMotor.getCurrentPosition();
+        PredefinedPosition.Pickup_up.ArmMotor = armMotor.getCurrentPosition();
+        PredefinedPosition.Pickup_up.WristServo = 0.6;
+        PredefinedPosition.Pickup_up.PalmServo = 0.4;
+        PredefinedPosition.Pickup_up.KnuckleServo = 0.2;
+        PredefinedPosition.Pickup_up.FingerServo = 0.8;
 
-            // Convert JsonObject to String Format
-            String userString = InitData.toString();
-            //telemetry.addLine(userString);
-            // Define the File Path and its Name
-            File directory = new File(directoryPath);
-            directory.mkdir();
-            FileWriter fileWriter = new FileWriter(
-                    directoryPath+"/"+"InitMotorsPosition.json");
+        PredefinedPosition.Pickup_down.LifterMotor = lifterMotor.getCurrentPosition();
+        PredefinedPosition.Pickup_down.RotatorMotor = rotatorMotor.getCurrentPosition();
+        PredefinedPosition.Pickup_down.ArmMotor = armMotor.getCurrentPosition();
+        PredefinedPosition.Pickup_down.WristServo = 0.1;
+        PredefinedPosition.Pickup_down.PalmServo = 0.5;
+        PredefinedPosition.Pickup_down.KnuckleServo = 0.5;
+        PredefinedPosition.Pickup_down.FingerServo = 0.8;
 
-            fileWriter.write(userString);
-            fileWriter.close();
-        }catch (Exception e)
-        {
-            telemetry.addLine("Save Init Motor Position Exception..."+e.toString());
-        }
+        PredefinedPosition.Pickup_left.LifterMotor = lifterMotor.getCurrentPosition();
+        PredefinedPosition.Pickup_left.RotatorMotor = rotatorMotor.getCurrentPosition();
+        PredefinedPosition.Pickup_left.ArmMotor = armMotor.getCurrentPosition();
+        PredefinedPosition.Pickup_left.WristServo = 0.6;
+        PredefinedPosition.Pickup_left.PalmServo = 0.4;
+        PredefinedPosition.Pickup_left.KnuckleServo = 0.7;
+        PredefinedPosition.Pickup_left.FingerServo = 0.8;
 
+        PredefinedPosition.Pickup_right.LifterMotor = lifterMotor.getCurrentPosition();
+        PredefinedPosition.Pickup_right.RotatorMotor = rotatorMotor.getCurrentPosition();
+        PredefinedPosition.Pickup_right.ArmMotor = armMotor.getCurrentPosition();
+        PredefinedPosition.Pickup_right.WristServo = 0.3;
+        PredefinedPosition.Pickup_right.PalmServo = 0.5;
+        PredefinedPosition.Pickup_right.KnuckleServo = 0.1;
+        PredefinedPosition.Pickup_right.FingerServo = 0.8;
 
-        try {
-            FileReader fileReader = new FileReader(
-                    directoryPath+"/"+"InitMotorsPosition.json");
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
-            StringBuilder stringBuilder = new StringBuilder();
-            String line = bufferedReader.readLine();
-            while (line != null) {
-                stringBuilder.append(line).append("\n");
-                line = bufferedReader.readLine();
-            }
-            bufferedReader.close();
-            // This responce will have Json Format String
-            String responce = stringBuilder.toString();
-            //telemetry.addLine(responce);
+        SavePositonsToFile("InitMotorsPosition.json", PredefinedPosition.InitPosition);
+        SavePositonsToFile("PickupUpMotorsPosition.json", PredefinedPosition.Pickup_up);
+        SavePositonsToFile("PickupDownMotorsPosition.json", PredefinedPosition.Pickup_down);
+        SavePositonsToFile("PickupLeftMotorsPosition.json", PredefinedPosition.Pickup_left);
+        SavePositonsToFile("PickupRightMotorsPosition.json", PredefinedPosition.Pickup_right);
+// End of Saving
 
 
-            JSONObject jsonObject = new JSONObject(responce);
-            PredefinedPosition.InitPosition.LifterMotor =
-                    Integer.parseInt(jsonObject.get(MotorPositionCal.LifterMotorStr).toString());
-            PredefinedPosition.InitPosition.RotatorMotor =
-                    Integer.parseInt(jsonObject.get(MotorPositionCal.RotatorMotorStr).toString());
-            PredefinedPosition.InitPosition.ArmMotor =
-                    Integer.parseInt(jsonObject.get(MotorPositionCal.ArmMotorStr).toString());
-            PredefinedPosition.InitPosition.WristServo =
-                    Double.parseDouble(jsonObject.get(MotorPositionCal.WristServoStr).toString());
-            PredefinedPosition.InitPosition.PalmServo =
-                    Double.parseDouble(jsonObject.get(MotorPositionCal.PalmServoStr).toString());
-            PredefinedPosition.InitPosition.KnuckleServo =
-                    Double.parseDouble(jsonObject.get(MotorPositionCal.KnuckleServoStr).toString());
-            PredefinedPosition.InitPosition.FingerServo =
-                    Double.parseDouble(jsonObject.get(MotorPositionCal.FingerServoStr).toString());
+        PredefinedPosition.InitPosition.SetValue(ReadPositionFromFile("InitMotorsPosition.json"));
+        PredefinedPosition.Pickup_up.SetValue(ReadPositionFromFile("PickupUpMotorsPosition.json"));
+        PredefinedPosition.Pickup_down.SetValue(ReadPositionFromFile("PickupDownMotorsPosition.json"));
+        PredefinedPosition.Pickup_left.SetValue(ReadPositionFromFile("PickupLeftMotorsPosition.json"));
+        PredefinedPosition.Pickup_right.SetValue(ReadPositionFromFile("PickupRightMotorsPosition.json"));
 
-            telemetry.addLine("Init Position at: " +
-                    PredefinedPosition.InitPosition.toString());
-        }
-        catch (Exception e)
-        {
-            telemetry.addLine("Read Init Motor Position Exception..."+e.toString());
-        }
+
+        telemetry.addLine("Init Position at: " +
+                PredefinedPosition.InitPosition.toString());
+
 
         telemetry.update();
+
+        SetMotorsPosition(PredefinedPosition.InitPosition);
 
         // Wait until we're told to go
         waitForStart();
@@ -326,37 +391,66 @@ public class SensorValueReader extends LinearOpMode
 */
             //hand.teleopControls(gamepad1, gamepad2);
 
+            if (gamepad1.dpad_up) {
+                if (!keylock_crossup) {
+                    keylock_crossup = true;
+                    SetMotorsPosition(PredefinedPosition.Pickup_up);
+                }
+            } else {
+                keylock_crossup = false;
+            }
 
-            wristServo.setPosition(PredefinedPosition.InitPosition.WristServo);
-            palmServo.setPosition(PredefinedPosition.InitPosition.PalmServo);;
-            knukcleServo.setPosition(PredefinedPosition.InitPosition.KnuckleServo);;
-            fingerServo.setPosition(PredefinedPosition.InitPosition.FingerServo);;
+            if (gamepad1.dpad_down) {
+                if (!keylock_crossdown) {
+                    keylock_crossdown = true;
+                    SetMotorsPosition(PredefinedPosition.Pickup_down);
+                }
+            } else {
+                keylock_crossdown = false;
+            }
 
+            if (gamepad1.dpad_left) {
+                if (!keylock_crossleft) {
+                    keylock_crossleft = true;
+                    SetMotorsPosition(PredefinedPosition.Pickup_left);
+                }
+            } else {
+                keylock_crossleft = false;
+            }
 
-            telemetry.addLine().addData("Lifter Position at ",  "%7d",
+            if (gamepad1.dpad_right) {
+                if (!keylock_crossright) {
+                    keylock_crossright = true;
+                    SetMotorsPosition(PredefinedPosition.Pickup_right);
+                }
+            } else {
+                keylock_crossright = false;
+            }
+
+            telemetry.addLine().addData("Lifter Position at ", "%7d",
                     lifterMotor.getCurrentPosition());
 
-            telemetry.addLine().addData("Rotator Currently at ",  "%7d",
+            telemetry.addLine().addData("Rotator Currently at ", "%7d",
                     rotatorMotor.getCurrentPosition());
 
-            telemetry.addLine().addData("Arm Position at ",  "%7d",
+            telemetry.addLine().addData("Arm Position at ", "%7d",
                     armMotor.getCurrentPosition());
 
-            telemetry.addLine().addData("wristServo Currently at ",  "%7f",
+            telemetry.addLine().addData("wristServo Currently at ", "%7f",
                     wristServo.getPosition());
 
-            telemetry.addLine().addData("palmServo Currently at ",  "%7f",
+            telemetry.addLine().addData("palmServo Currently at ", "%7f",
                     palmServo.getPosition());
 
-            telemetry.addLine().addData("knukcleServo Currently at ",  "%7f",
+            telemetry.addLine().addData("knukcleServo Currently at ", "%7f",
                     knukcleServo.getPosition());
 
-            telemetry.addLine().addData("fingerServo Currently at ",  "%7f",
+            telemetry.addLine().addData("fingerServo Currently at ", "%7f",
                     fingerServo.getPosition());
 
             //telemetry.addLine(hand.addTelemetry());
 
-            telemetry.addLine().addData("Back Drive Pos L:R ",  "%7d : %7d",
+            telemetry.addLine().addData("Back Drive Pos L:R ", "%7d : %7d",
                     backLeft.getCurrentPosition(),
                     backRight.getCurrentPosition());
 
@@ -374,59 +468,67 @@ public class SensorValueReader extends LinearOpMode
 
         // At the beginning of each telemetry update, grab a bunch of data
         // from the IMU that we will then display in separate lines.
-        telemetry.addAction(new Runnable() { @Override public void run()
-                {
+        telemetry.addAction(new Runnable() {
+            @Override
+            public void run() {
                 // Acquiring the angles is relatively expensive; we don't want
                 // to do that in each of the three items that need that info, as that's
                 // three times the necessary expense.
-                angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-                gravity  = imu.getGravity();
-                    //rotatorPosition = rotatorMotor.getCurrentPosition();
-                    //armPosition = armMotor.getCurrentPosition();
-                }
-            });
+                angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+                gravity = imu.getGravity();
+                //rotatorPosition = rotatorMotor.getCurrentPosition();
+                //armPosition = armMotor.getCurrentPosition();
+            }
+        });
 
         telemetry.addLine()
-            .addData("status", new Func<String>() {
-                @Override public String value() {
-                    return imu.getSystemStatus().toShortString();
+                .addData("status", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return imu.getSystemStatus().toShortString();
                     }
                 })
-            .addData("calib", new Func<String>() {
-                @Override public String value() {
-                    return imu.getCalibrationStatus().toString();
+                .addData("calib", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return imu.getCalibrationStatus().toString();
                     }
                 });
 
         telemetry.addLine()
-            .addData("heading", new Func<String>() {
-                @Override public String value() {
-                    return formatAngle(angles.angleUnit, angles.firstAngle);
+                .addData("heading", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return formatAngle(angles.angleUnit, angles.firstAngle);
                     }
                 })
-            .addData("roll", new Func<String>() {
-                @Override public String value() {
-                    return formatAngle(angles.angleUnit, angles.secondAngle);
+                .addData("roll", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return formatAngle(angles.angleUnit, angles.secondAngle);
                     }
                 })
-            .addData("pitch", new Func<String>() {
-                @Override public String value() {
-                    return formatAngle(angles.angleUnit, angles.thirdAngle);
+                .addData("pitch", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return formatAngle(angles.angleUnit, angles.thirdAngle);
                     }
                 });
 
         telemetry.addLine()
-            .addData("grvty", new Func<String>() {
-                @Override public String value() {
-                    return gravity.toString();
+                .addData("grvty", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return gravity.toString();
                     }
                 })
-            .addData("mag", new Func<String>() {
-                @Override public String value() {
-                    return String.format(Locale.getDefault(), "%.3f",
-                            Math.sqrt(gravity.xAccel*gravity.xAccel
-                                    + gravity.yAccel*gravity.yAccel
-                                    + gravity.zAccel*gravity.zAccel));
+                .addData("mag", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return String.format(Locale.getDefault(), "%.3f",
+                                Math.sqrt(gravity.xAccel * gravity.xAccel
+                                        + gravity.yAccel * gravity.yAccel
+                                        + gravity.zAccel * gravity.zAccel));
                     }
                 });
     }
@@ -439,7 +541,7 @@ public class SensorValueReader extends LinearOpMode
         return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
     }
 
-    String formatDegrees(double degrees){
+    String formatDegrees(double degrees) {
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
 }
