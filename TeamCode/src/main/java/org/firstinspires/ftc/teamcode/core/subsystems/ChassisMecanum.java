@@ -126,12 +126,23 @@ public class ChassisMecanum extends Subsystem {
      * @param gamepad1
      * @param gamepad2
      */
+    private final double TRIGGER_THRESHOLD = 0.75;
     @Override
     public void teleopControls(Gamepad gamepad1, Gamepad gamepad2)
     {
-        double x = -gamepad1.left_stick_x; // Remember, this is reversed!
-        double y = gamepad1.left_stick_y * 1.1; // Counteract imperfect strafing
-        double rx = -gamepad1.right_stick_x;
+        if(gamepad1.right_trigger > TRIGGER_THRESHOLD || gamepad1.left_trigger > TRIGGER_THRESHOLD) {
+            SlowControl(gamepad1); // robot coordinate
+        }
+        else {
+            FastControl(gamepad1); // field coordinate
+        }
+    }
+
+    private void FastControl(Gamepad gamepad)
+    {
+        double x = -gamepad.left_stick_x; // Remember, this is reversed!
+        double y = gamepad.left_stick_y * 1.1; // Counteract imperfect strafing
+        double rx = -gamepad.right_stick_x;
 
         // Read inverse IMU heading, as the IMU heading is CW positive
         double botHeading = -imu.getAngularOrientation().firstAngle;
@@ -154,6 +165,27 @@ public class ChassisMecanum extends Subsystem {
         backLeft.setPower(backLeftPower*LBMotorMultiplier);
         frontRight.setPower(frontRightPower*RFMotorMultiplier);
         backRight.setPower(backRightPower*RBMotorMultiplier);
+    }
+
+    private void SlowControl(Gamepad gamepad)
+    {
+        double y = -gamepad.left_stick_y; // Remember, this is reversed!
+        double x = gamepad.left_stick_x * 1.1; // Counteract imperfect strafing
+        double rx = gamepad.right_stick_x;
+
+        // Denominator is the largest motor power (absolute value) or 1
+        // This ensures all the powers maintain the same ratio, but only when
+        // at least one is out of the range [-1, 1]
+        double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
+        double frontLeftPower = (y + x + rx) / denominator;
+        double backLeftPower = (y - x + rx) / denominator;
+        double frontRightPower = (y - x - rx) / denominator;
+        double backRightPower = (y + x - rx) / denominator;
+
+        frontLeft.setPower(frontLeftPower*0.2);
+        backLeft.setPower(backLeftPower*0.2);
+        frontRight.setPower(frontRightPower*0.2);
+        backRight.setPower(backRightPower*0.2);
     }
 
     /**

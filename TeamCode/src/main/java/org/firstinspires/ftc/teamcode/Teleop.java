@@ -38,8 +38,8 @@ public class Teleop extends OpMode
 
                 telemetry.addData(system.toString(), system.addTelemetry() + "\n\n");
 
-                telemetry.addData("left_stick_y", gamepad1.left_stick_y);
-                telemetry.addData("right_stick_y", gamepad1.right_stick_y);
+                //telemetry.addData("left_stick_y", gamepad1.left_stick_y);
+                //telemetry.addData("right_stick_y", gamepad1.right_stick_y);
             }
         }
     }

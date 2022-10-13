@@ -161,7 +161,7 @@ public class Hand extends Subsystem {
             }
 
             // palm servo
-            if (gamepad.dpad_left) {
+            if (gamepad.y) {
                 if (!palmServoLeftLock) {
                     palmServoLeftLock = true;
                     palmServo.setPosition(palmServo.getPosition() + 0.02);
@@ -169,7 +169,7 @@ public class Hand extends Subsystem {
             } else {
                 palmServoLeftLock = false;
             }
-            if (gamepad.dpad_right) {
+            if (gamepad.a) {
                 if (!palmServoRightLock) {
                     palmServoRightLock = true;
                     palmServo.setPosition(palmServo.getPosition() - 0.02);
@@ -179,7 +179,7 @@ public class Hand extends Subsystem {
             }
 
             // Knuckle servo
-            if (gamepad.y) {
+            if (gamepad.dpad_left) {
                 if (!knuckleServoLeftLock) {
                     knuckleServoLeftLock = true;
                     knukcleServo.setPosition(knukcleServo.getPosition() + 0.05);
@@ -187,7 +187,7 @@ public class Hand extends Subsystem {
             } else {
                 knuckleServoLeftLock = false;
             }
-            if (gamepad.a) {
+            if (gamepad.dpad_right) {
                 if (!knuckleServoRightLock) {
                     knuckleServoRightLock = true;
                     knukcleServo.setPosition(knukcleServo.getPosition() - 0.05);
