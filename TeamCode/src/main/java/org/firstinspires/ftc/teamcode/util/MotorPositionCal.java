@@ -21,6 +21,7 @@ public class MotorPositionCal
     public final static int PalmServoInt = 4;
     public final static int KnuckleServoInt = 5;
     public final static int FingerServoInt = 6;
+    public final static int maxNumOfMotors = 7; // must be the last one
 
     public class StepPosition {
         public int LifterMotor;

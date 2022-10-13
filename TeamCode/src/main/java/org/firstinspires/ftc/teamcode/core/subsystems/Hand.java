@@ -69,7 +69,7 @@ public class Hand extends Subsystem {
 
 
     private String[] ReadPositionFromFile(String fileName) {
-        String[] data = new String[7];
+        String[] data = new String[MotorPositionCal.maxNumOfMotors];
         try {
             FileReader fileReader = new FileReader(
                     directoryPath + "/" + fileName);
@@ -126,134 +126,153 @@ public class Hand extends Subsystem {
     final double TRIGGER_THRESHOLD = 0.75;     // Squeeze more than 3/4 to get rumble.
     private boolean wristServoRightLock = false;
     private boolean wristServoLeftLock = false;
-    private boolean palmServoLock = false;
-    private boolean knuckleServoLock = false;
+    private boolean palmServoRightLock = false;
+    private boolean palmServoLeftLock = false;
+    private boolean knuckleServoLeftLock = false;
+    private boolean knuckleServoRightLock = false;
     private boolean lifterHighLock = false;
     private boolean lifterLowLock = false;
     ElapsedTime runtimeManual = new ElapsedTime();
 
+    //private boolean rampUp[] = new boolean[]{false, false, false, false, false, false, false};
+    //private double wristServoPosition = 0;
+
     private void ManualAdjustHandMotors(Gamepad gamepad) {
-        //Wrist Servo
-        if (gamepad.right_trigger > TRIGGER_THRESHOLD) {
-            if (!wristServoRightLock) {
-                wristServoRightLock = true;  // Hold off any more triggers
-                wristServo.setPosition(wristServo.getPosition() + 0.05);
-            }
-        } else {
-            wristServoRightLock = false;  // We can trigger again now.
-        }
 
-        if (gamepad.left_trigger > TRIGGER_THRESHOLD) {
-            if (!wristServoLeftLock) {
-                wristServoLeftLock = true;  // Hold off any more triggers
-                wristServo.setPosition(wristServo.getPosition() - 0.05);
-            }
-        } else {
-            wristServoLeftLock = false;  // We can trigger again now.
-        }
-
-        // palm servo
-        if (gamepad.right_bumper) {
-            if (!palmServoLock) {
-                palmServoLock = true;
-                double palmCurPosition = palmServo.getPosition();
-                if (palmCurPosition > 0.5) {
-                    palmCurPosition = 0.2;
-                } else {
-                    palmCurPosition = 0.8;
+        if(gamepad.right_trigger > TRIGGER_THRESHOLD || gamepad.left_trigger > TRIGGER_THRESHOLD)
+        {
+            //Wrist Servo
+            if (gamepad.dpad_up) {
+                if (!wristServoRightLock) {
+                    wristServoRightLock = true;  // Hold off any more triggers
+                    wristServo.setPosition(wristServo.getPosition() + 0.02);
                 }
-                palmServo.setPosition(palmCurPosition);
+            } else {
+                wristServoRightLock = false;  // We can trigger again now.
             }
-        } else {
-            palmServoLock = false;
-        }
 
-        // Knuckle servo
-        if (gamepad.left_bumper) {
-            if (!knuckleServoLock) {
-                knuckleServoLock = true;
-                double knuckleCurPosition = knukcleServo.getPosition();
-                if (knuckleCurPosition > 0.7) {
-                    knuckleCurPosition = 0.1;
-                } else if (knuckleCurPosition > 0.3) {
-                    knuckleCurPosition = 0.9;
-                } else {
-                    knuckleCurPosition = 0.5;
+            if (gamepad.dpad_down) {
+                if (!wristServoLeftLock) {
+                    wristServoLeftLock = true;  // Hold off any more triggers
+                    wristServo.setPosition(wristServo.getPosition() - 0.02);
                 }
-                knukcleServo.setPosition(knuckleCurPosition);
+            } else {
+                wristServoLeftLock = false;  // We can trigger again now.
             }
-        } else {
-            knuckleServoLock = false;
-        }
 
-        // finger servo
-        if (gamepad.x) { //open
-            fingerServo.setPosition(1);
-        }
-        if (gamepad.b) { // close
-            fingerServo.setPosition(0);
-        }
+            // palm servo
+            if (gamepad.dpad_left) {
+                if (!palmServoLeftLock) {
+                    palmServoLeftLock = true;
+                    palmServo.setPosition(palmServo.getPosition() + 0.02);
+                }
+            } else {
+                palmServoLeftLock = false;
+            }
+            if (gamepad.dpad_right) {
+                if (!palmServoRightLock) {
+                    palmServoRightLock = true;
+                    palmServo.setPosition(palmServo.getPosition() - 0.02);
+                }
+            } else {
+                palmServoRightLock = false;
+            }
 
-        // arm motor
-        double armPower = 0.35;
-        if (gamepad.dpad_up) {
-            armPosition += 50;
-        } else if (gamepad.dpad_down) {
-            armPosition -= 50;
-            armPower = 0.1;
-        }
-        armMotor.setTargetPosition(armPosition);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        runtimeManual.reset();
-        armMotor.setPower(armPower);
-        while ((runtimeManual.seconds() < 1) &&
-                (armMotor.isBusy())) {
-        }
+            // Knuckle servo
+            if (gamepad.y) {
+                if (!knuckleServoLeftLock) {
+                    knuckleServoLeftLock = true;
+                    knukcleServo.setPosition(knukcleServo.getPosition() + 0.05);
+                }
+            } else {
+                knuckleServoLeftLock = false;
+            }
+            if (gamepad.a) {
+                if (!knuckleServoRightLock) {
+                    knuckleServoRightLock = true;
+                    knukcleServo.setPosition(knukcleServo.getPosition() - 0.05);
+                }
+            } else {
+                knuckleServoRightLock = false;
+            }
 
-        // rotator motor
-        if (gamepad.dpad_left) {
-            rotatorMotor.setPower(0.2);
-        } else if (gamepad.dpad_right) {
-            rotatorMotor.setPower(-0.2);
-        } else {
-            rotatorMotor.setPower(0);
+            // finger servo
+            if (gamepad.x) { //open
+                fingerServo.setPosition(1);
+            }
+            if (gamepad.b) { // close
+                fingerServo.setPosition(0);
+            }
         }
+        else
+        //if(gamepad.left_trigger <= TRIGGER_THRESHOLD && gamepad.right_trigger <= TRIGGER_THRESHOLD)
+        {
+            // arm motor
+            double armPower = 0.35;
+            if (gamepad.dpad_up) {
+                armPosition += 25;
+                armPower = 0.35;
+            } else if (gamepad.dpad_down) {
+                armPosition -= 25;
+                armPower = 0.1;
+            }
+            else // stay
+            {
+                armPower = 0.2;
+            }
+            armMotor.setTargetPosition(armPosition);
+            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            runtimeManual.reset();
+            armMotor.setPower(armPower);
+            while ((runtimeManual.seconds() < 1) &&
+                    (armMotor.isBusy())) {
+            }
 
-        //lifter motor
-        if (gamepad.y) {//up
-            if (!lifterHighLock) {
-                lifterHighLock = true;  // Hold off any more triggers
-                if (lifterMotor.getCurrentPosition() < 2000) { // max high limit
-                    lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition() + 100);
-                    lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    runtimeManual.reset();
-                    lifterMotor.setPower(0.2);
-                    while ((runtimeManual.seconds() < 1) &&
-                            (lifterMotor.isBusy())) {
+            // rotator motor
+            if (gamepad.dpad_left) {
+                rotatorMotor.setPower(0.2);
+            } else if (gamepad.dpad_right) {
+                rotatorMotor.setPower(-0.2);
+            } else {
+                rotatorMotor.setPower(0);
+            }
+
+            //lifter motor
+            if (gamepad.left_bumper) {//up
+                if (!lifterHighLock) {
+                    lifterHighLock = true;  // Hold off any more triggers
+                    if (lifterMotor.getCurrentPosition() < 2000) { // max high limit
+                        lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition() + 100);
+                        lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                        runtimeManual.reset();
+                        lifterMotor.setPower(0.2);
+                        while ((runtimeManual.seconds() < 1) &&
+                                (lifterMotor.isBusy())) {
+                        }
+                    }
+                    //gamepad1.rumble(0.9, 0, 200);  // 200 mSec burst on left motor.
+                }
+            } else {
+                lifterHighLock = false;  // We can trigger again now.
+            }
+
+            if (gamepad.right_bumper) {//down
+                if (!lifterLowLock) {
+                    lifterLowLock = true;
+                    if (lifterMotor.getCurrentPosition() > 100) // min low limit
+                    {
+                        lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition() - 100);
+                        lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                        runtimeManual.reset();
+                        lifterMotor.setPower(0.2);
+                        while ((runtimeManual.seconds() < 1) &&
+                                (lifterMotor.isBusy())) {
+                        }
                     }
                 }
-                //gamepad1.rumble(0.9, 0, 200);  // 200 mSec burst on left motor.
+            } else {
+                lifterLowLock = false;
             }
-        } else {
-            lifterHighLock = false;  // We can trigger again now.
-        }
-
-        if (gamepad.a) {//down
-            if (!lifterLowLock) {
-                lifterLowLock = true;
-                if (lifterMotor.getCurrentPosition() > 100) // min low limit
-                {
-                    lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition() - 100);
-                    lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    runtimeManual.reset();
-                    lifterMotor.setPower(0.2);
-                    while ((runtimeManual.seconds() < 1) &&
-                            (lifterMotor.isBusy())) {
-                    }
-                }
-            }
-        } else {
-            lifterLowLock = false;
         }
     }
 
