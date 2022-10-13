@@ -103,6 +103,8 @@ public class Hand extends Subsystem {
         palmServo.setPosition(positions.PalmServo);
         knukcleServo.setPosition(positions.KnuckleServo);
         fingerServo.setPosition(positions.FingerServo);
+        armPosition = positions.ArmMotor;
+        armMotor.setTargetPosition(armPosition);
     }
 
     /**
@@ -118,6 +120,7 @@ public class Hand extends Subsystem {
     public void teleopControls(Gamepad gamepad1, Gamepad gamepad2) {
         ManualAdjustHandMotors(gamepad1);
         SetPredefinedHandMotors(gamepad2);
+        TuningHandMotors(gamepad2);
     }
 
     final double TRIGGER_THRESHOLD = 0.75;     // Squeeze more than 3/4 to get rumble.
@@ -337,6 +340,11 @@ public class Hand extends Subsystem {
         } else {
             keylock_y = false;
         }
+    }
+
+    public void TuningHandMotors(Gamepad gamepad)
+    {
+
     }
 
     @Override
