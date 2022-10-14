@@ -7,7 +7,7 @@ import org.firstinspires.ftc.teamcode.core.Robot;
 import org.firstinspires.ftc.teamcode.core.Subsystem;
 import org.firstinspires.ftc.teamcode.util.GameState;
 
-@TeleOp(name="JD Robot",group="")
+@TeleOp(name="JD Robot",group="Run")
 //@Disabled
 public class Teleop extends OpMode
 {

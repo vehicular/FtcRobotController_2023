@@ -13,10 +13,8 @@ import java.util.ArrayList;
  */
 public class Robot
 {
-    public boolean initialized = false;
-
-    public ChassisMecanum chassis;
-    public Hand hand;
+    private ChassisMecanum chassis;
+    private Hand hand;
 
     public ArrayList<Subsystem> modules = new ArrayList<Subsystem>();
 
@@ -39,7 +37,5 @@ public class Robot
 
         modules.add(chassis);
         modules.add(hand);
-
-        initialized = true;
     }
 }
