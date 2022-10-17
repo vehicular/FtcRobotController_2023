@@ -134,6 +134,7 @@ public class Hand extends Subsystem
         fingerServo.setPosition(position.FingerServo);
         armPosition = position.ArmMotor;
         armMotor.setTargetPosition(armPosition);
+        armPositionLock = true;
     }
 
     /**
@@ -163,6 +164,7 @@ public class Hand extends Subsystem
     private boolean lifterLowLock = false;
     ElapsedTime runtimeManual = new ElapsedTime();
 
+    ElapsedTime runtimeArm = new ElapsedTime() ;
     //private boolean rampUp[] = new boolean[]{false, false, false, false, false, false, false};
     //private double wristServoPosition = 0;
 
@@ -249,13 +251,13 @@ public class Hand extends Subsystem
             {
                 armPower = 0.2;
             }
-            armMotor.setTargetPosition(armPosition);
+            /*armMotor.setTargetPosition(armPosition);
             armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             runtimeManual.reset();
             armMotor.setPower(armPower);
             while ((runtimeManual.seconds() < 1) &&
                     (armMotor.isBusy())) {
-            }
+            }*/
 
             // rotator motor
             if (gamepad.dpad_left) {
@@ -317,6 +319,7 @@ public class Hand extends Subsystem
     boolean keylock_y = false;
 
     boolean leftTriggerLock = false;
+    boolean armPositionLock = false;
 
     public void SetPredefinedHandMotors(Gamepad gamepad) {
         if (gamepad.dpad_up) {
@@ -392,6 +395,7 @@ public class Hand extends Subsystem
         }
     }
 
+    double y = 0;
     public void TuningHandMotors(Gamepad gamepad)
     {
             //Wrist Servo
@@ -435,7 +439,7 @@ public class Hand extends Subsystem
             if (gamepad.right_stick_x > 0.3) {
                 if (!knuckleServoLeftLock) {
                     knuckleServoLeftLock = true;
-                    knukcleServo.setPosition(knukcleServo.getPosition() + 0.05);
+                    knukcleServo.setPosition(knukcleServo.getPosition() - 0.05);
                 }
             } else {
                 knuckleServoLeftLock = false;
@@ -443,7 +447,7 @@ public class Hand extends Subsystem
             if (gamepad.right_stick_x < -0.3) {
                 if (!knuckleServoRightLock) {
                     knuckleServoRightLock = true;
-                    knukcleServo.setPosition(knukcleServo.getPosition() - 0.05);
+                    knukcleServo.setPosition(knukcleServo.getPosition() + 0.05);
                 }
             } else {
                 knuckleServoRightLock = false;
@@ -482,7 +486,9 @@ public class Hand extends Subsystem
 
 
             // arm motor
-            double armPower = 0.35;
+            y = -gamepad.left_stick_y;
+
+            /*double armPower = 0.35;
             if (gamepad.dpad_up) {
                 armPosition += 25;
                 armPower = 0.35;
@@ -493,23 +499,51 @@ public class Hand extends Subsystem
             else // stay
             {
                 armPower = 0.2;
-            }
-            armMotor.setTargetPosition(armPosition);
-            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            runtimeManual.reset();
-            armMotor.setPower(armPower);
-            while ((runtimeManual.seconds() < 1) &&
-                    (armMotor.isBusy())) {
+            }*/
+        if( y > 0.1)
+        {
+            armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            armMotor.setPower(y*0.4);
+            armPositionLock = false;
+        }
+        else if(y<-0.1)
+        {
+            armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            if(armMotor.getCurrentPosition() > 900)// TODO: COS/SIN calculation
+                armMotor.setPower(y*0.1);
+            else
+                armMotor.setPower(y*0.02);
+            armPositionLock = false;
+        }
+        else
+        {
+            if(armPositionLock == false)
+            {
+                armMotor.setPower(0);
+                armPositionLock = true;
+                armPosition = armMotor.getCurrentPosition();
             }
 
+            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            armMotor.setTargetPosition(armPosition);
+            runtimeArm.reset();
+            armMotor.setPower(0.1);
+            while ((runtimeArm.seconds() < 2) &&
+                    (armMotor.isBusy())) {
+            }
+        }
+
+
             // rotator motor
-            if (gamepad.dpad_left) {
+            double x = -gamepad.left_stick_x;
+            rotatorMotor.setPower(0.15*x);
+            /*if (gamepad.dpad_left) {
                 rotatorMotor.setPower(0.2);
             } else if (gamepad.dpad_right) {
                 rotatorMotor.setPower(-0.2);
             } else {
                 rotatorMotor.setPower(0);
-            }
+            }*/
 
             //lifter motor
             if (gamepad.left_bumper) {//up
@@ -557,6 +591,8 @@ public class Hand extends Subsystem
         s += "Rotator: " + rotatorMotor.getCurrentPosition() + "; ";
 
         s += "Arm: " + armMotor.getCurrentPosition() + "; ";
+        //s += "Arm T Postion: " + armPosition + "; ";
+        //s += "Arm y: " + y + "; ";
 
         s += "wristServo: " + wristServo.getPosition() + "; ";
 

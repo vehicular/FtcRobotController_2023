@@ -67,10 +67,10 @@ public class ChassisMecanum extends Subsystem {
     //int zAcummulated,
     int heading,xVal,yVal,zVal;
 
-    double LFMotorMultiplier = 0.5;
-    double RFMotorMultiplier = 0.5;
-    double LBMotorMultiplier = 0.5;
-    double RBMotorMultiplier = 0.5;
+    double LFMotorMultiplier = 0.4;
+    double RFMotorMultiplier = 0.4;
+    double LBMotorMultiplier = 0.4;
+    double RBMotorMultiplier = 0.4;
 
     public ChassisMecanum(HardwareMap hardwareMap, boolean isTankDrive)
     {
@@ -164,7 +164,8 @@ public class ChassisMecanum extends Subsystem {
             if (gamepad1.right_trigger > TRIGGER_THRESHOLD || gamepad1.left_trigger > TRIGGER_THRESHOLD) {
                 SlowControl(gamepad1, true); // robot coordinate
             } else if (gamepad2.right_trigger < TRIGGER_THRESHOLD && gamepad2.left_trigger < TRIGGER_THRESHOLD) {
-                SlowControl(gamepad2, false); // robot coordinate
+                //SlowControl(gamepad2, false); // robot coordinate
+                InchMoveControl(gamepad2);
             }
         }
 
@@ -264,6 +265,48 @@ public class ChassisMecanum extends Subsystem {
         backRight.setPower(backRightPower*0.1);
     }
 
+
+    ElapsedTime InchMoveControlTimer = new ElapsedTime();
+    final static double InchMovePower = 0.15;
+    private void InchMoveControl(Gamepad gamepad)
+    {
+        if (gamepad.dpad_left) {
+            InchMoveControlTimer.reset();
+            frontLeft.setPower(-InchMovePower);
+            backLeft.setPower(InchMovePower);
+            frontRight.setPower(InchMovePower);
+            backRight.setPower(-InchMovePower);
+            while ((InchMoveControlTimer.milliseconds() < 50) ) {
+            }
+        } else if (gamepad.dpad_right) {
+            InchMoveControlTimer.reset();
+            frontLeft.setPower(InchMovePower);
+            backLeft.setPower(-InchMovePower);
+            frontRight.setPower(-InchMovePower);
+            backRight.setPower(InchMovePower);
+            while ((InchMoveControlTimer.milliseconds() < 50) ) {
+            }
+        }  else if (gamepad.dpad_up) {
+            InchMoveControlTimer.reset();
+            frontLeft.setPower(InchMovePower);
+            backLeft.setPower(InchMovePower);
+            frontRight.setPower(InchMovePower);
+            backRight.setPower(InchMovePower);
+            while ((InchMoveControlTimer.milliseconds() < 50) ) {
+            }
+        } else if (gamepad.dpad_down) {
+            InchMoveControlTimer.reset();
+            frontLeft.setPower(-InchMovePower);
+            backLeft.setPower(-InchMovePower);
+            frontRight.setPower(-InchMovePower);
+            backRight.setPower(-InchMovePower);
+            while ((InchMoveControlTimer.milliseconds() < 50) ) {
+            }
+        }
+
+        stop();
+    }
+
     /**
      * Sets power to motors to zero. Always call when done using this class for safety.
      */
@@ -287,7 +330,7 @@ public class ChassisMecanum extends Subsystem {
         crossSubsystem = otherSys;
 
         // Display the light level while we are waiting to start
-        getBrightness();
+        //getBrightness();
     }
 
     @Override
@@ -356,16 +399,15 @@ public class ChassisMecanum extends Subsystem {
     {
         /* Color Sensor
         // Start the robot moving forward, and then begin looking for a white line.
-        leftDrive.setPower(APPROACH_SPEED);
-        rightDrive.setPower(APPROACH_SPEED);
+        backLeft.setPower(APPROACH_SPEED);
+        backRight.setPower(APPROACH_SPEED);
 
         // run until the white line is seen OR the driver presses STOP;
         while (opModeIsActive() && (getBrightness() < WHITE_THRESHOLD)) {
             sleep(5);
         }
 
-        leftDrive.setPower(0);
-        rightDrive.setPower(0);
+        stop();
          */
     }
 
