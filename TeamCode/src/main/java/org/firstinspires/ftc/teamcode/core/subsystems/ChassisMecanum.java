@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.core.subsystems;
 
 
 
+import android.graphics.Color;
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -11,6 +13,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.SwitchableLight;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -120,6 +124,24 @@ public class ChassisMecanum extends Subsystem {
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
         imu.initialize(parameters);
+
+/* Color Sensor
+        // Get a reference to our sensor object. It's recommended to use NormalizedColorSensor over
+        // ColorSensor, because NormalizedColorSensor consistently gives values between 0 and 1, while
+        // the values you get from ColorSensor are dependent on the specific sensor you're using.
+        colorSensor = hardwareMap.get(NormalizedColorSensor.class, Constants.frontColorSensor);
+
+        // If necessary, turn ON the white LED (if there is no LED switch on the sensor)
+        if (colorSensor instanceof SwitchableLight) {
+            ((SwitchableLight)colorSensor).enableLight(true);
+        }
+
+        // Some sensors allow you to set your light sensor gain for optimal sensitivity...
+        // See the SensorColor sample in this folder for how to determine the optimal gain.
+        // A gain of 15 causes a Rev Color Sensor V2 to produce an Alpha value of 1.0 at about 1.5" above the floor.
+        colorSensor.setGain(15);
+
+ */
     }
 
     /**
@@ -145,6 +167,23 @@ public class ChassisMecanum extends Subsystem {
                 SlowControl(gamepad2, false); // robot coordinate
             }
         }
+
+        /* Color Sensor
+        // Check the status of the X button on the gamepad
+        xButtonCurrentlyPressed = gamepad1.x;
+
+        // If the button state is different than what it was, then act
+        if (xButtonCurrentlyPressed != xButtonPreviouslyPressed) {
+            // If the button is (now) down, then toggle the light
+            if (xButtonCurrentlyPressed) {
+                if (colorSensor instanceof SwitchableLight) {
+                    SwitchableLight light = (SwitchableLight)colorSensor;
+                    light.enableLight(!light.isLightOn());
+                }
+            }
+        }
+        xButtonPreviouslyPressed = xButtonCurrentlyPressed;
+         */
     }
 
     private void FastControl(Gamepad gamepad)
@@ -244,7 +283,11 @@ public class ChassisMecanum extends Subsystem {
 
     @Override
     public void teleopInit( Subsystem otherSys) {
+
         crossSubsystem = otherSys;
+
+        // Display the light level while we are waiting to start
+        getBrightness();
     }
 
     @Override
@@ -272,6 +315,58 @@ public class ChassisMecanum extends Subsystem {
         s += "constructor ran #: " + constru;
 
         return s;
+    }
+
+
+    // to obtain reflected light, read the normalized values from the color sensor.  Return the Alpha channel.
+    double getBrightness() {
+        // Once per loop, we will update this hsvValues array. The first element (0) will contain the
+        // hue, the second element (1) will contain the saturation, and the third element (2) will
+        // contain the value. See http://web.archive.org/web/20190311170843/https://infohost.nmt.edu/tcc/help/pubs/colortheory/web/hsv.html
+        // for an explanation of HSV color.
+        final float[] hsvValues = new float[3];
+
+        NormalizedRGBA colors = colorSensor.getNormalizedColors();
+        /* Use telemetry to display feedback on the driver station. We show the red, green, and blue
+         * normalized values from the sensor (in the range of 0 to 1), as well as the equivalent
+         * HSV (hue, saturation and value) values. See http://web.archive.org/web/20190311170843/https://infohost.nmt.edu/tcc/help/pubs/colortheory/web/hsv.html
+         * for an explanation of HSV color. */
+
+        // Update the hsvValues array by passing it to Color.colorToHSV()
+        Color.colorToHSV(colors.toColor(), hsvValues);
+
+        telemetry.addLine()
+                .addData("Red", "%.3f", colors.red)
+                .addData("Green", "%.3f", colors.green)
+                .addData("Blue", "%.3f", colors.blue);
+        telemetry.addLine()
+                .addData("Hue", "%.3f", hsvValues[0])
+                .addData("Saturation", "%.3f", hsvValues[1])
+                .addData("Value", "%.3f", hsvValues[2]);
+        telemetry.addData("Alpha", "%.3f", colors.alpha);
+        telemetry.addData("Light Level (0 to 1)",  "%4.2f", colors.alpha);
+        telemetry.update();
+
+        return colors.alpha;
+    }
+
+    static final double     WHITE_THRESHOLD = 0.5;  // spans between 0.0 - 1.0 from dark to light
+    static final double APPROACH_SPEED = 0.2;
+    private void DriveToColorLine()
+    {
+        /* Color Sensor
+        // Start the robot moving forward, and then begin looking for a white line.
+        leftDrive.setPower(APPROACH_SPEED);
+        rightDrive.setPower(APPROACH_SPEED);
+
+        // run until the white line is seen OR the driver presses STOP;
+        while (opModeIsActive() && (getBrightness() < WHITE_THRESHOLD)) {
+            sleep(5);
+        }
+
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+         */
     }
 
     public void analog_control(double x, double y, double rotation,boolean key_invert,boolean bmp1,boolean bmp2,boolean dpad1,boolean dpad2,boolean dpad3,boolean dpad4) {

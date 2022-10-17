@@ -91,8 +91,8 @@ import org.firstinspires.ftc.teamcode.util.Constants;
  *  Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@TeleOp(name="JD Auto Drive", group="Robot")
-//@Autonomous(name="JD Auto Drive", group="Robot")
+@TeleOp(name="JD Auto Drive", group="Run")
+//@Autonomous(name="JD Autonomous Drive", group="Robot")
 //@Disabled
 public class RobotAutoDriveByGyro_Linear extends LinearOpMode {
 

@@ -32,6 +32,15 @@ public class Hand extends Subsystem
         DROPOFF_DONE,
     }
 
+    enum FingerPosition
+    {
+        UNKNOWN,
+        FLATE,
+        DOWN_MID,
+        DOWN_LEFT,
+        DOWN_RIGHT,
+    }
+
     MotorPositionCal PredefinedPosition = new MotorPositionCal();
     MotorPositionCal.SubsystemPosition CurrentPostionBySet;
     MotorPositionCal.SubsystemPosition PreviousPostionBySet;
@@ -446,7 +455,8 @@ public class Hand extends Subsystem
             if (!leftTriggerLock) {
                 leftTriggerLock = true;
                 if (gamepad.right_trigger < TRIGGER_THRESHOLD) { // pickup
-                    if (armMotor.getCurrentPosition() > -320) //to be calibrated
+                    // TODO: to be checked if fingers are down position
+                    if (armMotor.getCurrentPosition() > -320) //TODO: to be calibrated
                     {
                         armMotor.setTargetPosition(-320);
                         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);

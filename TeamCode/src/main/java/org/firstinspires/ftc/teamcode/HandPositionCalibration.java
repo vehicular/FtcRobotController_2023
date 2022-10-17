@@ -64,7 +64,7 @@ import java.util.Locale;
  * <p>
  *
  */
-@TeleOp(name = "JD Motor Position Cal", group = "Calibration")
+@TeleOp(name = "JD Motor Position Calibration", group = "Calibration")
 //@Disabled                            // Comment this out to add to the opmode list
 public class HandPositionCalibration extends LinearOpMode
 {
