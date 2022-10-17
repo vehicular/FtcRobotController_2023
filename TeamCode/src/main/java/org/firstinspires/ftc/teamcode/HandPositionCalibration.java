@@ -97,7 +97,7 @@ public class HandPositionCalibration extends LinearOpMode
 
     String directoryPath = Environment.getExternalStorageDirectory().getPath() + "/MOTORS";
 
-    private void SavePositonsToFile(String fileName, MotorPositionCal.StepPosition positions)
+    private void SavePositonsToFile(String fileName, MotorPositionCal.SubsystemPosition positions)
     {
         JSONObject InitData = new JSONObject();
         try {
@@ -157,7 +157,7 @@ public class HandPositionCalibration extends LinearOpMode
         return data;
     }
 
-    private void SetMotorsPosition(MotorPositionCal.StepPosition positions)
+    private void SetMotorsPosition(MotorPositionCal.SubsystemPosition positions)
     {
         wristServo.setPosition(positions.WristServo);
         palmServo.setPosition(positions.PalmServo);
@@ -244,76 +244,76 @@ public class HandPositionCalibration extends LinearOpMode
 
 
 // Start to Save files
-        PredefinedPosition.InitPosition.LifterMotor = lifterMotor.getCurrentPosition();
-        PredefinedPosition.InitPosition.RotatorMotor = rotatorMotor.getCurrentPosition();
-        PredefinedPosition.InitPosition.ArmMotor = armMotor.getCurrentPosition();
-        PredefinedPosition.InitPosition.WristServo = 0.7;
-        PredefinedPosition.InitPosition.PalmServo = 0.8;
-        PredefinedPosition.InitPosition.KnuckleServo = 0.1;
+        PredefinedPosition.InitPosition.LifterMotor = 0;
+        PredefinedPosition.InitPosition.RotatorMotor = 0;
+        PredefinedPosition.InitPosition.ArmMotor = 0;
+        PredefinedPosition.InitPosition.WristServo = 0.92;
+        PredefinedPosition.InitPosition.PalmServo = 0.95;
+        PredefinedPosition.InitPosition.KnuckleServo = 0.33;
         PredefinedPosition.InitPosition.FingerServo = 0.9;
 
-        PredefinedPosition.Pickup_up.LifterMotor = lifterMotor.getCurrentPosition();
-        PredefinedPosition.Pickup_up.RotatorMotor = rotatorMotor.getCurrentPosition();
-        PredefinedPosition.Pickup_up.ArmMotor = -410;
-        PredefinedPosition.Pickup_up.WristServo = 0.8;
-        PredefinedPosition.Pickup_up.PalmServo = 0.6;
-        PredefinedPosition.Pickup_up.KnuckleServo = 0.1;
-        PredefinedPosition.Pickup_up.FingerServo = 0.8;
+        PredefinedPosition.Pickup_up.LifterMotor = 0;
+        PredefinedPosition.Pickup_up.RotatorMotor = 0;
+        PredefinedPosition.Pickup_up.ArmMotor = -450;
+        PredefinedPosition.Pickup_up.WristServo = 0.78;
+        PredefinedPosition.Pickup_up.PalmServo = 0.58;
+        PredefinedPosition.Pickup_up.KnuckleServo = 0.32;
+        PredefinedPosition.Pickup_up.FingerServo = 0.9;
 
-        PredefinedPosition.Pickup_down.LifterMotor = lifterMotor.getCurrentPosition();
-        PredefinedPosition.Pickup_down.RotatorMotor = rotatorMotor.getCurrentPosition();
-        PredefinedPosition.Pickup_down.ArmMotor = -210;
-        PredefinedPosition.Pickup_down.WristServo = 0.95;
-        PredefinedPosition.Pickup_down.PalmServo = 0.9;
-        PredefinedPosition.Pickup_down.KnuckleServo = 0.3;
-        PredefinedPosition.Pickup_down.FingerServo = 0.8;
+        PredefinedPosition.Pickup_down.LifterMotor = 0;
+        PredefinedPosition.Pickup_down.RotatorMotor = 0;
+        PredefinedPosition.Pickup_down.ArmMotor = -230;//-310 is lowest, add a bit
+        PredefinedPosition.Pickup_down.WristServo = 0.91;
+        PredefinedPosition.Pickup_down.PalmServo = 0.95;
+        PredefinedPosition.Pickup_down.KnuckleServo = 0.33;
+        PredefinedPosition.Pickup_down.FingerServo = 1;
 
-        PredefinedPosition.Pickup_left.LifterMotor = lifterMotor.getCurrentPosition();
-        PredefinedPosition.Pickup_left.RotatorMotor = rotatorMotor.getCurrentPosition();
-        PredefinedPosition.Pickup_left.ArmMotor = -210;
-        PredefinedPosition.Pickup_left.WristServo = 0.85;
+        PredefinedPosition.Pickup_left.LifterMotor = 0;
+        PredefinedPosition.Pickup_left.RotatorMotor = 0;
+        PredefinedPosition.Pickup_left.ArmMotor = -230;//-310 is lowest, add a bit
+        PredefinedPosition.Pickup_left.WristServo = 0.91;
         PredefinedPosition.Pickup_left.PalmServo = 0.95;
-        PredefinedPosition.Pickup_left.KnuckleServo = 0.1;
-        PredefinedPosition.Pickup_left.FingerServo = 0.8;
+        PredefinedPosition.Pickup_left.KnuckleServo = 0.0;
+        PredefinedPosition.Pickup_left.FingerServo = 0.9;
 
-        PredefinedPosition.Pickup_right.LifterMotor = lifterMotor.getCurrentPosition();
-        PredefinedPosition.Pickup_right.RotatorMotor = rotatorMotor.getCurrentPosition();
-        PredefinedPosition.Pickup_right.ArmMotor = -210;
-        PredefinedPosition.Pickup_right.WristServo = 0.85;
+        PredefinedPosition.Pickup_right.LifterMotor = 0;
+        PredefinedPosition.Pickup_right.RotatorMotor = 0;
+        PredefinedPosition.Pickup_right.ArmMotor = -230;//-310 is lowest, add a bit
+        PredefinedPosition.Pickup_right.WristServo = 0.91;
         PredefinedPosition.Pickup_right.PalmServo = 0.95;
-        PredefinedPosition.Pickup_right.KnuckleServo = 0.5;
-        PredefinedPosition.Pickup_right.FingerServo = 0.8;
+        PredefinedPosition.Pickup_right.KnuckleServo = 0.7;
+        PredefinedPosition.Pickup_right.FingerServo = 0.9;
 
-        PredefinedPosition.Drop_A_1.LifterMotor = lifterMotor.getCurrentPosition();
-        PredefinedPosition.Drop_A_1.RotatorMotor = rotatorMotor.getCurrentPosition();
+        PredefinedPosition.Drop_A_1.LifterMotor = 0;
+        PredefinedPosition.Drop_A_1.RotatorMotor = 0;
         PredefinedPosition.Drop_A_1.ArmMotor = -410;
         PredefinedPosition.Drop_A_1.WristServo = 0.85;
-        PredefinedPosition.Drop_A_1.PalmServo = 0.55;
-        PredefinedPosition.Drop_A_1.KnuckleServo = 0.3;
+        PredefinedPosition.Drop_A_1.PalmServo = 0.53;
+        PredefinedPosition.Drop_A_1.KnuckleServo = 0.33;
         PredefinedPosition.Drop_A_1.FingerServo = 0.1;
 
-        PredefinedPosition.Drop_B_2.LifterMotor = lifterMotor.getCurrentPosition();
-        PredefinedPosition.Drop_B_2.RotatorMotor = rotatorMotor.getCurrentPosition();
+        PredefinedPosition.Drop_B_2.LifterMotor = 0;
+        PredefinedPosition.Drop_B_2.RotatorMotor = 0;
         PredefinedPosition.Drop_B_2.ArmMotor = 150;
         PredefinedPosition.Drop_B_2.WristServo = 0.9;
-        PredefinedPosition.Drop_B_2.PalmServo = 0.57;
-        PredefinedPosition.Drop_B_2.KnuckleServo = 0.3;
+        PredefinedPosition.Drop_B_2.PalmServo = 0.62;
+        PredefinedPosition.Drop_B_2.KnuckleServo = 0.33;
         PredefinedPosition.Drop_B_2.FingerServo = 0.1;
 
-        PredefinedPosition.Drop_X_3.LifterMotor = lifterMotor.getCurrentPosition();
-        PredefinedPosition.Drop_X_3.RotatorMotor = rotatorMotor.getCurrentPosition();
-        PredefinedPosition.Drop_X_3.ArmMotor = 600;
-        PredefinedPosition.Drop_X_3.WristServo = 0.9;
+        PredefinedPosition.Drop_X_3.LifterMotor = 0;
+        PredefinedPosition.Drop_X_3.RotatorMotor = 0;
+        PredefinedPosition.Drop_X_3.ArmMotor = 725;
+        PredefinedPosition.Drop_X_3.WristServo = 0.92;
         PredefinedPosition.Drop_X_3.PalmServo = 0.75;
-        PredefinedPosition.Drop_X_3.KnuckleServo = 0.3;
+        PredefinedPosition.Drop_X_3.KnuckleServo = 0.32;
         PredefinedPosition.Drop_X_3.FingerServo = 0.1;
 
-        PredefinedPosition.Drop_Y_4.LifterMotor = lifterMotor.getCurrentPosition();
-        PredefinedPosition.Drop_Y_4.RotatorMotor = rotatorMotor.getCurrentPosition();
-        PredefinedPosition.Drop_Y_4.ArmMotor = 1000;
-        PredefinedPosition.Drop_Y_4.WristServo = 0.95;
-        PredefinedPosition.Drop_Y_4.PalmServo = 1;
-        PredefinedPosition.Drop_Y_4.KnuckleServo = 0.3;
+        PredefinedPosition.Drop_Y_4.LifterMotor = 0;
+        PredefinedPosition.Drop_Y_4.RotatorMotor = 0;
+        PredefinedPosition.Drop_Y_4.ArmMotor = 1150;
+        PredefinedPosition.Drop_Y_4.WristServo = 0.91;
+        PredefinedPosition.Drop_Y_4.PalmServo = 0.96;
+        PredefinedPosition.Drop_Y_4.KnuckleServo = 0.32;
         PredefinedPosition.Drop_Y_4.FingerServo = 0.1;
 
         SavePositonsToFile("InitMotorsPosition.json", PredefinedPosition.InitPosition);
@@ -360,9 +360,9 @@ public class HandPositionCalibration extends LinearOpMode
         // Loop and update the dashboard
         while (opModeIsActive())
         {
-            ManualAdjustHandMotors(gamepad2);
+            //ManualAdjustHandMotors(gamepad2); to be removed, use the Hand instead
 
-            SetPredefinedHandMotors(gamepad1);
+            //SetPredefinedHandMotors(gamepad1);
 
             telemetry.addLine().addData("Lifter Position at ", "%7d",
                     lifterMotor.getCurrentPosition());

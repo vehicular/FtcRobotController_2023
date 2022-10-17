@@ -157,7 +157,7 @@ public class ChassisTank extends Subsystem
      * Sets the runmode of the encoders to not use encoders.
      */
     @Override
-    public void teleopInit()
+    public void teleopInit(Subsystem otherSys)
     {
         setupGyro();
         leftDrive.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -181,6 +181,12 @@ public class ChassisTank extends Subsystem
         leftDrive.setDirection(DcMotorSimple.Direction.FORWARD);
         leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
+
+    @Override
+    public void CrossSubsystemCheck() {
+
     }
 
     public void driveDistance()

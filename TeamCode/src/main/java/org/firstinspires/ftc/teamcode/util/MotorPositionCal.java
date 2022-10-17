@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.util;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-
 import java.util.Locale;
 
 public class MotorPositionCal
@@ -23,7 +21,7 @@ public class MotorPositionCal
     public final static int FingerServoInt = 6;
     public final static int maxNumOfMotors = 7; // must be the last one
 
-    public class StepPosition {
+    public class SubsystemPosition {
         public int LifterMotor;
         public int RotatorMotor;
         public int ArmMotor;
@@ -32,7 +30,7 @@ public class MotorPositionCal
         public double KnuckleServo;
         public double FingerServo;
 
-        public StepPosition()
+        public SubsystemPosition()
         {}
         public String toString()
         {
@@ -66,17 +64,17 @@ public class MotorPositionCal
         }
     }
 
-    public StepPosition InitPosition = new StepPosition();
+    public SubsystemPosition InitPosition = new SubsystemPosition();
 
-    public StepPosition Pickup_up = new StepPosition();
-    public StepPosition Pickup_down = new StepPosition();
-    public StepPosition Pickup_left = new StepPosition();
-    public StepPosition Pickup_right = new StepPosition();
+    public SubsystemPosition Pickup_up = new SubsystemPosition();
+    public SubsystemPosition Pickup_down = new SubsystemPosition();
+    public SubsystemPosition Pickup_left = new SubsystemPosition();
+    public SubsystemPosition Pickup_right = new SubsystemPosition();
 
-    public StepPosition Drop_A_1 = new StepPosition(); // 0-10 inches
-    public StepPosition Drop_B_2 = new StepPosition(); // 10-20 inches
-    public StepPosition Drop_X_3 = new StepPosition(); // 20-30 inches
-    public StepPosition Drop_Y_4 = new StepPosition(); // 30-40 inches
+    public SubsystemPosition Drop_A_1 = new SubsystemPosition(); // 0-10 inches
+    public SubsystemPosition Drop_B_2 = new SubsystemPosition(); // 10-20 inches
+    public SubsystemPosition Drop_X_3 = new SubsystemPosition(); // 20-30 inches
+    public SubsystemPosition Drop_Y_4 = new SubsystemPosition(); // 30-40 inches
 
     public MotorPositionCal()
     {}

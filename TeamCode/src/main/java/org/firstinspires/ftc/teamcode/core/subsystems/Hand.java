@@ -17,8 +17,24 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.FileReader;
 
-public class Hand extends Subsystem {
+public class Hand extends Subsystem
+{
+    Subsystem crossSubsystem;
+
+    enum HandStatus
+    {
+        NONE,
+        MOVING,
+        INIT,
+        READY_PICKUP,
+        PICKUP_DONE,
+        READY_DROPOFF,
+        DROPOFF_DONE,
+    }
+
     MotorPositionCal PredefinedPosition = new MotorPositionCal();
+    MotorPositionCal.SubsystemPosition CurrentPostionBySet;
+    MotorPositionCal.SubsystemPosition PreviousPostionBySet;
     String directoryPath = Environment.getExternalStorageDirectory().getPath() + "/MOTORS";
 
     private DcMotor lifterMotor;
@@ -98,12 +114,16 @@ public class Hand extends Subsystem {
         return data;
     }
 
-    private void SetMotorsPosition(MotorPositionCal.StepPosition positions) {
-        wristServo.setPosition(positions.WristServo);
-        palmServo.setPosition(positions.PalmServo);
-        knukcleServo.setPosition(positions.KnuckleServo);
-        fingerServo.setPosition(positions.FingerServo);
-        armPosition = positions.ArmMotor;
+    private void SetMotorsPosition(MotorPositionCal.SubsystemPosition position) {
+        if(position != CurrentPostionBySet) {
+            PreviousPostionBySet = CurrentPostionBySet;
+            CurrentPostionBySet = position;
+        }
+        wristServo.setPosition(position.WristServo);
+        palmServo.setPosition(position.PalmServo);
+        knukcleServo.setPosition(position.KnuckleServo);
+        fingerServo.setPosition(position.FingerServo);
+        armPosition = position.ArmMotor;
         armMotor.setTargetPosition(armPosition);
     }
 
@@ -118,8 +138,8 @@ public class Hand extends Subsystem {
     private int armPosition = 0;
     @Override
     public void teleopControls(Gamepad gamepad1, Gamepad gamepad2) {
-        ManualAdjustHandMotors(gamepad1);
-        SetPredefinedHandMotors(gamepad2);
+        //ManualAdjustHandMotors(gamepad1);
+        SetPredefinedHandMotors(gamepad1);
         TuningHandMotors(gamepad2);
     }
 
@@ -287,6 +307,8 @@ public class Hand extends Subsystem {
     boolean keylock_x = false;
     boolean keylock_y = false;
 
+    boolean leftTriggerLock = false;
+
     public void SetPredefinedHandMotors(Gamepad gamepad) {
         if (gamepad.dpad_up) {
             if (!keylock_crossup) {
@@ -363,7 +385,159 @@ public class Hand extends Subsystem {
 
     public void TuningHandMotors(Gamepad gamepad)
     {
+            //Wrist Servo
+            if (gamepad.right_stick_y > 0.3) {
+                if (!wristServoRightLock) {
+                    wristServoRightLock = true;  // Hold off any more triggers
+                    wristServo.setPosition(wristServo.getPosition() + 0.02);
+                }
+            } else {
+                wristServoRightLock = false;  // We can trigger again now.
+            }
 
+            if (gamepad.right_stick_y < -0.3) {
+                if (!wristServoLeftLock) {
+                    wristServoLeftLock = true;  // Hold off any more triggers
+                    wristServo.setPosition(wristServo.getPosition() - 0.02);
+                }
+            } else {
+                wristServoLeftLock = false;  // We can trigger again now.
+            }
+
+            // palm servo
+            if (gamepad.y) {
+                if (!palmServoLeftLock) {
+                    palmServoLeftLock = true;
+                    palmServo.setPosition(palmServo.getPosition() + 0.02);
+                }
+            } else {
+                palmServoLeftLock = false;
+            }
+            if (gamepad.a) {
+                if (!palmServoRightLock) {
+                    palmServoRightLock = true;
+                    palmServo.setPosition(palmServo.getPosition() - 0.02);
+                }
+            } else {
+                palmServoRightLock = false;
+            }
+
+            // Knuckle servo
+            if (gamepad.right_stick_x > 0.3) {
+                if (!knuckleServoLeftLock) {
+                    knuckleServoLeftLock = true;
+                    knukcleServo.setPosition(knukcleServo.getPosition() + 0.05);
+                }
+            } else {
+                knuckleServoLeftLock = false;
+            }
+            if (gamepad.right_stick_x < -0.3) {
+                if (!knuckleServoRightLock) {
+                    knuckleServoRightLock = true;
+                    knukcleServo.setPosition(knukcleServo.getPosition() - 0.05);
+                }
+            } else {
+                knuckleServoRightLock = false;
+            }
+
+            // finger servo
+        if (gamepad.left_trigger > TRIGGER_THRESHOLD )
+        {
+            if (!leftTriggerLock) {
+                leftTriggerLock = true;
+                if (gamepad.right_trigger < TRIGGER_THRESHOLD) { // pickup
+                    if (armMotor.getCurrentPosition() > -320) //to be calibrated
+                    {
+                        armMotor.setTargetPosition(-320);
+                        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                        runtimeManual.reset();
+                        armMotor.setPower(0.1);
+                        while ((runtimeManual.seconds() < 1) &&
+                                (armMotor.isBusy())) {
+                        }
+                    }
+                    fingerServo.setPosition(0);
+                } else// if (gamepad.left_trigger > 0.75) { // dropoff
+                    fingerServo.setPosition(1);
+            }
+        }
+        else if(gamepad.left_trigger < TRIGGER_THRESHOLD && gamepad.right_trigger < TRIGGER_THRESHOLD)
+        {
+            leftTriggerLock = false;
+        }
+        if (gamepad.x )
+            fingerServo.setPosition(1);//open
+        if(gamepad.b )
+            fingerServo.setPosition(0);// close
+
+
+            // arm motor
+            double armPower = 0.35;
+            if (gamepad.dpad_up) {
+                armPosition += 25;
+                armPower = 0.35;
+            } else if (gamepad.dpad_down) {
+                armPosition -= 25;
+                armPower = 0.1;
+            }
+            else // stay
+            {
+                armPower = 0.2;
+            }
+            armMotor.setTargetPosition(armPosition);
+            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            runtimeManual.reset();
+            armMotor.setPower(armPower);
+            while ((runtimeManual.seconds() < 1) &&
+                    (armMotor.isBusy())) {
+            }
+
+            // rotator motor
+            if (gamepad.dpad_left) {
+                rotatorMotor.setPower(0.2);
+            } else if (gamepad.dpad_right) {
+                rotatorMotor.setPower(-0.2);
+            } else {
+                rotatorMotor.setPower(0);
+            }
+
+            //lifter motor
+            if (gamepad.left_bumper) {//up
+                if (!lifterHighLock) {
+                    lifterHighLock = true;  // Hold off any more triggers
+                    if (lifterMotor.getCurrentPosition() < 2000) { // max high limit
+                        lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition() + 100);
+                        lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                        runtimeManual.reset();
+                        lifterMotor.setPower(0.2);
+                        while ((runtimeManual.seconds() < 1) &&
+                                (lifterMotor.isBusy())) {
+                        }
+                    }
+                    //gamepad1.rumble(0.9, 0, 200);  // 200 mSec burst on left motor.
+                }
+            } else {
+                lifterHighLock = false;  // We can trigger again now.
+            }
+
+            if (gamepad.right_bumper) {//down
+                if (!lifterLowLock) {
+                    lifterLowLock = true;
+                    if (lifterMotor.getCurrentPosition() > 100) // min low limit
+                    {
+                        lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition() - 100);
+                        lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                        runtimeManual.reset();
+                        lifterMotor.setPower(0.2);
+                        while ((runtimeManual.seconds() < 1) &&
+                                (lifterMotor.isBusy())) {
+                        }
+                    }
+                }
+            } else {
+                lifterLowLock = false;
+            }
+        //}
     }
 
     @Override
@@ -396,12 +570,29 @@ public class Hand extends Subsystem {
     }
 
     @Override
-    public void teleopInit() {
+    public void teleopInit( Subsystem otherSys) {
+        crossSubsystem = otherSys;
+        PreviousPostionBySet = CurrentPostionBySet = PredefinedPosition.InitPosition;
         SetMotorsPosition(PredefinedPosition.InitPosition);
         armPosition =  armMotor.getCurrentPosition();
     }
 
+
+    @Override
+    public void CrossSubsystemCheck() {
+
+    }
+
+
+
     public void setFingerTargetPosition(int position) {
         fingerServo.setPosition(position);
+    }
+
+    public void setArmTargetPosition(int position) {
+        armPosition = position;
+    }
+    public int getArmTargetPosition() {
+        return armPosition;
     }
 }
