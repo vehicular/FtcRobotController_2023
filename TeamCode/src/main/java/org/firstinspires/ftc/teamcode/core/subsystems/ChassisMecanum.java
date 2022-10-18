@@ -162,10 +162,9 @@ public class ChassisMecanum extends Subsystem {
         }
         else {
             if (gamepad1.right_trigger > TRIGGER_THRESHOLD || gamepad1.left_trigger > TRIGGER_THRESHOLD) {
-                SlowControl(gamepad1, true); // robot coordinate
+                SlowControl(gamepad1); // robot coordinate
             } else if (gamepad2.right_trigger < TRIGGER_THRESHOLD && gamepad2.left_trigger < TRIGGER_THRESHOLD) {
-                //SlowControl(gamepad2, false); // robot coordinate
-                InchMoveControl(gamepad2);
+                InchMoveControl(gamepad2); // robot coordinate
             }
         }
 
@@ -242,13 +241,11 @@ public class ChassisMecanum extends Subsystem {
         backRight.setPower(backRightPower*LFMotorMultiplier);
     }
 
-    private void SlowControl(Gamepad gamepad, boolean isFullCtrl)
+    private void SlowControl(Gamepad gamepad)
     {
         double y = -gamepad.left_stick_y; // Remember, this is reversed!
         double x = gamepad.left_stick_x * 1.1; // Counteract imperfect strafing
-        double rx = 0;
-        if(isFullCtrl)
-            rx = gamepad.right_stick_x;
+        double rx = gamepad.right_stick_x;
 
         // Denominator is the largest motor power (absolute value) or 1
         // This ensures all the powers maintain the same ratio, but only when

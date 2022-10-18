@@ -57,6 +57,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Locale;
 
 /**
@@ -117,9 +121,13 @@ public class HandPositionCalibration extends LinearOpMode
             directory.mkdir();
             FileWriter fileWriter = new FileWriter(
                     directoryPath + "/" + fileName);
+            FileWriter bkWriter = new FileWriter(
+                    directoryPath + "/bk_" + fileName);
 
             fileWriter.write(userString);
             fileWriter.close();
+            bkWriter.write(userString);
+            bkWriter.close();
         } catch (Exception e) {
             telemetry.addLine("Save " + fileName + " Error..." + e.toString());
         }
@@ -127,7 +135,7 @@ public class HandPositionCalibration extends LinearOpMode
 
     private String[] ReadPositionFromFile(String fileName)
     {
-        String[] data = new String[7];
+        String[] data = new String[MotorPositionCal.maxNumOfMotors];
         try {
             FileReader fileReader = new FileReader(
                     directoryPath + "/" + fileName);
@@ -139,6 +147,7 @@ public class HandPositionCalibration extends LinearOpMode
                 line = bufferedReader.readLine();
             }
             bufferedReader.close();
+            fileReader.close();
             // This responce will have Json Format String
             String responce = stringBuilder.toString();
 

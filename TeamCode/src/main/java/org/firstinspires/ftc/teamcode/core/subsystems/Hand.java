@@ -15,11 +15,20 @@ import org.firstinspires.ftc.teamcode.util.MotorPositionCal;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 
 public class Hand extends Subsystem
 {
     Subsystem crossSubsystem;
+
+    enum SysState
+    {
+        RUN,
+        RECALIBRATION,
+        RECOVER,
+    }
 
     enum HandStatus
     {
@@ -54,6 +63,8 @@ public class Hand extends Subsystem
     private Servo knukcleServo;
     private Servo fingerServo;
 
+    private SysState CurState = SysState.RUN;
+    String FileOpTele = "";
 
     public Hand(HardwareMap hardwareMap) {
         super(hardwareMap);
@@ -106,6 +117,7 @@ public class Hand extends Subsystem
                 line = bufferedReader.readLine();
             }
             bufferedReader.close();
+            fileReader.close();
             // This responce will have Json Format String
             String responce = stringBuilder.toString();
 
@@ -137,6 +149,53 @@ public class Hand extends Subsystem
         armPositionLock = true;
     }
 
+    private void GetMotorsPosition(MotorPositionCal.SubsystemPosition position) {
+        position.WristServo = wristServo.getPosition();
+        position.PalmServo = palmServo.getPosition();
+        position.KnuckleServo = knukcleServo.getPosition();
+        position.FingerServo = fingerServo.getPosition();
+        position.ArmMotor = armMotor.getCurrentPosition();
+        position.RotatorMotor = rotatorMotor.getCurrentPosition();
+        position.LifterMotor = lifterMotor.getCurrentPosition();
+        //SavePositonsToFile("PickupDownMotorsPosition.json", PredefinedPosition.Pickup_down);
+        //SavePositonsToFile("PickupLeftMotorsPosition.json", PredefinedPosition.Pickup_left);
+        //SavePositonsToFile("PickupRightMotorsPosition.json", PredefinedPosition.Pickup_right);
+
+        //SavePositonsToFile("DropA1MotorsPosition.json", PredefinedPosition.Drop_A_1);
+        //SavePositonsToFile("DropB2MotorsPosition.json", PredefinedPosition.Drop_B_2);
+        //SavePositonsToFile("DropX3MotorsPosition.json", PredefinedPosition.Drop_X_3);
+        //SavePositonsToFile("DropY4MotorsPosition.json", PredefinedPosition.Drop_Y_4);
+    }
+
+    private void SavePositonsToFile(String fileName, MotorPositionCal.SubsystemPosition positions)
+    {
+        JSONObject InitData = new JSONObject();
+        try {
+            InitData.put(MotorPositionCal.LifterMotorStr, positions.LifterMotor);
+            InitData.put(MotorPositionCal.RotatorMotorStr, positions.RotatorMotor);
+            InitData.put(MotorPositionCal.ArmMotorStr, positions.ArmMotor);
+            InitData.put(MotorPositionCal.WristServoStr, positions.WristServo);
+            InitData.put(MotorPositionCal.PalmServoStr, positions.PalmServo);
+            InitData.put(MotorPositionCal.KnuckleServoStr, positions.KnuckleServo);
+            InitData.put(MotorPositionCal.FingerServoStr, positions.FingerServo);
+
+            // Convert JsonObject to String Format
+            String userString = InitData.toString();
+            //telemetry.addLine(userString);
+            // Define the File Path and its Name
+            File directory = new File(directoryPath);
+            directory.mkdir();
+            FileWriter fileWriter = new FileWriter(
+                    directoryPath + "/" + fileName);
+
+            fileWriter.write(userString);
+            fileWriter.close();
+        } catch (Exception e) {
+            //telemetry.addLine("Save " + fileName + " Error..." + e.toString());
+            // TODO: add a sound
+        }
+    }
+
     /**
      * Runs repeatedly during teleop. The right bumper toggles between control modes.
      * In the first control mode, 3 buttons move the flipper between 3 positions.
@@ -149,8 +208,83 @@ public class Hand extends Subsystem
     @Override
     public void teleopControls(Gamepad gamepad1, Gamepad gamepad2) {
         //ManualAdjustHandMotors(gamepad1);
-        SetPredefinedHandMotors(gamepad1);
+        if(CurState == SysState.RUN) {
+            if(gamepad1.start && gamepad1.left_stick_button)
+            {
+                CurState = SysState.RECALIBRATION;
+            }
+            if(gamepad1.start && gamepad1.right_stick_button)
+            {
+                CurState = SysState.RECOVER;
+            }
+        }
+        else //if(CurState == SysState.RECALIBRATION)
+        {
+            if(gamepad1.back)
+            {
+                CurState = SysState.RUN;
+            }
+        }
+
+        if(CurState == SysState.RUN) {
+            SetPredefinedHandMotors(gamepad1);
+        }
+        else //if(CurState == SysState.RECALIBRATION || RECOVER)
+        {
+            RedoPredefinedHandMotors(gamepad1);
+        }
+
         TuningHandMotors(gamepad2);
+    }
+
+    private void CopyPositionFile(String fileName)
+    {
+        try {
+            FileReader fileReader = new FileReader(
+                    directoryPath + "/bk_" + fileName);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            StringBuilder stringBuilder = new StringBuilder();
+            String line = bufferedReader.readLine();
+            while (line != null) {
+                stringBuilder.append(line).append("\n");
+                line = bufferedReader.readLine();
+            }
+            bufferedReader.close();
+            fileReader.close();
+            // This responce will have Json Format String
+            String responce = stringBuilder.toString();
+
+            FileWriter fileWriter = new FileWriter(
+                    directoryPath + "/" + fileName);
+            fileWriter.write(responce);
+            fileWriter.close();
+        }
+        catch (Exception e)
+        {
+
+        }
+    }
+
+    private void RedoPredefinedHandMotors(Gamepad gamepad)
+    {
+        if (gamepad.dpad_up || gamepad.dpad_down) {
+            if (!keylock_crossup) {
+                keylock_crossup = true;
+                if(CurState == SysState.RECALIBRATION) {
+                    GetMotorsPosition(PredefinedPosition.Pickup_up);
+                    SavePositonsToFile("PickupUpMotorsPosition.json", PredefinedPosition.Pickup_up);
+                }
+                else if(CurState == SysState.RECOVER)
+                {
+                    CopyPositionFile("PickupUpMotorsPosition.json");
+                    PredefinedPosition.Pickup_up.SetValue(ReadPositionFromFile("PickupUpMotorsPosition.json"));
+                }
+            }
+        }
+        else
+        {
+            keylock_crossup = false;
+        }
     }
 
     final double TRIGGER_THRESHOLD = 0.75;     // Squeeze more than 3/4 to get rumble.
@@ -584,6 +718,7 @@ public class Hand extends Subsystem
         //}
     }
 
+
     @Override
     public String addTelemetry() {
         String s = "Lifter: " + lifterMotor.getCurrentPosition() + "; ";
@@ -601,6 +736,11 @@ public class Hand extends Subsystem
         s += "knukcleServo: " + knukcleServo.getPosition() + "; ";
 
         s += "fingerServo: " + fingerServo.getPosition() + "; ";
+
+        if(CurState != SysState.RUN)
+        {
+            s += FileOpTele;
+        }
 
         return s;
     }
