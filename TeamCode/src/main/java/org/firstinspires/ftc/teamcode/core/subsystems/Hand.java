@@ -267,7 +267,7 @@ public class Hand extends Subsystem
 
     private void RedoPredefinedHandMotors(Gamepad gamepad)
     {
-        if (gamepad.dpad_up || gamepad.dpad_down) {
+        if (gamepad.dpad_up) {
             if (!keylock_crossup) {
                 keylock_crossup = true;
                 if(CurState == SysState.RECALIBRATION) {
@@ -284,6 +284,125 @@ public class Hand extends Subsystem
         else
         {
             keylock_crossup = false;
+        }
+
+        if (gamepad.dpad_down) {
+            if (!keylock_crossdown) {
+                keylock_crossdown = true;
+                if(CurState == SysState.RECALIBRATION) {
+                    GetMotorsPosition(PredefinedPosition.Pickup_down);
+                    SavePositonsToFile("PickupDownMotorsPosition.json", PredefinedPosition.Pickup_down);
+                }
+                else if(CurState == SysState.RECOVER)
+                {
+                    CopyPositionFile("PickupDownMotorsPosition.json");
+                    PredefinedPosition.Pickup_down.SetValue(ReadPositionFromFile("PickupDownMotorsPosition.json"));
+                }
+            }
+        } else {
+            keylock_crossdown = false;
+        }
+
+        if (gamepad.dpad_left) {
+            if (!keylock_crossleft) {
+                keylock_crossleft = true;
+                if(CurState == SysState.RECALIBRATION) {
+                    GetMotorsPosition(PredefinedPosition.Pickup_left);
+                    SavePositonsToFile("PickupLeftMotorsPosition.json", PredefinedPosition.Pickup_left);
+                }
+                else if(CurState == SysState.RECOVER)
+                {
+                    CopyPositionFile("PickupLeftMotorsPosition.json");
+                    PredefinedPosition.Pickup_left.SetValue(ReadPositionFromFile("PickupLeftMotorsPosition.json"));
+                }
+            }
+        } else {
+            keylock_crossleft = false;
+        }
+
+        if (gamepad.dpad_right) {
+            if (!keylock_crossright) {
+                keylock_crossright = true;
+                if(CurState == SysState.RECALIBRATION) {
+                    GetMotorsPosition(PredefinedPosition.Pickup_right);
+                    SavePositonsToFile("PickupRightMotorsPosition.json", PredefinedPosition.Pickup_right);
+                }
+                else if(CurState == SysState.RECOVER)
+                {
+                    CopyPositionFile("PickupRightMotorsPosition.json");
+                    PredefinedPosition.Pickup_right.SetValue(ReadPositionFromFile("PickupRightMotorsPosition.json"));
+                }
+            }
+        } else {
+            keylock_crossright = false;
+        }
+
+        if (gamepad.a) {
+            if (!keylock_a) {
+                keylock_a = true;
+                if(CurState == SysState.RECALIBRATION) {
+                    GetMotorsPosition(PredefinedPosition.Drop_A_1);
+                    SavePositonsToFile("DropA1MotorsPosition.json", PredefinedPosition.Drop_A_1);
+                }
+                else if(CurState == SysState.RECOVER)
+                {
+                    CopyPositionFile("DropA1MotorsPosition.json");
+                    PredefinedPosition.Drop_A_1.SetValue(ReadPositionFromFile("DropA1MotorsPosition.json"));
+                }
+            }
+        } else {
+            keylock_a = false;
+        }
+
+        if (gamepad.b) {
+            if (!keylock_b) {
+                keylock_b = true;
+                if(CurState == SysState.RECALIBRATION) {
+                    GetMotorsPosition(PredefinedPosition.Drop_B_2);
+                    SavePositonsToFile("DropB2MotorsPosition.json", PredefinedPosition.Drop_B_2);
+                }
+                else if(CurState == SysState.RECOVER)
+                {
+                    CopyPositionFile("DropB2MotorsPosition.json");
+                    PredefinedPosition.Drop_B_2.SetValue(ReadPositionFromFile("DropB2MotorsPosition.json"));
+                }
+            }
+        } else {
+            keylock_b = false;
+        }
+
+        if (gamepad.x) {
+            if (!keylock_x) {
+                keylock_x = true;
+                if(CurState == SysState.RECALIBRATION) {
+                    GetMotorsPosition(PredefinedPosition.Drop_X_3);
+                    SavePositonsToFile("DropX3MotorsPosition.json", PredefinedPosition.Drop_X_3);
+                }
+                else if(CurState == SysState.RECOVER)
+                {
+                    CopyPositionFile("DropX3MotorsPosition.json");
+                    PredefinedPosition.Drop_X_3.SetValue(ReadPositionFromFile("DropX3MotorsPosition.json"));
+                }
+            }
+        } else {
+            keylock_x = false;
+        }
+
+        if (gamepad.y) {
+            if (!keylock_y) {
+                keylock_y = true;
+                if(CurState == SysState.RECALIBRATION) {
+                    GetMotorsPosition(PredefinedPosition.Drop_Y_4);
+                    SavePositonsToFile("DropY4MotorsPosition.json", PredefinedPosition.Drop_Y_4);
+                }
+                else if(CurState == SysState.RECOVER)
+                {
+                    CopyPositionFile("DropY4MotorsPosition.json");
+                    PredefinedPosition.Drop_Y_4.SetValue(ReadPositionFromFile("DropY4MotorsPosition.json"));
+                }
+            }
+        } else {
+            keylock_y = false;
         }
     }
 
