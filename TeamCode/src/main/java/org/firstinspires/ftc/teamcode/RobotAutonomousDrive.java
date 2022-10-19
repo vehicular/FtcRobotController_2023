@@ -94,7 +94,7 @@ import org.firstinspires.ftc.teamcode.util.Constants;
 @TeleOp(name="JD Auto Drive", group="Run")
 //@Autonomous(name="JD Autonomous Drive", group="Robot")
 //@Disabled
-public class RobotAutoDriveByGyro_Linear extends LinearOpMode {
+public class RobotAutonomousDrive extends LinearOpMode {
 
     /* Declare OpMode members. */
     private DcMotor         leftDrive   = null;

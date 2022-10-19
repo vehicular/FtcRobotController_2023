@@ -57,29 +57,25 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Locale;
 
 /**
- * {@link HandPositionCalibration} Set Motors' Predefined Position
+ * {@link CalibrationHandPosition} Set Motors' Predefined Position
  * <p>
  *
  */
-@TeleOp(name = "JD Motor Position Calibration", group = "Calibration")
+@TeleOp(name = "Calibration Motors' Position ", group = "Calibration")
 //@Disabled                            // Comment this out to add to the opmode list
-public class HandPositionCalibration extends LinearOpMode
+public class CalibrationHandPosition extends LinearOpMode
 {
     //----------------------------------------------------------------------------------------------
     // State
     //----------------------------------------------------------------------------------------------
 
-    public DcMotor frontLeft;
-    public DcMotor frontRight;
-    public DcMotor backLeft;
-    public DcMotor backRight;
+    //public DcMotor frontLeft;
+    //public DcMotor frontRight;
+    //public DcMotor backLeft;
+    //public DcMotor backRight;
 
     DcMotor lifterMotor;
     DcMotor rotatorMotor;
@@ -182,7 +178,7 @@ public class HandPositionCalibration extends LinearOpMode
     @Override
     public void runOpMode() {
 
-        //frontLeft = hardwareMap.get(DcMotor.class, "LFMotor");
+        /*//frontLeft = hardwareMap.get(DcMotor.class, "LFMotor");
         //frontRight = hardwareMap.get(DcMotor.class, "RFMotor");
         backLeft = hardwareMap.get(DcMotor.class, Constants.leftbackMotor);
         backRight = hardwareMap.get(DcMotor.class, Constants.rightbackMotor);
@@ -200,7 +196,7 @@ public class HandPositionCalibration extends LinearOpMode
         //frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         //frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);*/
 
         lifterMotor = hardwareMap.get(DcMotor.class, Constants.lifterMotor);
         rotatorMotor = hardwareMap.get(DcMotor.class, Constants.rotatorMotor);
@@ -394,9 +390,9 @@ public class HandPositionCalibration extends LinearOpMode
             telemetry.addLine().addData("fingerServo Currently at ", "%7f",
                     fingerServo.getPosition());
 
-            telemetry.addLine().addData("Back Drive Pos L:R ", "%7d : %7d",
+            /*telemetry.addLine().addData("Back Drive Pos L:R ", "%7d : %7d",
                     backLeft.getCurrentPosition(),
-                    backRight.getCurrentPosition());
+                    backRight.getCurrentPosition());*/
 
             telemetry.update();
 

@@ -130,7 +130,7 @@ public class Hand extends Subsystem
             data[MotorPositionCal.KnuckleServoInt] = ((jsonObject.get(MotorPositionCal.KnuckleServoStr).toString()));
             data[MotorPositionCal.FingerServoInt] = ((jsonObject.get(MotorPositionCal.FingerServoStr).toString()));
         } catch (Exception e) {
-            //telemetry.addLine("Read " + fileName + " Error..." + e.toString());
+            FileOpTele = ("Read " + fileName + " Error..." + e.toString());
         }
         return data;
     }
@@ -157,14 +157,6 @@ public class Hand extends Subsystem
         position.ArmMotor = armMotor.getCurrentPosition();
         position.RotatorMotor = rotatorMotor.getCurrentPosition();
         position.LifterMotor = lifterMotor.getCurrentPosition();
-        //SavePositonsToFile("PickupDownMotorsPosition.json", PredefinedPosition.Pickup_down);
-        //SavePositonsToFile("PickupLeftMotorsPosition.json", PredefinedPosition.Pickup_left);
-        //SavePositonsToFile("PickupRightMotorsPosition.json", PredefinedPosition.Pickup_right);
-
-        //SavePositonsToFile("DropA1MotorsPosition.json", PredefinedPosition.Drop_A_1);
-        //SavePositonsToFile("DropB2MotorsPosition.json", PredefinedPosition.Drop_B_2);
-        //SavePositonsToFile("DropX3MotorsPosition.json", PredefinedPosition.Drop_X_3);
-        //SavePositonsToFile("DropY4MotorsPosition.json", PredefinedPosition.Drop_Y_4);
     }
 
     private void SavePositonsToFile(String fileName, MotorPositionCal.SubsystemPosition positions)
@@ -191,8 +183,7 @@ public class Hand extends Subsystem
             fileWriter.write(userString);
             fileWriter.close();
         } catch (Exception e) {
-            //telemetry.addLine("Save " + fileName + " Error..." + e.toString());
-            // TODO: add a sound
+            FileOpTele = ("Write " + fileName + " Error..." + e.toString());
         }
     }
 
@@ -207,15 +198,17 @@ public class Hand extends Subsystem
     private int armPosition = 0;
     @Override
     public void teleopControls(Gamepad gamepad1, Gamepad gamepad2) {
-        //ManualAdjustHandMotors(gamepad1);
+
         if(CurState == SysState.RUN) {
             if(gamepad1.start && gamepad1.left_stick_button)
             {
                 CurState = SysState.RECALIBRATION;
+                FileOpTele = ("Enter RE-CALIBRATION ...");
             }
             if(gamepad1.start && gamepad1.right_stick_button)
             {
                 CurState = SysState.RECOVER;
+                FileOpTele = ("Enter RECOVER ...");
             }
         }
         else //if(CurState == SysState.RECALIBRATION)
@@ -223,6 +216,7 @@ public class Hand extends Subsystem
             if(gamepad1.back)
             {
                 CurState = SysState.RUN;
+                FileOpTele = ("Enter RUN ...");
             }
         }
 
@@ -261,7 +255,7 @@ public class Hand extends Subsystem
         }
         catch (Exception e)
         {
-
+            FileOpTele = ("Copy " + fileName + " Error..." + e.toString());
         }
     }
 

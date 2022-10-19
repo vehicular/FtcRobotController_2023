@@ -30,8 +30,6 @@ import org.firstinspires.ftc.teamcode.util.Constants;
 
 public class ChassisMecanum extends Subsystem {
 
-    int constru = 0;
-
     Subsystem crossSubsystem;
 
     boolean isAutonomous = false;
@@ -86,7 +84,6 @@ public class ChassisMecanum extends Subsystem {
         backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         backRight.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        constru++;
         if (isAutonomous) {
             //sleep(250);
             backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -344,15 +341,11 @@ public class ChassisMecanum extends Subsystem {
     public String addTelemetry()
     {
         String s = "Chassis \n";
-//        s+= "[Left Drive]" + leftDrive.toString() + "\t[Right Drive: " +rightDrive.toString();
-        //   s+= "Heading: " +gyro.getAngularOrientation().toString();
-//        s+= "Displacement: " + gyro.getPosition().toString();
-        //s += "Velocity " + gyro.getVelocity().toString();
+
         s += "left Front Wheel: " + frontLeft.getCurrentPosition() + "\n";
         s += "Left Back Wheel: " + backLeft.getCurrentPosition();
         s += "Right Front Wheel: " + frontRight.getCurrentPosition() + "\n";
         s += "Right Back Wheel: " + backRight.getCurrentPosition() + "\n";
-        s += "constructor ran #: " + constru;
 
         return s;
     }
@@ -408,7 +401,9 @@ public class ChassisMecanum extends Subsystem {
          */
     }
 
-    public void analog_control(double x, double y, double rotation,boolean key_invert,boolean bmp1,boolean bmp2,boolean dpad1,boolean dpad2,boolean dpad3,boolean dpad4) {
+    public void analog_control(double x, double y, double rotation,boolean key_invert,
+                               boolean bmp1,boolean bmp2,
+                               boolean dpad1,boolean dpad2,boolean dpad3,boolean dpad4) {
 
         if(key_invert&&runt4.milliseconds()>=500) {
             inv=!inv;
