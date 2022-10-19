@@ -29,7 +29,7 @@ public class Hand extends Subsystem
         RECALIBRATION,
         RECOVER,
     }
-
+/*
     enum HandStatus
     {
         NONE,
@@ -49,10 +49,10 @@ public class Hand extends Subsystem
         DOWN_LEFT,
         DOWN_RIGHT,
     }
-
+*/
     MotorPositionCal PredefinedPosition = new MotorPositionCal();
-    MotorPositionCal.SubsystemPosition CurrentPostionBySet;
-    MotorPositionCal.SubsystemPosition PreviousPostionBySet;
+    MotorPositionCal.SubsystemPosition CurrentPositionBySet;
+    MotorPositionCal.SubsystemPosition PreviousPositionBySet;
     String directoryPath = Environment.getExternalStorageDirectory().getPath() + "/MOTORS";
 
     private DcMotor lifterMotor;
@@ -60,18 +60,22 @@ public class Hand extends Subsystem
     private DcMotor armMotor;
     private Servo wristServo;
     private Servo palmServo;
-    private Servo knukcleServo;
+    private Servo knuckleServo;
     private Servo fingerServo;
 
     private SysState CurState = SysState.RUN;
     String FileOpTele = "";
 
-    public Hand(HardwareMap hardwareMap) {
+    private int armPosition = 0;
+
+    public Hand(HardwareMap hardwareMap)
+    {
         super(hardwareMap);
+
         fingerServo = hardwareMap.servo.get(Constants.fingerServo);
         wristServo = hardwareMap.servo.get(Constants.wristServo);
         palmServo = hardwareMap.servo.get(Constants.palmServo);
-        knukcleServo = hardwareMap.servo.get(Constants.knuckleServo);
+        knuckleServo = hardwareMap.servo.get(Constants.knuckleServo);
 
         lifterMotor = hardwareMap.get(DcMotor.class, Constants.lifterMotor);
         rotatorMotor = hardwareMap.get(DcMotor.class, Constants.rotatorMotor);
@@ -92,15 +96,24 @@ public class Hand extends Subsystem
         rotatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        PredefinedPosition.InitPosition.SetValue(ReadPositionFromFile("InitMotorsPosition.json"));
-        PredefinedPosition.Pickup_up.SetValue(ReadPositionFromFile("PickupUpMotorsPosition.json"));
-        PredefinedPosition.Pickup_down.SetValue(ReadPositionFromFile("PickupDownMotorsPosition.json"));
-        PredefinedPosition.Pickup_left.SetValue(ReadPositionFromFile("PickupLeftMotorsPosition.json"));
-        PredefinedPosition.Pickup_right.SetValue(ReadPositionFromFile("PickupRightMotorsPosition.json"));
-        PredefinedPosition.Drop_A_1.SetValue(ReadPositionFromFile("DropA1MotorsPosition.json"));
-        PredefinedPosition.Drop_B_2.SetValue(ReadPositionFromFile("DropB2MotorsPosition.json"));
-        PredefinedPosition.Drop_X_3.SetValue(ReadPositionFromFile("DropX3MotorsPosition.json"));
-        PredefinedPosition.Drop_Y_4.SetValue(ReadPositionFromFile("DropY4MotorsPosition.json"));
+        PredefinedPosition.InitPosition.SetValue(
+                ReadPositionFromFile("InitMotorsPosition.json"));
+        PredefinedPosition.Pickup_up.SetValue(
+                ReadPositionFromFile("PickupUpMotorsPosition.json"));
+        PredefinedPosition.Pickup_down.SetValue(
+                ReadPositionFromFile("PickupDownMotorsPosition.json"));
+        PredefinedPosition.Pickup_left.SetValue(
+                ReadPositionFromFile("PickupLeftMotorsPosition.json"));
+        PredefinedPosition.Pickup_right.SetValue(
+                ReadPositionFromFile("PickupRightMotorsPosition.json"));
+        PredefinedPosition.Drop_A_1.SetValue(
+                ReadPositionFromFile("DropA1MotorsPosition.json"));
+        PredefinedPosition.Drop_B_2.SetValue(
+                ReadPositionFromFile("DropB2MotorsPosition.json"));
+        PredefinedPosition.Drop_X_3.SetValue(
+                ReadPositionFromFile("DropX3MotorsPosition.json"));
+        PredefinedPosition.Drop_Y_4.SetValue(
+                ReadPositionFromFile("DropY4MotorsPosition.json"));
     }
 
 
@@ -111,52 +124,35 @@ public class Hand extends Subsystem
                     directoryPath + "/" + fileName);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             StringBuilder stringBuilder = new StringBuilder();
-            String line = bufferedReader.readLine();
-            while (line != null) {
-                stringBuilder.append(line).append("\n");
-                line = bufferedReader.readLine();
+            String oneLine = bufferedReader.readLine();
+            while (oneLine != null) {
+                stringBuilder.append(oneLine).append("\n");
+                oneLine = bufferedReader.readLine();
             }
             bufferedReader.close();
             fileReader.close();
-            // This responce will have Json Format String
-            String responce = stringBuilder.toString();
+            // This objStr will have Json Format String
+            String objStr = stringBuilder.toString();
 
-            JSONObject jsonObject = new JSONObject(responce);
-            data[MotorPositionCal.LifterMotorInt] = ((jsonObject.get(MotorPositionCal.LifterMotorStr).toString()));
-            data[MotorPositionCal.RotatorMotorInt] = ((jsonObject.get(MotorPositionCal.RotatorMotorStr).toString()));
-            data[MotorPositionCal.ArmMotorInt] = ((jsonObject.get(MotorPositionCal.ArmMotorStr).toString()));
-            data[MotorPositionCal.WristServoInt] = ((jsonObject.get(MotorPositionCal.WristServoStr).toString()));
-            data[MotorPositionCal.PalmServoInt] = ((jsonObject.get(MotorPositionCal.PalmServoStr).toString()));
-            data[MotorPositionCal.KnuckleServoInt] = ((jsonObject.get(MotorPositionCal.KnuckleServoStr).toString()));
-            data[MotorPositionCal.FingerServoInt] = ((jsonObject.get(MotorPositionCal.FingerServoStr).toString()));
+            JSONObject jsonObject = new JSONObject(objStr);
+            data[MotorPositionCal.LifterMotorInt] =
+                    ((jsonObject.get(MotorPositionCal.LifterMotorStr).toString()));
+            data[MotorPositionCal.RotatorMotorInt] =
+                    ((jsonObject.get(MotorPositionCal.RotatorMotorStr).toString()));
+            data[MotorPositionCal.ArmMotorInt] =
+                    ((jsonObject.get(MotorPositionCal.ArmMotorStr).toString()));
+            data[MotorPositionCal.WristServoInt] =
+                    ((jsonObject.get(MotorPositionCal.WristServoStr).toString()));
+            data[MotorPositionCal.PalmServoInt] =
+                    ((jsonObject.get(MotorPositionCal.PalmServoStr).toString()));
+            data[MotorPositionCal.KnuckleServoInt] =
+                    ((jsonObject.get(MotorPositionCal.KnuckleServoStr).toString()));
+            data[MotorPositionCal.FingerServoInt] =
+                    ((jsonObject.get(MotorPositionCal.FingerServoStr).toString()));
         } catch (Exception e) {
             FileOpTele = ("Read " + fileName + " Error..." + e.toString());
         }
         return data;
-    }
-
-    private void SetMotorsPosition(MotorPositionCal.SubsystemPosition position) {
-        if(position != CurrentPostionBySet) {
-            PreviousPostionBySet = CurrentPostionBySet;
-            CurrentPostionBySet = position;
-        }
-        wristServo.setPosition(position.WristServo);
-        palmServo.setPosition(position.PalmServo);
-        knukcleServo.setPosition(position.KnuckleServo);
-        fingerServo.setPosition(position.FingerServo);
-        armPosition = position.ArmMotor;
-        armMotor.setTargetPosition(armPosition);
-        armPositionLock = true;
-    }
-
-    private void GetMotorsPosition(MotorPositionCal.SubsystemPosition position) {
-        position.WristServo = wristServo.getPosition();
-        position.PalmServo = palmServo.getPosition();
-        position.KnuckleServo = knukcleServo.getPosition();
-        position.FingerServo = fingerServo.getPosition();
-        position.ArmMotor = armMotor.getCurrentPosition();
-        position.RotatorMotor = rotatorMotor.getCurrentPosition();
-        position.LifterMotor = lifterMotor.getCurrentPosition();
     }
 
     private void SavePositonsToFile(String fileName, MotorPositionCal.SubsystemPosition positions)
@@ -187,50 +183,6 @@ public class Hand extends Subsystem
         }
     }
 
-    /**
-     * Runs repeatedly during teleop. The right bumper toggles between control modes.
-     * In the first control mode, 3 buttons move the flipper between 3 positions.
-     * In the second control mode, the 2 buttons move theh flipper up and down.
-     *
-     * @param gamepad1
-     * @param gamepad2
-     */
-    private int armPosition = 0;
-    @Override
-    public void teleopControls(Gamepad gamepad1, Gamepad gamepad2) {
-
-        if(CurState == SysState.RUN) {
-            if(gamepad1.start && gamepad1.left_stick_button)
-            {
-                CurState = SysState.RECALIBRATION;
-                FileOpTele = ("Enter RE-CALIBRATION ...");
-            }
-            if(gamepad1.start && gamepad1.right_stick_button)
-            {
-                CurState = SysState.RECOVER;
-                FileOpTele = ("Enter RECOVER ...");
-            }
-        }
-        else //if(CurState == SysState.RECALIBRATION)
-        {
-            if(gamepad1.back)
-            {
-                CurState = SysState.RUN;
-                FileOpTele = ("Enter RUN ...");
-            }
-        }
-
-        if(CurState == SysState.RUN) {
-            SetPredefinedHandMotors(gamepad1);
-        }
-        else //if(CurState == SysState.RECALIBRATION || RECOVER)
-        {
-            RedoPredefinedHandMotors(gamepad1);
-        }
-
-        TuningHandMotors(gamepad2);
-    }
-
     private void CopyPositionFile(String fileName)
     {
         try {
@@ -245,12 +197,12 @@ public class Hand extends Subsystem
             }
             bufferedReader.close();
             fileReader.close();
-            // This responce will have Json Format String
-            String responce = stringBuilder.toString();
+            // This dataStr will have Json Format String
+            String dataStr = stringBuilder.toString();
 
             FileWriter fileWriter = new FileWriter(
                     directoryPath + "/" + fileName);
-            fileWriter.write(responce);
+            fileWriter.write(dataStr);
             fileWriter.close();
         }
         catch (Exception e)
@@ -259,144 +211,184 @@ public class Hand extends Subsystem
         }
     }
 
-    private void RedoPredefinedHandMotors(Gamepad gamepad)
-    {
-        if (gamepad.dpad_up) {
-            if (!keylock_crossup) {
-                keylock_crossup = true;
-                if(CurState == SysState.RECALIBRATION) {
-                    GetMotorsPosition(PredefinedPosition.Pickup_up);
-                    SavePositonsToFile("PickupUpMotorsPosition.json", PredefinedPosition.Pickup_up);
-                }
-                else if(CurState == SysState.RECOVER)
-                {
-                    CopyPositionFile("PickupUpMotorsPosition.json");
-                    PredefinedPosition.Pickup_up.SetValue(ReadPositionFromFile("PickupUpMotorsPosition.json"));
-                }
-            }
+    private void SetMotorsPosition(MotorPositionCal.SubsystemPosition targetPosition) {
+        if(targetPosition != CurrentPositionBySet) {
+            PreviousPositionBySet = CurrentPositionBySet;
+            CurrentPositionBySet = targetPosition;
         }
-        else
+
+        boolean doArmFirst = false;
+        double armPow = 0.1;
+        //if( )
         {
-            keylock_crossup = false;
+            if(targetPosition.ArmMotor > armMotor.getCurrentPosition()) {
+                doArmFirst = true;
+            }
+        }
+        if(armMotor.getCurrentPosition() < -200)
+        {
+            if(targetPosition.PalmServo>0.8 && PreviousPositionBySet.PalmServo<0.8)
+            {
+                doArmFirst = true;
+            }
+            else if(targetPosition.PalmServo<0.8 && PreviousPositionBySet.PalmServo>0.8)
+            {
+                doArmFirst = false;
+            }
+        }
+        if (targetPosition.ArmMotor > armMotor.getCurrentPosition()) {
+            armPow = 0.3;
+        } else {
+            if (armMotor.getCurrentPosition() > 900)// TODO: COS/SIN calculation
+                armPow = (0.1);
+            else
+                armPow = (0.1);
         }
 
-        if (gamepad.dpad_down) {
-            if (!keylock_crossdown) {
-                keylock_crossdown = true;
-                if(CurState == SysState.RECALIBRATION) {
-                    GetMotorsPosition(PredefinedPosition.Pickup_down);
-                    SavePositonsToFile("PickupDownMotorsPosition.json", PredefinedPosition.Pickup_down);
-                }
-                else if(CurState == SysState.RECOVER)
-                {
-                    CopyPositionFile("PickupDownMotorsPosition.json");
-                    PredefinedPosition.Pickup_down.SetValue(ReadPositionFromFile("PickupDownMotorsPosition.json"));
-                }
-            }
-        } else {
-            keylock_crossdown = false;
+        if(!doArmFirst ) {
+            wristServo.setPosition(targetPosition.WristServo);
+            palmServo.setPosition(targetPosition.PalmServo);
+            knuckleServo.setPosition(targetPosition.KnuckleServo);
+            fingerServo.setPosition(targetPosition.FingerServo);
         }
 
-        if (gamepad.dpad_left) {
-            if (!keylock_crossleft) {
-                keylock_crossleft = true;
-                if(CurState == SysState.RECALIBRATION) {
-                    GetMotorsPosition(PredefinedPosition.Pickup_left);
-                    SavePositonsToFile("PickupLeftMotorsPosition.json", PredefinedPosition.Pickup_left);
-                }
-                else if(CurState == SysState.RECOVER)
-                {
-                    CopyPositionFile("PickupLeftMotorsPosition.json");
-                    PredefinedPosition.Pickup_left.SetValue(ReadPositionFromFile("PickupLeftMotorsPosition.json"));
-                }
-            }
-        } else {
-            keylock_crossleft = false;
+        armPosition = targetPosition.ArmMotor;
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotor.setTargetPosition(armPosition);
+        runtimeArm.reset();
+        armMotor.setPower(armPow);
+        while ((runtimeArm.seconds() < 2) &&
+                (armMotor.isBusy())) {
         }
 
-        if (gamepad.dpad_right) {
-            if (!keylock_crossright) {
-                keylock_crossright = true;
-                if(CurState == SysState.RECALIBRATION) {
-                    GetMotorsPosition(PredefinedPosition.Pickup_right);
-                    SavePositonsToFile("PickupRightMotorsPosition.json", PredefinedPosition.Pickup_right);
-                }
-                else if(CurState == SysState.RECOVER)
-                {
-                    CopyPositionFile("PickupRightMotorsPosition.json");
-                    PredefinedPosition.Pickup_right.SetValue(ReadPositionFromFile("PickupRightMotorsPosition.json"));
-                }
+        if(doArmFirst ) {
+            wristServo.setPosition(targetPosition.WristServo);
+            palmServo.setPosition(targetPosition.PalmServo);
+            knuckleServo.setPosition(targetPosition.KnuckleServo);
+            fingerServo.setPosition(targetPosition.FingerServo);
+        }
+    }
+
+    private void GetMotorsPosition(MotorPositionCal.SubsystemPosition position) {
+        position.WristServo = wristServo.getPosition();
+        position.PalmServo = palmServo.getPosition();
+        position.KnuckleServo = knuckleServo.getPosition();
+        position.FingerServo = fingerServo.getPosition();
+        position.ArmMotor = armMotor.getCurrentPosition();
+        position.RotatorMotor = rotatorMotor.getCurrentPosition();
+        position.LifterMotor = lifterMotor.getCurrentPosition();
+    }
+
+
+
+    /**
+     * Runs repeatedly during teleop. The right bumper toggles between control modes.
+     * In the first control mode, 3 buttons move the flipper between 3 positions.
+     * In the second control mode, the 2 buttons move theh flipper up and down.
+     *
+     * @param gamepad1
+     * @param gamepad2
+     */
+    private ElapsedTime runtimeMain = new ElapsedTime();
+    @Override
+    public void teleopControls(Gamepad gamepad1, Gamepad gamepad2) {
+
+        if(CurState == SysState.RUN) {
+            if(gamepad1.start)
+            {
+                CurState = SysState.RECALIBRATION;
+                //FileOpTele = "Enter RE-CALIBRATION ...";
+                runtimeMain.reset();
             }
-        } else {
-            keylock_crossright = false;
+            else if(gamepad1.back)
+            {
+                CurState = SysState.RECOVER;
+                //FileOpTele = "Enter RECOVER ...";
+                runtimeMain.reset();
+            }
         }
 
-        if (gamepad.a) {
-            if (!keylock_a) {
-                keylock_a = true;
-                if(CurState == SysState.RECALIBRATION) {
-                    GetMotorsPosition(PredefinedPosition.Drop_A_1);
-                    SavePositonsToFile("DropA1MotorsPosition.json", PredefinedPosition.Drop_A_1);
-                }
-                else if(CurState == SysState.RECOVER)
-                {
-                    CopyPositionFile("DropA1MotorsPosition.json");
-                    PredefinedPosition.Drop_A_1.SetValue(ReadPositionFromFile("DropA1MotorsPosition.json"));
-                }
-            }
-        } else {
-            keylock_a = false;
+        if(CurState == SysState.RUN) {
+            SetPredefinedHandMotors(gamepad1);
+            TuningHandMotors(gamepad2);
         }
-
-        if (gamepad.b) {
-            if (!keylock_b) {
-                keylock_b = true;
-                if(CurState == SysState.RECALIBRATION) {
-                    GetMotorsPosition(PredefinedPosition.Drop_B_2);
-                    SavePositonsToFile("DropB2MotorsPosition.json", PredefinedPosition.Drop_B_2);
-                }
-                else if(CurState == SysState.RECOVER)
-                {
-                    CopyPositionFile("DropB2MotorsPosition.json");
-                    PredefinedPosition.Drop_B_2.SetValue(ReadPositionFromFile("DropB2MotorsPosition.json"));
-                }
-            }
-        } else {
-            keylock_b = false;
+        else //if(CurState == SysState.RECALIBRATION || RECOVER)
+        {
+            RedoPredefinedHandMotors();
+            CurState = SysState.RUN;
+            //FileOpTele = "";
         }
+    }
 
-        if (gamepad.x) {
-            if (!keylock_x) {
-                keylock_x = true;
-                if(CurState == SysState.RECALIBRATION) {
-                    GetMotorsPosition(PredefinedPosition.Drop_X_3);
-                    SavePositonsToFile("DropX3MotorsPosition.json", PredefinedPosition.Drop_X_3);
-                }
-                else if(CurState == SysState.RECOVER)
-                {
-                    CopyPositionFile("DropX3MotorsPosition.json");
-                    PredefinedPosition.Drop_X_3.SetValue(ReadPositionFromFile("DropX3MotorsPosition.json"));
-                }
+    private void RedoPredefinedHandMotors() {
+        if (CurState == SysState.RECALIBRATION) {
+            if (CurrentPositionBySet == PredefinedPosition.Pickup_up) {
+                GetMotorsPosition(PredefinedPosition.Pickup_up);
+                SavePositonsToFile("PickupUpMotorsPosition.json",
+                        PredefinedPosition.Pickup_up);
+            } else if (CurrentPositionBySet == PredefinedPosition.Pickup_down) {
+                GetMotorsPosition(PredefinedPosition.Pickup_down);
+                SavePositonsToFile("PickupDownMotorsPosition.json",
+                        PredefinedPosition.Pickup_down);
+            } else if (CurrentPositionBySet == PredefinedPosition.Pickup_left) {
+                GetMotorsPosition(PredefinedPosition.Pickup_left);
+                SavePositonsToFile("PickupLeftMotorsPosition.json",
+                        PredefinedPosition.Pickup_left);
+            } else if (CurrentPositionBySet == PredefinedPosition.Pickup_right) {
+                GetMotorsPosition(PredefinedPosition.Pickup_right);
+                SavePositonsToFile("PickupRightMotorsPosition.json",
+                        PredefinedPosition.Pickup_right);
+            } else if (CurrentPositionBySet == PredefinedPosition.Drop_A_1) {
+                GetMotorsPosition(PredefinedPosition.Drop_A_1);
+                SavePositonsToFile("DropA1MotorsPosition.json",
+                        PredefinedPosition.Drop_A_1);
+            } else if (CurrentPositionBySet == PredefinedPosition.Drop_B_2) {
+                GetMotorsPosition(PredefinedPosition.Drop_B_2);
+                SavePositonsToFile("DropB2MotorsPosition.json",
+                        PredefinedPosition.Drop_B_2);
+            } else if (CurrentPositionBySet == PredefinedPosition.Drop_X_3) {
+                GetMotorsPosition(PredefinedPosition.Drop_X_3);
+                SavePositonsToFile("DropX3MotorsPosition.json",
+                        PredefinedPosition.Drop_X_3);
+            } else if (CurrentPositionBySet == PredefinedPosition.Drop_Y_4) {
+                GetMotorsPosition(PredefinedPosition.Drop_Y_4);
+                SavePositonsToFile("DropY4MotorsPosition.json",
+                        PredefinedPosition.Drop_Y_4);
             }
-        } else {
-            keylock_x = false;
-        }
-
-        if (gamepad.y) {
-            if (!keylock_y) {
-                keylock_y = true;
-                if(CurState == SysState.RECALIBRATION) {
-                    GetMotorsPosition(PredefinedPosition.Drop_Y_4);
-                    SavePositonsToFile("DropY4MotorsPosition.json", PredefinedPosition.Drop_Y_4);
-                }
-                else if(CurState == SysState.RECOVER)
-                {
-                    CopyPositionFile("DropY4MotorsPosition.json");
-                    PredefinedPosition.Drop_Y_4.SetValue(ReadPositionFromFile("DropY4MotorsPosition.json"));
-                }
+        } else if (CurState == SysState.RECOVER) {
+            if (CurrentPositionBySet == PredefinedPosition.Pickup_up) {
+                CopyPositionFile("PickupUpMotorsPosition.json");
+                PredefinedPosition.Pickup_up.SetValue(
+                        ReadPositionFromFile("PickupUpMotorsPosition.json"));
+            } else if (CurrentPositionBySet == PredefinedPosition.Pickup_down) {
+                CopyPositionFile("PickupDownMotorsPosition.json");
+                PredefinedPosition.Pickup_down.SetValue(
+                        ReadPositionFromFile("PickupDownMotorsPosition.json"));
+            } else if (CurrentPositionBySet == PredefinedPosition.Pickup_left) {
+                CopyPositionFile("PickupLeftMotorsPosition.json");
+                PredefinedPosition.Pickup_left.SetValue(
+                        ReadPositionFromFile("PickupLeftMotorsPosition.json"));
+            } else if (CurrentPositionBySet == PredefinedPosition.Pickup_right) {
+                CopyPositionFile("PickupRightMotorsPosition.json");
+                PredefinedPosition.Pickup_right.SetValue(
+                        ReadPositionFromFile("PickupRightMotorsPosition.json"));
+            } else if (CurrentPositionBySet == PredefinedPosition.Drop_A_1) {
+                CopyPositionFile("DropA1MotorsPosition.json");
+                PredefinedPosition.Drop_A_1.SetValue(
+                        ReadPositionFromFile("DropA1MotorsPosition.json"));
+            } else if (CurrentPositionBySet == PredefinedPosition.Drop_B_2) {
+                CopyPositionFile("DropB2MotorsPosition.json");
+                PredefinedPosition.Drop_B_2.SetValue(
+                        ReadPositionFromFile("DropB2MotorsPosition.json"));
+            } else if (CurrentPositionBySet == PredefinedPosition.Drop_X_3) {
+                CopyPositionFile("DropX3MotorsPosition.json");
+                PredefinedPosition.Drop_X_3.SetValue(
+                        ReadPositionFromFile("DropX3MotorsPosition.json"));
+            } else if (CurrentPositionBySet == PredefinedPosition.Drop_Y_4) {
+                CopyPositionFile("DropY4MotorsPosition.json");
+                PredefinedPosition.Drop_Y_4.SetValue(
+                        ReadPositionFromFile("DropY4MotorsPosition.json"));
             }
-        } else {
-            keylock_y = false;
         }
     }
 
@@ -409,11 +401,9 @@ public class Hand extends Subsystem
     private boolean knuckleServoRightLock = false;
     private boolean lifterHighLock = false;
     private boolean lifterLowLock = false;
-    ElapsedTime runtimeManual = new ElapsedTime();
 
+    ElapsedTime runtimeManual = new ElapsedTime();
     ElapsedTime runtimeArm = new ElapsedTime() ;
-    //private boolean rampUp[] = new boolean[]{false, false, false, false, false, false, false};
-    //private double wristServoPosition = 0;
 
     private void ManualAdjustHandMotors(Gamepad gamepad) {
 
@@ -460,7 +450,7 @@ public class Hand extends Subsystem
             if (gamepad.dpad_left) {
                 if (!knuckleServoLeftLock) {
                     knuckleServoLeftLock = true;
-                    knukcleServo.setPosition(knukcleServo.getPosition() + 0.05);
+                    knuckleServo.setPosition(knuckleServo.getPosition() + 0.05);
                 }
             } else {
                 knuckleServoLeftLock = false;
@@ -468,7 +458,7 @@ public class Hand extends Subsystem
             if (gamepad.dpad_right) {
                 if (!knuckleServoRightLock) {
                     knuckleServoRightLock = true;
-                    knukcleServo.setPosition(knukcleServo.getPosition() - 0.05);
+                    knuckleServo.setPosition(knuckleServo.getPosition() - 0.05);
                 }
             } else {
                 knuckleServoRightLock = false;
@@ -565,9 +555,6 @@ public class Hand extends Subsystem
     boolean keylock_x = false;
     boolean keylock_y = false;
 
-    boolean leftTriggerLock = false;
-    boolean armPositionLock = false;
-
     public void SetPredefinedHandMotors(Gamepad gamepad) {
         if (gamepad.dpad_up) {
             if (!keylock_crossup) {
@@ -642,67 +629,68 @@ public class Hand extends Subsystem
         }
     }
 
-    double y = 0;
-    public void TuningHandMotors(Gamepad gamepad)
-    {
-            //Wrist Servo
-            if (gamepad.right_stick_y > 0.3) {
-                if (!wristServoRightLock) {
-                    wristServoRightLock = true;  // Hold off any more triggers
-                    wristServo.setPosition(wristServo.getPosition() + 0.02);
-                }
-            } else {
-                wristServoRightLock = false;  // We can trigger again now.
-            }
+    boolean leftTriggerLock = false;
+    boolean armPositionLock = false;
 
-            if (gamepad.right_stick_y < -0.3) {
-                if (!wristServoLeftLock) {
-                    wristServoLeftLock = true;  // Hold off any more triggers
-                    wristServo.setPosition(wristServo.getPosition() - 0.02);
-                }
-            } else {
-                wristServoLeftLock = false;  // We can trigger again now.
+    double wristPoistion = 0;
+    public void TuningHandMotors(Gamepad gamepad) {
+        //Wrist Servo
+        if (gamepad.right_stick_y > 0.3) {
+            if (!wristServoRightLock) {
+                wristServoRightLock = true;  // Hold off any more triggers
+                wristServo.setPosition(wristServo.getPosition() + 0.02);
             }
+        } else {
+            wristServoRightLock = false;  // We can trigger again now.
+        }
 
-            // palm servo
-            if (gamepad.y) {
-                if (!palmServoLeftLock) {
-                    palmServoLeftLock = true;
-                    palmServo.setPosition(palmServo.getPosition() + 0.02);
-                }
-            } else {
-                palmServoLeftLock = false;
+        if (gamepad.right_stick_y < -0.3) {
+            if (!wristServoLeftLock) {
+                wristServoLeftLock = true;  // Hold off any more triggers
+                wristServo.setPosition(wristServo.getPosition() - 0.02);
             }
-            if (gamepad.a) {
-                if (!palmServoRightLock) {
-                    palmServoRightLock = true;
-                    palmServo.setPosition(palmServo.getPosition() - 0.02);
-                }
-            } else {
-                palmServoRightLock = false;
-            }
+        } else {
+            wristServoLeftLock = false;  // We can trigger again now.
+        }
 
-            // Knuckle servo
-            if (gamepad.right_stick_x > 0.3) {
-                if (!knuckleServoLeftLock) {
-                    knuckleServoLeftLock = true;
-                    knukcleServo.setPosition(knukcleServo.getPosition() - 0.05);
-                }
-            } else {
-                knuckleServoLeftLock = false;
+        // palm servo
+        if (gamepad.right_stick_x > 0.3) {
+            if (!palmServoLeftLock) {
+                palmServoLeftLock = true;
+                palmServo.setPosition(palmServo.getPosition() + 0.05);
             }
-            if (gamepad.right_stick_x < -0.3) {
-                if (!knuckleServoRightLock) {
-                    knuckleServoRightLock = true;
-                    knukcleServo.setPosition(knukcleServo.getPosition() + 0.05);
-                }
-            } else {
-                knuckleServoRightLock = false;
+        } else {
+            palmServoLeftLock = false;
+        }
+        if (gamepad.right_stick_x < -0.3) {
+            if (!palmServoRightLock) {
+                palmServoRightLock = true;
+                palmServo.setPosition(palmServo.getPosition() - 0.05);
             }
+        } else {
+            palmServoRightLock = false;
+        }
 
-            // finger servo
-        if (gamepad.left_trigger > TRIGGER_THRESHOLD )
-        {
+        // Knuckle servo
+        if (gamepad.b) {
+            if (!knuckleServoLeftLock) {
+                knuckleServoLeftLock = true;
+                knuckleServo.setPosition(knuckleServo.getPosition() - 0.05);
+            }
+        } else {
+            knuckleServoLeftLock = false;
+        }
+        if (gamepad.x) {
+            if (!knuckleServoRightLock) {
+                knuckleServoRightLock = true;
+                knuckleServo.setPosition(knuckleServo.getPosition() + 0.05);
+            }
+        } else {
+            knuckleServoRightLock = false;
+        }
+
+        // finger servo
+        if (gamepad.left_trigger > TRIGGER_THRESHOLD) {
             if (!leftTriggerLock) {
                 leftTriggerLock = true;
                 if (gamepad.right_trigger < TRIGGER_THRESHOLD) { // pickup
@@ -721,19 +709,18 @@ public class Hand extends Subsystem
                 } else// if (gamepad.left_trigger > 0.75) { // dropoff
                     fingerServo.setPosition(1);
             }
-        }
-        else if(gamepad.left_trigger < TRIGGER_THRESHOLD && gamepad.right_trigger < TRIGGER_THRESHOLD)
-        {
+        } else if (gamepad.left_trigger < TRIGGER_THRESHOLD &&
+                gamepad.right_trigger < TRIGGER_THRESHOLD) {
             leftTriggerLock = false;
         }
-        if (gamepad.x )
+        if (gamepad.y)
             fingerServo.setPosition(1);//open
-        if(gamepad.b )
+        if (gamepad.a)
             fingerServo.setPosition(0);// close
 
 
-            // arm motor
-            y = -gamepad.left_stick_y;
+        // arm motor
+        double y = -gamepad.left_stick_y;
 
             /*double armPower = 0.35;
             if (gamepad.dpad_up) {
@@ -747,25 +734,19 @@ public class Hand extends Subsystem
             {
                 armPower = 0.2;
             }*/
-        if( y > 0.1)
-        {
+        if (y > 0.1) {
             armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            armMotor.setPower(y*0.4);
+            armMotor.setPower(y * 0.4);
             armPositionLock = false;
-        }
-        else if(y<-0.1)
-        {
+        } else if (y < -0.1) {
             armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            if(armMotor.getCurrentPosition() > 900)// TODO: COS/SIN calculation
-                armMotor.setPower(y*0.1);
+            if (armMotor.getCurrentPosition() > 900)// TODO: COS/SIN calculation
+                armMotor.setPower(y * 0.1);
             else
-                armMotor.setPower(y*0.02);
+                armMotor.setPower(y * 0.02);
             armPositionLock = false;
-        }
-        else
-        {
-            if(armPositionLock == false)
-            {
+        } else {
+            if (armPositionLock == false) {
                 armMotor.setPower(0);
                 armPositionLock = true;
                 armPosition = armMotor.getCurrentPosition();
@@ -781,9 +762,9 @@ public class Hand extends Subsystem
         }
 
 
-            // rotator motor
-            double x = -gamepad.left_stick_x;
-            rotatorMotor.setPower(0.15*x);
+        // rotator motor
+        double x = -gamepad.left_stick_x;
+        rotatorMotor.setPower(0.15 * x);
             /*if (gamepad.dpad_left) {
                 rotatorMotor.setPower(0.2);
             } else if (gamepad.dpad_right) {
@@ -792,69 +773,57 @@ public class Hand extends Subsystem
                 rotatorMotor.setPower(0);
             }*/
 
-            //lifter motor
-            if (gamepad.left_bumper) {//up
-                if (!lifterHighLock) {
-                    lifterHighLock = true;  // Hold off any more triggers
-                    if (lifterMotor.getCurrentPosition() < 2000) { // max high limit
-                        lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition() + 100);
-                        lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                        runtimeManual.reset();
-                        lifterMotor.setPower(0.2);
-                        while ((runtimeManual.seconds() < 1) &&
-                                (lifterMotor.isBusy())) {
-                        }
+        //lifter motor
+        if (gamepad.left_bumper) {//up
+            if (!lifterHighLock) {
+                lifterHighLock = true;  // Hold off any more triggers
+                if (lifterMotor.getCurrentPosition() < 2000) { // max high limit
+                    lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition() + 100);
+                    lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    runtimeManual.reset();
+                    lifterMotor.setPower(0.2);
+                    while ((runtimeManual.seconds() < 1) &&
+                            (lifterMotor.isBusy())) {
                     }
-                    //gamepad1.rumble(0.9, 0, 200);  // 200 mSec burst on left motor.
                 }
-            } else {
-                lifterHighLock = false;  // We can trigger again now.
+                //gamepad1.rumble(0.9, 0, 200);  // 200 mSec burst on left motor.
             }
+        } else {
+            lifterHighLock = false;  // We can trigger again now.
+        }
 
-            if (gamepad.right_bumper) {//down
-                if (!lifterLowLock) {
-                    lifterLowLock = true;
-                    if (lifterMotor.getCurrentPosition() > 100) // min low limit
-                    {
-                        lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition() - 100);
-                        lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                        runtimeManual.reset();
-                        lifterMotor.setPower(0.2);
-                        while ((runtimeManual.seconds() < 1) &&
-                                (lifterMotor.isBusy())) {
-                        }
+        if (gamepad.right_bumper) {//down
+            if (!lifterLowLock) {
+                lifterLowLock = true;
+                if (lifterMotor.getCurrentPosition() > 100) // min low limit
+                {
+                    lifterMotor.setTargetPosition(lifterMotor.getCurrentPosition() - 100);
+                    lifterMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    runtimeManual.reset();
+                    lifterMotor.setPower(0.2);
+                    while ((runtimeManual.seconds() < 1) &&
+                            (lifterMotor.isBusy())) {
                     }
                 }
-            } else {
-                lifterLowLock = false;
             }
-        //}
+        } else {
+            lifterLowLock = false;
+        }
     }
 
 
     @Override
-    public String addTelemetry() {
-        String s = "Lifter: " + lifterMotor.getCurrentPosition() + "; ";
-
-        s += "Rotator: " + rotatorMotor.getCurrentPosition() + "; ";
-
-        s += "Arm: " + armMotor.getCurrentPosition() + "; ";
-        //s += "Arm T Postion: " + armPosition + "; ";
-        //s += "Arm y: " + y + "; ";
-
-        s += "wristServo: " + wristServo.getPosition() + "; ";
-
-        s += "palmServo: " + palmServo.getPosition() + "; ";
-
-        s += "knukcleServo: " + knukcleServo.getPosition() + "; ";
-
-        s += "fingerServo: " + fingerServo.getPosition() + "; ";
-
-        if(CurState != SysState.RUN)
-        {
-            s += FileOpTele;
-        }
-
+    public String addTelemetry()
+    {
+        String s = "----HAND---- \n";
+        s += "Lifter: " + lifterMotor.getCurrentPosition() + "\n";
+        s += "Rotator: " + rotatorMotor.getCurrentPosition() + "\n";
+        s += "Arm: " + armMotor.getCurrentPosition() + "\n";
+        s += "wristServo: " + wristServo.getPosition() + "\n";
+        s += "palmServo: " + palmServo.getPosition() + "\n";
+        s += "knuckleServo: " + knuckleServo.getPosition() + "\n";
+        s += "fingerServo: " + fingerServo.getPosition() + "\n";
+        s += FileOpTele + "\n";;
         return s;
     }
 
@@ -871,23 +840,19 @@ public class Hand extends Subsystem
     @Override
     public void teleopInit( Subsystem otherSys) {
         crossSubsystem = otherSys;
-        PreviousPostionBySet = CurrentPostionBySet = PredefinedPosition.InitPosition;
+        PreviousPositionBySet = CurrentPositionBySet = PredefinedPosition.InitPosition;
         SetMotorsPosition(PredefinedPosition.InitPosition);
         armPosition =  armMotor.getCurrentPosition();
     }
-
 
     @Override
     public void CrossSubsystemCheck() {
 
     }
 
-
-
     public void setFingerTargetPosition(int position) {
         fingerServo.setPosition(position);
     }
-
     public void setArmTargetPosition(int position) {
         armPosition = position;
     }

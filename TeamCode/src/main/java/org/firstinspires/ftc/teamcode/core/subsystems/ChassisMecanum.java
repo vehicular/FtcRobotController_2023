@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.core.subsystems;
 
-
-
 import android.graphics.Color;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
@@ -27,22 +25,26 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.core.Subsystem;
 import org.firstinspires.ftc.teamcode.util.Constants;
 
+public class ChassisMecanum extends Subsystem
+{
 
-public class ChassisMecanum extends Subsystem {
+    private final double TRIGGER_THRESHOLD = 0.75;
 
     Subsystem crossSubsystem;
 
     boolean isAutonomous = false;
 
-    private DcMotor backLeft = null; private DcMotor backRight = null;
-    private DcMotor frontLeft = null; private DcMotor frontRight = null;
+    private DcMotor backLeft = null;
+    private DcMotor backRight = null;
+    private DcMotor frontLeft = null;
+    private DcMotor frontRight = null;
 
     //private ModernRoboticsI2cGyro myGyro= null;// Additional Gyro device
     //private GyroSensor sensorGyro=null;
     private BNO055IMU imu         = null;      // Control/Expansion Hub IMU
 
     /** The colorSensor field will contain a reference to our color sensor hardware object */
-    private NormalizedColorSensor colorSensor;
+    private NormalizedColorSensor colorSensor = null;
 
     private HardwareMap hardMap = null;
     private Telemetry telemetry = null;
@@ -53,12 +55,12 @@ public class ChassisMecanum extends Subsystem {
     private double speedmodifier=1;
     private boolean inv=false;
 
-
     private static final double DRIVE_GEAR_REDUCTION = 1;
     private static final double TICKS_PER_REV=537.7; // eg: GoBILDA 312 RPM Yellow Jacket;
     private static final double WHEEL_DIAMETER_INCHES=4;
-    private static final double COUNTS_PER_INCH = (TICKS_PER_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * Math.PI);
-    private static final double P_DRIVE_COEFF = 0.15;     // Larger is more responsive, but also less stable
+    private static final double COUNTS_PER_INCH =
+            (TICKS_PER_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * Math.PI);
+    private static final double P_DRIVE_COEFF = 0.15; // Larger is more responsive, but also less stable
 
     //private MediaPlayer hatz= new MediaPlayer();
 
@@ -70,8 +72,7 @@ public class ChassisMecanum extends Subsystem {
     double LBMotorMultiplier = 0.4;
     double RBMotorMultiplier = 0.4;
 
-    public ChassisMecanum(HardwareMap hardwareMap, boolean isTankDrive)
-    {
+    public ChassisMecanum(HardwareMap hardwareMap, boolean isTankDrive) {
         super(hardwareMap);
         frontLeft = hardwareMap.get(DcMotor.class, Constants.leftfrontMotor);
         frontRight = hardwareMap.get(DcMotor.class, Constants.rightfrontMotor);
@@ -94,7 +95,6 @@ public class ChassisMecanum extends Subsystem {
             backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            //if autonomous
         } else {
             backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -113,11 +113,11 @@ public class ChassisMecanum extends Subsystem {
         // algorithm here just reports accelerations to the logcat log; it doesn't actually
         // provide positional information.
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
-        parameters.loggingEnabled      = true;
-        parameters.loggingTag          = "IMU";
+        parameters.loggingEnabled = true;
+        parameters.loggingTag = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
         imu.initialize(parameters);
@@ -147,7 +147,6 @@ public class ChassisMecanum extends Subsystem {
      * @param gamepad1
      * @param gamepad2
      */
-    private final double TRIGGER_THRESHOLD = 0.75;
     @Override
     public void teleopControls(Gamepad gamepad1, Gamepad gamepad2)
     {
@@ -158,9 +157,14 @@ public class ChassisMecanum extends Subsystem {
             FastControl(gamepad1); // field coordinate
         }
         else {
-            if (gamepad1.right_trigger > TRIGGER_THRESHOLD || gamepad1.left_trigger > TRIGGER_THRESHOLD) {
+            if (gamepad1.right_trigger > TRIGGER_THRESHOLD ||
+                    gamepad1.left_trigger > TRIGGER_THRESHOLD)
+            {
                 SlowControl(gamepad1); // robot coordinate
-            } else if (gamepad2.right_trigger < TRIGGER_THRESHOLD && gamepad2.left_trigger < TRIGGER_THRESHOLD) {
+            }
+            else if (gamepad2.right_trigger < TRIGGER_THRESHOLD &&
+                    gamepad2.left_trigger < TRIGGER_THRESHOLD)
+            {
                 InchMoveControl(gamepad2); // robot coordinate
             }
         }
@@ -221,7 +225,7 @@ public class ChassisMecanum extends Subsystem {
         */
         double y = -gamepad.left_stick_y; // Remember, this is reversed!
         double x = gamepad.left_stick_x * 1.1; // Counteract imperfect strafing
-        double rx = gamepad.right_stick_x;
+        double rx = gamepad.right_stick_x * 0.8; // make it slow
 
         // Denominator is the largest motor power (absolute value) or 1
         // This ensures all the powers maintain the same ratio, but only when
@@ -233,9 +237,9 @@ public class ChassisMecanum extends Subsystem {
         double backRightPower = (y + x - rx) / denominator;
 
         frontLeft.setPower(frontLeftPower*LFMotorMultiplier);
-        backLeft.setPower(backLeftPower*LFMotorMultiplier);
-        frontRight.setPower(frontRightPower*LFMotorMultiplier);
-        backRight.setPower(backRightPower*LFMotorMultiplier);
+        backLeft.setPower(backLeftPower*LBMotorMultiplier);
+        frontRight.setPower(frontRightPower*RFMotorMultiplier);
+        backRight.setPower(backRightPower*RBMotorMultiplier);
     }
 
     private void SlowControl(Gamepad gamepad)
@@ -340,10 +344,10 @@ public class ChassisMecanum extends Subsystem {
     @Override
     public String addTelemetry()
     {
-        String s = "Chassis \n";
+        String s = "----CHASSIS---- \n";
 
         s += "left Front Wheel: " + frontLeft.getCurrentPosition() + "\n";
-        s += "Left Back Wheel: " + backLeft.getCurrentPosition();
+        s += "Left Back Wheel: " + backLeft.getCurrentPosition() + "\n";;
         s += "Right Front Wheel: " + frontRight.getCurrentPosition() + "\n";
         s += "Right Back Wheel: " + backRight.getCurrentPosition() + "\n";
 
@@ -352,7 +356,8 @@ public class ChassisMecanum extends Subsystem {
 
 
     // to obtain reflected light, read the normalized values from the color sensor.  Return the Alpha channel.
-    double getBrightness() {
+    double getBrightness()
+    {
         // Once per loop, we will update this hsvValues array. The first element (0) will contain the
         // hue, the second element (1) will contain the saturation, and the third element (2) will
         // contain the value. See http://web.archive.org/web/20190311170843/https://infohost.nmt.edu/tcc/help/pubs/colortheory/web/hsv.html
