@@ -332,7 +332,7 @@ public class ChassisMecanum extends Subsystem
     }
 
     @Override
-    public void CrossSubsystemCheck() {
+    public void crossSubsystemCheck() {
 
     }
 

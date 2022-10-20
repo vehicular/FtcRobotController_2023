@@ -30,7 +30,7 @@ public abstract class Subsystem
 
     public abstract void teleopInit(Subsystem otherSys);
 
-    public abstract void CrossSubsystemCheck();
+    public abstract void crossSubsystemCheck();
     //{
         // 1) finger is too low while driving
         // 2) finger needs chassis's help to reach a specified point(3d)

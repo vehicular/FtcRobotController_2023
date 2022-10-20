@@ -185,7 +185,7 @@ public class ChassisTank extends Subsystem
 
 
     @Override
-    public void CrossSubsystemCheck() {
+    public void crossSubsystemCheck() {
 
     }
 

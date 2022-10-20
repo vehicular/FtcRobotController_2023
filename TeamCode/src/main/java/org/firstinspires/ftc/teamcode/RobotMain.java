@@ -40,8 +40,8 @@ public class RobotMain extends OpMode
         hand.teleopControls(gamepad1, gamepad2);
         telemetry.addData("  ", hand.addTelemetry() + "\n");
 
-        chassis.CrossSubsystemCheck();
-        hand.CrossSubsystemCheck();
+        chassis.crossSubsystemCheck();
+        hand.crossSubsystemCheck();
 
         //telemetry.addData("left_stick_y", gamepad1.left_stick_y);
         //telemetry.addData("right_stick_y", gamepad1.right_stick_y);

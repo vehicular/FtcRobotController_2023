@@ -267,7 +267,7 @@ public class CalibrationHandPosition extends LinearOpMode
 
         PredefinedPosition.Pickup_down.LifterMotor = 0;
         PredefinedPosition.Pickup_down.RotatorMotor = 0;
-        PredefinedPosition.Pickup_down.ArmMotor = -230;//-310 is lowest, add a bit
+        PredefinedPosition.Pickup_down.ArmMotor = -210;//-310 is lowest, add a bit
         PredefinedPosition.Pickup_down.WristServo = 0.91;
         PredefinedPosition.Pickup_down.PalmServo = 0.95;
         PredefinedPosition.Pickup_down.KnuckleServo = 0.33;
@@ -275,7 +275,7 @@ public class CalibrationHandPosition extends LinearOpMode
 
         PredefinedPosition.Pickup_left.LifterMotor = 0;
         PredefinedPosition.Pickup_left.RotatorMotor = 0;
-        PredefinedPosition.Pickup_left.ArmMotor = -230;//-310 is lowest, add a bit
+        PredefinedPosition.Pickup_left.ArmMotor = -210;//-310 is lowest, add a bit
         PredefinedPosition.Pickup_left.WristServo = 0.91;
         PredefinedPosition.Pickup_left.PalmServo = 0.95;
         PredefinedPosition.Pickup_left.KnuckleServo = 0.0;
@@ -283,7 +283,7 @@ public class CalibrationHandPosition extends LinearOpMode
 
         PredefinedPosition.Pickup_right.LifterMotor = 0;
         PredefinedPosition.Pickup_right.RotatorMotor = 0;
-        PredefinedPosition.Pickup_right.ArmMotor = -230;//-310 is lowest, add a bit
+        PredefinedPosition.Pickup_right.ArmMotor = -210;//-310 is lowest, add a bit
         PredefinedPosition.Pickup_right.WristServo = 0.91;
         PredefinedPosition.Pickup_right.PalmServo = 0.95;
         PredefinedPosition.Pickup_right.KnuckleServo = 0.7;

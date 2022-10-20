@@ -79,4 +79,38 @@ public class MotorPositionCal
     public MotorPositionCal()
     {}
 
+
+    public static final int LIFTER_POSITION_LOWEST = 0;
+    public static final int LIFTER_POSITION_HIGHEST = 1000;
+
+    public static final int ROTATOR_POSITION_CENTER = 0;
+    public static final int ROTATOR_POSITION_MOST_LEFT = 500;
+    public static final int ROTATOR_POSITION_MOST_RIGHT = -500;
+
+    public static final int ARM_POSITION_HIGHEST = 1200;  // max position
+    public static final int ARM_POSITION_P_45D = 250;     // 45 degree point up
+    public static final int ARM_POSITION_HORIZONTAL = 0;  // horizontal, init
+    public static final int ARM_POSITION_N_45D = -250;    // 45 degree point down
+    public static final int ARM_POSITION_LOWEST = -330;   // min position
+
+    public static final double WRIST_POSITION_MAX = 1.0;
+    public static final double WRIST_POSITION_ARM_P45D = 0.8;  // angle up 45 degree with arm
+    public static final double WRIST_POSITION_WITH_ARM = 0.7;  // flat with arm
+    public static final double WRIST_POSITION_WITH_N45D = 0.6; // angle down 45 degree with arm
+    public static final double WRIST_POSITION_MIN = 0;
+
+    public static final double PALM_POSITION_MAX = 1.0;
+    public static final double PALM_POSITION_WITH_WRIST = 0.7; // flat with wrist
+    public static final double PALM_POSITION_MIN = 0;
+
+    public static final double KNUCKLE_POSITION_LEFT_MAX = 0;
+    public static final double KNUCKLE_POSITION_LEFT = 0.2;
+    public static final double KNUCKLE_POSITION_CENTER = 0.4;
+    public static final double KNUCKLE_POSITION_RIGHT = 0.6;
+    public static final double KNUCKLE_POSITION_RIGHT_MAX = 0.8;
+
+    public static final double FINGER_POSITION_CLOSE = 1.0;
+    public static final double FINGER_POSITION_OPEN = 0;
+
+
 }
