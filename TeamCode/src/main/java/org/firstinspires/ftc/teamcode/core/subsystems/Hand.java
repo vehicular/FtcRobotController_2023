@@ -86,14 +86,16 @@ public class Hand extends Subsystem
         rotatorMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         
-        lifterMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rotatorMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        // reset all motors encoder to zero. remove them since we use saved cali data
+        //lifterMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //rotatorMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         
         lifterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rotatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        
+    
+        lifterMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rotatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         
@@ -154,6 +156,25 @@ public class Hand extends Subsystem
     @Override
     public void stop()
     {
+        // slowly move the arm and lifter down
+        armMotor.setTargetPosition(-220);
+        runtimeArm.reset();
+        armMotor.setPower(0.1);
+        while ((runtimeArm.seconds() < 2) &&
+                (armMotor.isBusy()))
+        {
+        }
+    
+        if (lifterMotor.getCurrentPosition() > 100) // min low limit
+        {
+            lifterMotor.setTargetPosition(50);
+            runtimeManual.reset();
+            lifterMotor.setPower(0.2);
+            while ((runtimeManual.seconds() < 1) &&
+                    (lifterMotor.isBusy()))
+            {
+            }
+        }
     }
     
     /**
@@ -206,6 +227,59 @@ public class Hand extends Subsystem
     
     private void SetPredefinedHandMotors(Gamepad gamepad)
     {
+        // finger servo
+        if (gamepad.left_trigger > TRIGGER_THRESHOLD)
+        {
+            if (!leftTriggerLock)
+            {
+                leftTriggerLock = true;
+                if (gamepad.right_trigger < TRIGGER_THRESHOLD)
+                { // pickup
+                    // TODO: to be checked if fingers are down position
+                    if (armMotor.getCurrentPosition() > -320) //TODO: to be calibrated
+                    {
+                        armMotor.setTargetPosition(-320);
+                        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                        runtimeManual.reset();
+                        armMotor.setPower(0.1);
+                        while ((runtimeManual.seconds() < 1) &&
+                                (armMotor.isBusy()))
+                        {
+                        }
+                        // arm will automatically get back to starting position
+                    }
+                    fingerServo.setPosition(0);
+                }
+                else// if (gamepad.left_trigger && right_trigger > 0.75) { // dropoff
+                {
+                    armMotor.setTargetPosition(armMotor.getCurrentPosition() - 30);
+                    armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    runtimeManual.reset();
+                    armMotor.setPower(0.1);
+                    while ((runtimeManual.seconds() < 1) &&
+                            (armMotor.isBusy()))
+                    {
+                    }
+                    runtimeManual.reset();
+                    while (runtimeManual.milliseconds() < 200)
+                    {
+                    }
+                    fingerServo.setPosition(1);
+                    runtimeManual.reset();
+                    while (runtimeManual.milliseconds() < 300)
+                    {
+                    }
+                    // arm will automatically get back to starting position
+                }
+            }
+        }
+        else if (gamepad.left_trigger < TRIGGER_THRESHOLD &&
+                gamepad.right_trigger < TRIGGER_THRESHOLD)
+        {
+            leftTriggerLock = false;
+        }
+        
+        
         if (gamepad.dpad_up)
         {
             if (!keylock_crossup)
@@ -429,7 +503,7 @@ public class Hand extends Subsystem
                     }
                     fingerServo.setPosition(0);
                 }
-                else// if (gamepad.left_trigger > 0.75) { // dropoff
+                else// if (gamepad.left_trigger & right_trigger > 0.75) { // dropoff
                 {
                     armMotor.setTargetPosition(armMotor.getCurrentPosition() - 30);
                     armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);

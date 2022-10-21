@@ -24,7 +24,8 @@ public class Constants
     public static String armMotor = "armmotor2";
 
     public static String imu = "imu";
-    public static String frontColorSensor = "color0";
+    public static String frontColorSensor = "leftcolor0";
+    public static String frontWebcamera = "Webcam 1";
 
     public static double TICKS_TO_INCHES = 1;
     public static int topClimber = -25000;
