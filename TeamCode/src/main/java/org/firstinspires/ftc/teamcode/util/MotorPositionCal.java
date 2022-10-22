@@ -29,9 +29,13 @@ public class MotorPositionCal
         public double PalmServo;
         public double KnuckleServo;
         public double FingerServo;
+        
+        private String positionName;
 
-        public SubsystemPosition()
-        {}
+        public SubsystemPosition(String name)
+        {
+            positionName = name;
+        }
         public String toString()
         {
             return String.format(Locale.getDefault(), "%7d : %7d : %7d : %2f : %2f : %2f : %2f",
@@ -43,6 +47,11 @@ public class MotorPositionCal
                 KnuckleServo,
                 FingerServo
             );
+        }
+        
+        public String GetPositionName()
+        {
+            return positionName;
         }
 
         public void SetValue(String[] data)
@@ -63,18 +72,18 @@ public class MotorPositionCal
                     Double.parseDouble(data[FingerServoInt]);
         }
     }
+    
+    public SubsystemPosition InitPosition = new SubsystemPosition("InitMotorsPosition.json");
 
-    public SubsystemPosition InitPosition = new SubsystemPosition();
+    public SubsystemPosition Pickup_up = new SubsystemPosition("PickupUpMotorsPosition.json");
+    public SubsystemPosition Pickup_down = new SubsystemPosition("PickupDownMotorsPosition.json");
+    public SubsystemPosition Pickup_left = new SubsystemPosition("PickupLeftMotorsPosition.json");
+    public SubsystemPosition Pickup_right = new SubsystemPosition("PickupRightMotorsPosition.json");
 
-    public SubsystemPosition Pickup_up = new SubsystemPosition();
-    public SubsystemPosition Pickup_down = new SubsystemPosition();
-    public SubsystemPosition Pickup_left = new SubsystemPosition();
-    public SubsystemPosition Pickup_right = new SubsystemPosition();
-
-    public SubsystemPosition Drop_A_1 = new SubsystemPosition(); // 0-10 inches
-    public SubsystemPosition Drop_B_2 = new SubsystemPosition(); // 10-20 inches
-    public SubsystemPosition Drop_X_3 = new SubsystemPosition(); // 20-30 inches
-    public SubsystemPosition Drop_Y_4 = new SubsystemPosition(); // 30-40 inches
+    public SubsystemPosition Drop_A_1 = new SubsystemPosition("DropA1MotorsPosition.json"); // 0-5 inches
+    public SubsystemPosition Drop_B_2 = new SubsystemPosition("DropB2MotorsPosition.json"); // 10-15 inches
+    public SubsystemPosition Drop_X_3 = new SubsystemPosition("DropX3MotorsPosition.json"); // 20-25 inches
+    public SubsystemPosition Drop_Y_4 = new SubsystemPosition("DropY4MotorsPosition.json"); // 30-35 inches
 
     public MotorPositionCal()
     {}
