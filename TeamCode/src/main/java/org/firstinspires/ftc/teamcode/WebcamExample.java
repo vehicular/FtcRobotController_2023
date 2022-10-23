@@ -35,7 +35,6 @@ import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
-import org.openftc.easyopencv.OpenCvInternalCamera;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 import org.openftc.easyopencv.TimestampedOpenCvPipeline;
@@ -154,7 +153,7 @@ public class WebcamExample extends LinearOpMode
      */
     static class StageSwitchingPipeline extends TimestampedOpenCvPipeline //OpenCvPipeline
     {
-        Point textAnchor;
+        Point stageTextAnchor;
         Point timeTextAnchor;
         Scalar green = new Scalar(0,255,0,255);
         
@@ -180,20 +179,13 @@ public class WebcamExample extends LinearOpMode
         public void init(Mat mat)
         {
             timeTextAnchor = new Point(0, 15);
-            textAnchor = new Point(540, mat.height()-10);
+            stageTextAnchor = new Point(540, mat.height()-10);
             runtime.reset();
         }
         
         @Override
         public void onViewportTapped()
         {
-            /*
-             * Note that this method is invoked from the UI thread
-             * so whatever we do here, we must do quickly.
-             */
-            
-            /**/
-            
         }
     
         ElapsedTime runtime = new ElapsedTime();
@@ -213,24 +205,11 @@ public class WebcamExample extends LinearOpMode
                 runtime.reset();
             }
             
-            ///Draw a simple box around the middle 1/2 of the entire frame
-            Imgproc.rectangle(
-                    input,
-                    new Point(
-                            input.cols()/4,
-                            input.rows()/4),
-                    new Point(
-                            input.cols()*(3f/4f),
-                            input.rows()*(3f/4f)),
-                    new Scalar(0, 255, 0), 4);
-    
             Imgproc.putText(input, String.format("Time: %d", captureTimeNanos),
                     timeTextAnchor, Imgproc.FONT_HERSHEY_PLAIN, 1, green, 1);
     
             Imgproc.putText(input, String.format("%s",stageToRenderToViewport.toString()),
-                    textAnchor, Imgproc.FONT_HERSHEY_PLAIN, 1, green, 1);
-            
-            //return input;
+                    stageTextAnchor, Imgproc.FONT_HERSHEY_PLAIN, 1, green, 1);
             
             contoursList.clear();
             
@@ -260,6 +239,16 @@ public class WebcamExample extends LinearOpMode
                 
                 case CONTOURS_OVERLAYED_ON_FRAME:
                 {
+                    ///Draw a simple box around the middle 1/2 of the entire frame
+                    Imgproc.rectangle(
+                            contoursOnFrameMat,
+                            new Point(
+                                    input.cols()/4,
+                                    input.rows()/4),
+                            new Point(
+                                    input.cols()*(3f/4f),
+                                    input.rows()*(3f/4f)),
+                            new Scalar(0, 255, 0), 4);
                     return contoursOnFrameMat;
                 }
                 
