@@ -23,6 +23,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.opencv.core.Core;
@@ -154,6 +155,7 @@ public class WebcamExample extends LinearOpMode
     static class StageSwitchingPipeline extends TimestampedOpenCvPipeline //OpenCvPipeline
     {
         Point textAnchor;
+        Point timeTextAnchor;
         Scalar green = new Scalar(0,255,0,255);
         
         Mat yCbCrChan2Mat = new Mat();
@@ -173,10 +175,13 @@ public class WebcamExample extends LinearOpMode
         private Stage stageToRenderToViewport = Stage.YCbCr_CHAN2;
         private Stage[] stages = Stage.values();
         
+        
         @Override
         public void init(Mat mat)
         {
-            textAnchor = new Point(20, mat.height()/2);
+            timeTextAnchor = new Point(0, 15);
+            textAnchor = new Point(540, mat.height()-10);
+            runtime.reset();
         }
         
         @Override
@@ -187,21 +192,26 @@ public class WebcamExample extends LinearOpMode
              * so whatever we do here, we must do quickly.
              */
             
-            int currentStageNum = stageToRenderToViewport.ordinal();
+            /**/
             
-            int nextStageNum = currentStageNum + 1;
-            
-            if(nextStageNum >= stages.length)
-            {
-                nextStageNum = 0;
-            }
-            
-            stageToRenderToViewport = stages[nextStageNum];
         }
+    
+        ElapsedTime runtime = new ElapsedTime();
         
         @Override
         public Mat processFrame(Mat input, long captureTimeNanos)
         {
+            if(runtime.seconds()>5)
+            {
+                int currentStageNum = stageToRenderToViewport.ordinal();
+                int nextStageNum = currentStageNum + 1;
+                if(nextStageNum >= stages.length)
+                {
+                    nextStageNum = 0;
+                }
+                stageToRenderToViewport = stages[nextStageNum];
+                runtime.reset();
+            }
             
             ///Draw a simple box around the middle 1/2 of the entire frame
             Imgproc.rectangle(
@@ -214,12 +224,15 @@ public class WebcamExample extends LinearOpMode
                             input.rows()*(3f/4f)),
                     new Scalar(0, 255, 0), 4);
     
-            Imgproc.putText(input, String.format("Capture time: %d", captureTimeNanos),
-                    textAnchor, Imgproc.FONT_HERSHEY_PLAIN, 1.5, green, 2);
+            Imgproc.putText(input, String.format("Time: %d", captureTimeNanos),
+                    timeTextAnchor, Imgproc.FONT_HERSHEY_PLAIN, 1, green, 1);
+    
+            Imgproc.putText(input, String.format("%s",stageToRenderToViewport.toString()),
+                    textAnchor, Imgproc.FONT_HERSHEY_PLAIN, 1, green, 1);
             
-            return input;
+            //return input;
             
-            /*contoursList.clear();
+            contoursList.clear();
             
             //This pipeline finds the contours of yellow blobs such as the Gold Mineral
             //from the Rover Ruckus game.
@@ -259,7 +272,7 @@ public class WebcamExample extends LinearOpMode
                 {
                     return input;
                 }
-            }*/
+            }
         }
         
         public int getNumContoursFound()
