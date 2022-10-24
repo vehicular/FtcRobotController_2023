@@ -30,7 +30,9 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
@@ -155,13 +157,113 @@ public class WebcamExample extends LinearOpMode
     {
         Point stageTextAnchor;
         Point timeTextAnchor;
-        Scalar green = new Scalar(0,255,0,255);
         
+        Scalar green = new Scalar(0,255,0,255);
+        /*
+         * Threshold values
+         */
+        static final int CB_CHAN_MASK_THRESHOLD = 80;  // 102
+        static final double DENSITY_UPRIGHT_THRESHOLD = 0.03;
+    
+        static final int CONTOUR_LINE_THICKNESS = 2;
+        static final int CB_CHAN_IDX = 2;
+    
+        /*
+         * The elements we use for noise reduction
+         */
+        Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
+        Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(6, 6));
+    
+        /*
+         * Colors
+         */
+        static final Scalar TEAL = new Scalar(3, 148, 252);
+        static final Scalar PURPLE = new Scalar(158, 52, 235);
+        static final Scalar RED = new Scalar(255, 0, 0);
+        static final Scalar GREEN = new Scalar(0, 255, 0);
+        static final Scalar BLUE = new Scalar(0, 0, 255);
+        
+        
+        
+    
+        /*
+         * Our working image buffers
+         */
         Mat yCbCrChan2Mat = new Mat();
         Mat thresholdMat = new Mat();
-        Mat contoursOnFrameMat = new Mat();
-        List<MatOfPoint> contoursList = new ArrayList<>();
+        Mat morphedThreshold = new Mat();
+        Mat contoursOnPlainImageMat = new Mat();
+    
+    
+        ArrayList<MatOfPoint> contoursList = new ArrayList<>();
+    
+        static class AnalyzedStone
+        {
+            StoneOrientation orientation;
+            double angle;
+        }
+    
+        enum StoneOrientation
+        {
+            UPRIGHT,
+            NOT_UPRIGHT
+        }
+        
+        ArrayList<AnalyzedStone> internalStoneList = new ArrayList<>();
+        // Volatile since accessed by OpMode thread w/o synchronization ?
+        volatile ArrayList<AnalyzedStone> clientStoneList = new ArrayList<>();
+        
+        
+    
         int numContoursFound;
+    
+        /*
+         * The core values which define the location and size of the sample regions
+         */
+        static final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(109,98);
+        static final Point REGION2_TOPLEFT_ANCHOR_POINT = new Point(181,98);
+        static final Point REGION3_TOPLEFT_ANCHOR_POINT = new Point(253,98);
+        static final int REGION_WIDTH = 20;
+        static final int REGION_HEIGHT = 20;
+    
+    
+        int avg1, avg2, avg3;
+    
+        /*
+         * Points which actually define the sample region rectangles, derived from above values
+         *
+         * Example of how points A and B work to define a rectangle
+         *
+         *   ------------------------------------
+         *   | (0,0) Point A                    |
+         *   |                                  |
+         *   |                                  |
+         *   |                                  |
+         *   |                                  |
+         *   |                                  |
+         *   |                                  |
+         *   |                  Point B (70,50) |
+         *   ------------------------------------
+         *
+         */
+        Point region1_pointA = new Point(
+                REGION1_TOPLEFT_ANCHOR_POINT.x,
+                REGION1_TOPLEFT_ANCHOR_POINT.y);
+        Point region1_pointB = new Point(
+                REGION1_TOPLEFT_ANCHOR_POINT.x + REGION_WIDTH,
+                REGION1_TOPLEFT_ANCHOR_POINT.y + REGION_HEIGHT);
+        Point region2_pointA = new Point(
+                REGION2_TOPLEFT_ANCHOR_POINT.x,
+                REGION2_TOPLEFT_ANCHOR_POINT.y);
+        Point region2_pointB = new Point(
+                REGION2_TOPLEFT_ANCHOR_POINT.x + REGION_WIDTH,
+                REGION2_TOPLEFT_ANCHOR_POINT.y + REGION_HEIGHT);
+        Point region3_pointA = new Point(
+                REGION3_TOPLEFT_ANCHOR_POINT.x,
+                REGION3_TOPLEFT_ANCHOR_POINT.y);
+        Point region3_pointB = new Point(
+                REGION3_TOPLEFT_ANCHOR_POINT.x + REGION_WIDTH,
+                REGION3_TOPLEFT_ANCHOR_POINT.y + REGION_HEIGHT);
         
         enum Stage
         {
@@ -210,20 +312,30 @@ public class WebcamExample extends LinearOpMode
     
             Imgproc.putText(input, String.format("%s",stageToRenderToViewport.toString()),
                     stageTextAnchor, Imgproc.FONT_HERSHEY_PLAIN, 1, green, 1);
-            
-            contoursList.clear();
-            
-            //This pipeline finds the contours of yellow blobs such as the Gold Mineral
-            //from the Rover Ruckus game.
-
-            Imgproc.cvtColor(input, yCbCrChan2Mat, Imgproc.COLOR_RGB2YCrCb);
-            Core.extractChannel(yCbCrChan2Mat, yCbCrChan2Mat, 2);
-            Imgproc.threshold(yCbCrChan2Mat, thresholdMat, 102, 255, Imgproc.THRESH_BINARY_INV);
-            Imgproc.findContours(thresholdMat, contoursList, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
-            numContoursFound = contoursList.size();
-            input.copyTo(contoursOnFrameMat);
-            Imgproc.drawContours(contoursOnFrameMat, contoursList, -1, new Scalar(0, 0, 255), 3, 8);
     
+    
+            
+            internalStoneList.clear();
+            
+    
+            for(MatOfPoint contour : findContours(input))
+            {
+                analyzeContour(contour, input);
+            }
+    
+            clientStoneList = new ArrayList<>(internalStoneList);
+            
+            // hull
+            
+            // filter out small hulls
+            
+            // detect convex hull shape
+            
+            // object boundary rect
+            
+            // left, center, right position calculation
+            
+            //https://gist.github.com/razimgit/d9c91edfd1be6420f58a74e1837bde18
             
             switch (stageToRenderToViewport)
             {
@@ -241,7 +353,7 @@ public class WebcamExample extends LinearOpMode
                 {
                     ///Draw a simple box around the middle 1/2 of the entire frame
                     Imgproc.rectangle(
-                            contoursOnFrameMat,
+                            contoursOnPlainImageMat,
                             new Point(
                                     input.cols()/4,
                                     input.rows()/4),
@@ -249,7 +361,7 @@ public class WebcamExample extends LinearOpMode
                                     input.cols()*(3f/4f),
                                     input.rows()*(3f/4f)),
                             new Scalar(0, 255, 0), 4);
-                    return contoursOnFrameMat;
+                    return contoursOnPlainImageMat;
                 }
                 
                 case RAW_IMAGE:
@@ -262,6 +374,113 @@ public class WebcamExample extends LinearOpMode
                     return input;
                 }
             }
+        }
+    
+        ArrayList<MatOfPoint> findContours(Mat input)
+        {
+            contoursList.clear();
+            
+            // A list we'll be using to store the contours we find
+            //ArrayList<MatOfPoint> contoursList = new ArrayList<>();
+        
+            // Convert the input image to YCrCb color space, then extract the Cb channel
+            Imgproc.cvtColor(input, yCbCrChan2Mat, Imgproc.COLOR_RGB2YCrCb);
+            Core.extractChannel(yCbCrChan2Mat, yCbCrChan2Mat, CB_CHAN_IDX);
+        
+            // Threshold the Cb channel to form a mask, then run some noise reduction
+            Imgproc.threshold(yCbCrChan2Mat, thresholdMat, CB_CHAN_MASK_THRESHOLD, 255, Imgproc.THRESH_BINARY_INV);
+            morphMask(thresholdMat, morphedThreshold);
+        
+            // Ok, now actually look for the contours! We only look for external contours.
+            Imgproc.findContours(morphedThreshold, contoursList, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE);
+            //Imgproc.findContours(thresholdMat, contoursList, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+            numContoursFound = contoursList.size();
+            
+            // We do draw the contours we find, but not to the main input buffer.
+            input.copyTo(contoursOnPlainImageMat);
+            Imgproc.drawContours(contoursOnPlainImageMat, contoursList, -1, BLUE, CONTOUR_LINE_THICKNESS, 8);
+        
+            return contoursList;
+        }
+        
+        void morphMask(Mat input, Mat output)
+        {
+            /*
+             * Apply some erosion and dilation for noise reduction
+             */
+            Imgproc.erode(input, output, erodeElement);
+            Imgproc.erode(output, output, erodeElement);
+        
+            Imgproc.dilate(output, output, dilateElement);
+            Imgproc.dilate(output, output, dilateElement);
+        }
+    
+        /*
+         * Working variables
+         */
+        Mat region1_Cb, region2_Cb, region3_Cb;
+        
+        void analyzeContour(MatOfPoint contour, Mat input)
+        {
+            /*
+             * Submats are a persistent reference to a region of the parent
+             * buffer. Any changes to the child affect the parent, and the
+             * reverse also holds true.
+             */
+            region1_Cb = yCbCrChan2Mat.submat(new Rect(region1_pointA, region1_pointB));
+            region2_Cb = yCbCrChan2Mat.submat(new Rect(region2_pointA, region2_pointB));
+            region3_Cb = yCbCrChan2Mat.submat(new Rect(region3_pointA, region3_pointB));
+            
+            /*
+             * Compute the average pixel value of each submat region. We're
+             * taking the average of a single channel buffer, so the value
+             * we need is at index 0. We could have also taken the average
+             * pixel value of the 3-channel image, and referenced the value
+             * at index 2 here.
+             */
+            avg1 = (int) Core.mean(region1_Cb).val[0];
+            avg2 = (int) Core.mean(region2_Cb).val[0];
+            avg3 = (int) Core.mean(region3_Cb).val[0];
+    
+            /*
+             * Draw a rectangle showing sample region 1 on the screen.
+             * Simply a visual aid. Serves no functional purpose.
+             */
+            Imgproc.rectangle(
+                    input, // Buffer to draw on
+                    region1_pointA, // First point which defines the rectangle
+                    region1_pointB, // Second point which defines the rectangle
+                    BLUE, // The color the rectangle is drawn in
+                    2); // Thickness of the rectangle lines
+    
+            /*
+             * Draw a rectangle showing sample region 2 on the screen.
+             * Simply a visual aid. Serves no functional purpose.
+             */
+            Imgproc.rectangle(
+                    input, // Buffer to draw on
+                    region2_pointA, // First point which defines the rectangle
+                    region2_pointB, // Second point which defines the rectangle
+                    BLUE, // The color the rectangle is drawn in
+                    2); // Thickness of the rectangle lines
+    
+            /*
+             * Draw a rectangle showing sample region 3 on the screen.
+             * Simply a visual aid. Serves no functional purpose.
+             */
+            Imgproc.rectangle(
+                    input, // Buffer to draw on
+                    region3_pointA, // First point which defines the rectangle
+                    region3_pointB, // Second point which defines the rectangle
+                    BLUE, // The color the rectangle is drawn in
+                    2); // Thickness of the rectangle lines
+    
+    
+            /*
+             * Find the max of the 3 averages
+             */
+            int maxOneTwo = Math.max(avg1, avg2);
+            int max = Math.max(maxOneTwo, avg3);
         }
         
         public int getNumContoursFound()
