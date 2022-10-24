@@ -29,8 +29,10 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
+import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
@@ -162,17 +164,17 @@ public class WebcamExample extends LinearOpMode
         /*
          * Threshold values
          */
-        static final int CB_CHAN_MASK_THRESHOLD = 80;  // 102
+        static final int CB_CHAN_MASK_THRESHOLD = 180;  // 102, 80
         static final double DENSITY_UPRIGHT_THRESHOLD = 0.03;
     
         static final int CONTOUR_LINE_THICKNESS = 2;
-        static final int CB_CHAN_IDX = 2;
+        static final int CB_CHAN_IDX = 1;//2;
     
         /*
          * The elements we use for noise reduction
          */
-        Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
-        Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(6, 6));
+        Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(12,12));//(3, 3));
+        Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(9, 9));
     
         /*
          * Colors
@@ -189,13 +191,13 @@ public class WebcamExample extends LinearOpMode
         /*
          * Our working image buffers
          */
-        Mat yCbCrChan2Mat = new Mat();
+        Mat yCbCrChanMat = new Mat();
         Mat thresholdMat = new Mat();
         Mat morphedThreshold = new Mat();
         Mat contoursOnPlainImageMat = new Mat();
     
     
-        ArrayList<MatOfPoint> contoursList = new ArrayList<>();
+        
     
         static class AnalyzedStone
         {
@@ -267,13 +269,14 @@ public class WebcamExample extends LinearOpMode
         
         enum Stage
         {
-            YCbCr_CHAN2,
+            YCbCr_CHAN,
             THRESHOLD,
+            MORPHED,
             CONTOURS_OVERLAYED_ON_FRAME,
             RAW_IMAGE,
         }
         
-        private Stage stageToRenderToViewport = Stage.YCbCr_CHAN2;
+        private Stage stageToRenderToViewport = Stage.YCbCr_CHAN;
         private Stage[] stages = Stage.values();
         
         
@@ -325,23 +328,13 @@ public class WebcamExample extends LinearOpMode
     
             clientStoneList = new ArrayList<>(internalStoneList);
             
-            // hull
-            
-            // filter out small hulls
-            
-            // detect convex hull shape
-            
-            // object boundary rect
-            
-            // left, center, right position calculation
-            
             //https://gist.github.com/razimgit/d9c91edfd1be6420f58a74e1837bde18
             
             switch (stageToRenderToViewport)
             {
-                case YCbCr_CHAN2:
+                case YCbCr_CHAN:
                 {
-                    return yCbCrChan2Mat;
+                    return yCbCrChanMat;
                 }
                 
                 case THRESHOLD:
@@ -349,27 +342,17 @@ public class WebcamExample extends LinearOpMode
                     return thresholdMat;
                 }
                 
+                case MORPHED:
+                {
+                    return morphedThreshold;
+                }
+                
                 case CONTOURS_OVERLAYED_ON_FRAME:
                 {
-                    ///Draw a simple box around the middle 1/2 of the entire frame
-                    Imgproc.rectangle(
-                            contoursOnPlainImageMat,
-                            new Point(
-                                    input.cols()/4,
-                                    input.rows()/4),
-                            new Point(
-                                    input.cols()*(3f/4f),
-                                    input.rows()*(3f/4f)),
-                            new Scalar(0, 255, 0), 4);
                     return contoursOnPlainImageMat;
                 }
                 
-                case RAW_IMAGE:
-                {
-                    return input;
-                }
-                
-                default:
+                default: //RAW_IMAGE
                 {
                     return input;
                 }
@@ -378,28 +361,30 @@ public class WebcamExample extends LinearOpMode
     
         ArrayList<MatOfPoint> findContours(Mat input)
         {
-            contoursList.clear();
+            ArrayList<MatOfPoint> contoursList = new ArrayList<>();
+            //contoursList.clear(); // better to new it?
             
             // A list we'll be using to store the contours we find
             //ArrayList<MatOfPoint> contoursList = new ArrayList<>();
         
             // Convert the input image to YCrCb color space, then extract the Cb channel
-            Imgproc.cvtColor(input, yCbCrChan2Mat, Imgproc.COLOR_RGB2YCrCb);
-            Core.extractChannel(yCbCrChan2Mat, yCbCrChan2Mat, CB_CHAN_IDX);
+            Imgproc.cvtColor(input, yCbCrChanMat, Imgproc.COLOR_RGB2YCrCb);
+            Core.extractChannel(yCbCrChanMat, yCbCrChanMat, CB_CHAN_IDX); //2->red? 1->blue
         
             // Threshold the Cb channel to form a mask, then run some noise reduction
-            Imgproc.threshold(yCbCrChan2Mat, thresholdMat, CB_CHAN_MASK_THRESHOLD, 255, Imgproc.THRESH_BINARY_INV);
+            Imgproc.threshold(yCbCrChanMat, thresholdMat, CB_CHAN_MASK_THRESHOLD, 255, Imgproc.THRESH_BINARY);
             morphMask(thresholdMat, morphedThreshold);
         
             // Ok, now actually look for the contours! We only look for external contours.
-            Imgproc.findContours(morphedThreshold, contoursList, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE);
-            //Imgproc.findContours(thresholdMat, contoursList, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+            //Imgproc.findContours(morphedThreshold, contoursList, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE);
+            Imgproc.findContours(morphedThreshold, contoursList, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
             numContoursFound = contoursList.size();
             
             // We do draw the contours we find, but not to the main input buffer.
             input.copyTo(contoursOnPlainImageMat);
             Imgproc.drawContours(contoursOnPlainImageMat, contoursList, -1, BLUE, CONTOUR_LINE_THICKNESS, 8);
-        
+    
+    
             return contoursList;
         }
         
@@ -422,14 +407,22 @@ public class WebcamExample extends LinearOpMode
         
         void analyzeContour(MatOfPoint contour, Mat input)
         {
+            // Transform the contour to a different format
+            Point[] points = contour.toArray();
+            MatOfPoint2f contour2f = new MatOfPoint2f(contour.toArray());
+    
+            // Do a rect fit to the contour, and draw it on the screen
+            RotatedRect rotatedRectFitToContour = Imgproc.minAreaRect(contour2f);
+            drawRotatedRect(rotatedRectFitToContour, input);
+            
             /*
              * Submats are a persistent reference to a region of the parent
              * buffer. Any changes to the child affect the parent, and the
              * reverse also holds true.
              */
-            region1_Cb = yCbCrChan2Mat.submat(new Rect(region1_pointA, region1_pointB));
-            region2_Cb = yCbCrChan2Mat.submat(new Rect(region2_pointA, region2_pointB));
-            region3_Cb = yCbCrChan2Mat.submat(new Rect(region3_pointA, region3_pointB));
+            //region1_Cb = yCbCrChanMat.submat(new Rect(region1_pointA, region1_pointB));
+            //region2_Cb = yCbCrChanMat.submat(new Rect(region2_pointA, region2_pointB));
+            //region3_Cb = yCbCrChanMat.submat(new Rect(region3_pointA, region3_pointB));
             
             /*
              * Compute the average pixel value of each submat region. We're
@@ -438,42 +431,42 @@ public class WebcamExample extends LinearOpMode
              * pixel value of the 3-channel image, and referenced the value
              * at index 2 here.
              */
-            avg1 = (int) Core.mean(region1_Cb).val[0];
-            avg2 = (int) Core.mean(region2_Cb).val[0];
-            avg3 = (int) Core.mean(region3_Cb).val[0];
+            //avg1 = (int) Core.mean(region1_Cb).val[0];
+            //avg2 = (int) Core.mean(region2_Cb).val[0];
+            //avg3 = (int) Core.mean(region3_Cb).val[0];
     
             /*
              * Draw a rectangle showing sample region 1 on the screen.
              * Simply a visual aid. Serves no functional purpose.
              */
-            Imgproc.rectangle(
+            /*Imgproc.rectangle(
                     input, // Buffer to draw on
                     region1_pointA, // First point which defines the rectangle
                     region1_pointB, // Second point which defines the rectangle
                     BLUE, // The color the rectangle is drawn in
-                    2); // Thickness of the rectangle lines
+                    2); // Thickness of the rectangle lines*/
     
             /*
              * Draw a rectangle showing sample region 2 on the screen.
              * Simply a visual aid. Serves no functional purpose.
              */
-            Imgproc.rectangle(
+            /*Imgproc.rectangle(
                     input, // Buffer to draw on
                     region2_pointA, // First point which defines the rectangle
                     region2_pointB, // Second point which defines the rectangle
                     BLUE, // The color the rectangle is drawn in
-                    2); // Thickness of the rectangle lines
+                    2); // Thickness of the rectangle lines*/
     
             /*
              * Draw a rectangle showing sample region 3 on the screen.
              * Simply a visual aid. Serves no functional purpose.
              */
-            Imgproc.rectangle(
+            /*Imgproc.rectangle(
                     input, // Buffer to draw on
                     region3_pointA, // First point which defines the rectangle
                     region3_pointB, // Second point which defines the rectangle
                     BLUE, // The color the rectangle is drawn in
-                    2); // Thickness of the rectangle lines
+                    2); // Thickness of the rectangle lines*/
     
     
             /*
@@ -486,6 +479,37 @@ public class WebcamExample extends LinearOpMode
         public int getNumContoursFound()
         {
             return numContoursFound;
+        }
+    
+    
+    
+        static void drawTagText(RotatedRect rect, String text, Mat mat)
+        {
+            Imgproc.putText(
+                    mat, // The buffer we're drawing on
+                    text, // The text we're drawing
+                    new Point( // The anchor point for the text
+                            rect.center.x-50,  // x anchor point
+                            rect.center.y+25), // y anchor point
+                    Imgproc.FONT_HERSHEY_PLAIN, // Font
+                    1, // Font size
+                    TEAL, // Font color
+                    1); // Font thickness
+        }
+    
+        static void drawRotatedRect(RotatedRect rect, Mat drawOn)
+        {
+            /*
+             * Draws a rotated rect by drawing each of the 4 lines individually
+             */
+        
+            Point[] points = new Point[4];
+            rect.points(points);
+        
+            for(int i = 0; i < 4; ++i)
+            {
+                Imgproc.line(drawOn, points[i], points[(i+1)%4], RED, 2);
+            }
         }
     }
 }
