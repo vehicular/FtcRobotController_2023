@@ -21,6 +21,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.util.Log;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -55,7 +57,8 @@ import java.util.List;
 public class WebcamExample extends LinearOpMode
 {
     OpenCvWebcam webcam;
-    StageSwitchingPipeline stageSwitchingPipeline;
+    RedConeDectectionPipeline redPipeline;
+    YellowPoleDetector yellowPipeline;
     
     @Override
     public void runOpMode()
@@ -67,11 +70,18 @@ public class WebcamExample extends LinearOpMode
          * webcam counterpart, {@link WebcamExample} first.
          */
         
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+        int cameraMonitorViewId = hardwareMap.appContext.getResources()
+                .getIdentifier("cameraMonitorViewId", "id", 
+                        hardwareMap.appContext.getPackageName());
+        webcam = OpenCvCameraFactory.getInstance().createWebcam(
+                hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
         
-        stageSwitchingPipeline = new StageSwitchingPipeline();
-        webcam.setPipeline(stageSwitchingPipeline);
+        //redPipeline = new RedConeDectectionPipeline();
+        //webcam.setPipeline(redPipeline);
+    
+        yellowPipeline = new YellowPoleDetector();
+        webcam.setPipeline(yellowPipeline);
+        
         webcam.setMillisecondsPermissionTimeout(2500); // Timeout for obtaining permission is configurable. Set before opening.
         webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
         {
@@ -107,7 +117,14 @@ public class WebcamExample extends LinearOpMode
             telemetry.addData("Overhead time ms", webcam.getOverheadTimeMs());
             telemetry.addData("Theoretical max FPS", webcam.getCurrentPipelineMaxFps());
             
-            telemetry.addData("Num contours found", stageSwitchingPipeline.getNumContoursFound());
+            //telemetry.addData("Num contours found", redPipeline.getNumContoursFound());
+            
+            telemetry.addData("Pole Position", yellowPipeline.getLocation_leftright());
+            telemetry.addData("top_left", yellowPipeline.top_left_x);
+            telemetry.addData("top_right", yellowPipeline.top_right_x);
+            telemetry.addData("bottom_left", yellowPipeline.bottom_left_x);
+            telemetry.addData("bottom_right", yellowPipeline.bottom_right_x);
+            
             telemetry.update();
     
             /*
@@ -139,6 +156,13 @@ public class WebcamExample extends LinearOpMode
                 webcam.stopStreaming();
                 //webcam.closeCameraDevice();
             }
+    
+            //YellowPoleDetector.PoleLocation location = yellowPipeline.getLocation();
+            //if (location != YellowPoleDetector.PoleLocation.NONE) {
+                // Move to the left / right
+            //} else {
+                // adjust claw, and drop the cone
+            //}
             
             /*
              * For the purposes of this sample, throttle ourselves to 10Hz loop to avoid burning
@@ -155,7 +179,8 @@ public class WebcamExample extends LinearOpMode
      * particularly useful during pipeline development. We also show how
      * to get data from the pipeline to your OpMode.
      */
-    static class StageSwitchingPipeline extends TimestampedOpenCvPipeline //OpenCvPipeline
+    // Good to dectect red cone
+    static class RedConeDectectionPipeline extends TimestampedOpenCvPipeline //OpenCvPipeline
     {
         Point stageTextAnchor;
         Point timeTextAnchor;
@@ -510,6 +535,343 @@ public class WebcamExample extends LinearOpMode
             {
                 Imgproc.line(drawOn, points[i], points[(i+1)%4], RED, 2);
             }
+        }
+    }
+    
+    
+    static class YellowPoleDetector extends OpenCvPipeline {
+        enum PoleLocation {
+            LEFT,
+            RIGHT,
+            NONE
+        }
+        enum Stage
+        {
+            HSV_CHAN,
+            THRESHOLD,
+            MORPHED,
+            EDGE,
+            //HIERARCHY,
+            //CONTOURS_OVERLAYED_ON_FRAME,
+            RAW_IMAGE,
+        }
+    
+        private YellowPoleDetector.Stage stageToRenderToViewport = YellowPoleDetector.Stage.HSV_CHAN;
+        private YellowPoleDetector.Stage[] stages = YellowPoleDetector.Stage.values();
+        
+        private int width; // width of the image
+        int location_leftright = 0;
+        int location_forwardback = 0;
+    
+        /*
+         * Our working image buffers
+         */
+        Mat hSVChanMat = new Mat();
+        Mat thresholdMat = new Mat();
+        Mat edgesMat = new Mat();
+        Mat morphedThreshold = new Mat();
+        Mat contoursOnPlainImageMat = new Mat();
+    
+    
+        /*
+         * The elements we use for noise reduction
+         */
+        Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(6,6));//(3, 3));
+        Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
+    
+        static final int CB_CHAN_MASK_THRESHOLD = 150;
+    
+        // THESE NEED TO BE TUNED BASED ON YOUR DISTANCE FROM THE POLE
+        private final double minContourArea = 300.0;
+        private final double minContourPerimeter = 1000.0;
+        private final double minContourWidth = 10.0;
+        private final double minContourHeight = 100.0;
+        
+        public YellowPoleDetector() {
+        
+        }
+        
+        
+        ElapsedTime runtime = new ElapsedTime();
+    
+        @Override
+        public void init(Mat mat)
+        {
+            this.width = mat.width();
+            runtime.reset();
+        }
+        
+        @Override
+        public Mat processFrame(Mat input) {
+            
+            if(runtime.seconds()>5)
+            {
+                int currentStageNum = stageToRenderToViewport.ordinal();
+                int nextStageNum = currentStageNum + 1;
+                if(nextStageNum >= stages.length)
+                {
+                    nextStageNum = 0;
+                }
+                stageToRenderToViewport = stages[nextStageNum];
+                runtime.reset();
+            }
+            
+            // "Mat" stands for matrix, which is basically the image that the detector will process
+            // the input matrix is the image coming from the camera
+            // the function will return a matrix to be drawn on your phone's screen
+            
+            // The detector detects regular stones. The camera fits two stones.
+            // If it finds one regular stone then the other must be the Pole.
+            // If both are regular stones, it returns NONE to tell the robot to keep looking
+            
+            // Make a working copy of the input matrix in HSV
+            Imgproc.cvtColor(input, hSVChanMat, Imgproc.COLOR_RGB2HSV);
+            
+            // if something is wrong, we assume there's no Pole
+            if (hSVChanMat.empty()) {
+                location_leftright = 100;
+                return input;
+            }
+            
+            // We create a HSV range for yellow to detect regular stones
+            // NOTE: In OpenCV's implementation,
+            // Hue values are half the real value
+            Scalar lowHSV = new Scalar(11.8, 161.7, 116.5); // lower bound HSV for yellow 20,100,100
+            Scalar highHSV = new Scalar(30.3, 255.0, 255.0); // higher bound HSV for yellow 30,255,255
+            
+            // We'll get a black and white image. The white regions represent the regular stones.
+            // inRange(): thresh[i][j] = {255,255,255} if mat[i][i] is within the range
+            Core.inRange(hSVChanMat, lowHSV, highHSV, thresholdMat);
+            //Imgproc.threshold(hSVChanMat, thresholdMat, CB_CHAN_MASK_THRESHOLD, 255, Imgproc.THRESH_BINARY);
+    
+            morphMask(thresholdMat, morphedThreshold);
+            // Use Canny Edge Detection to find edges
+            // you might have to tune the thresholds for hysteresis
+            Imgproc.Canny(morphedThreshold, edgesMat, 100, 300);
+            
+            // https://docs.opencv.org/3.4/da/d0c/tutorial_bounding_rects_circles.html
+            // Oftentimes the edges are disconnected. findContours connects these edges.
+            // We then find the bounding rectangles of those contours
+            List<MatOfPoint> contoursList = new ArrayList<>();
+            
+            //Imgproc.findContours(edgesMat, contours, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+            Imgproc.findContours(edgesMat, contoursList, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+    
+            // remove noisy contours
+            List<MatOfPoint> outputContours = new ArrayList<>();
+            filterContours(contoursList,outputContours, minContourArea, minContourPerimeter, minContourWidth, minContourHeight);
+            //https://github.com/Epsilon10/SKYSTONE-CV/blob/19fc8b43450bd660614f579c4a368f628d192def/VisionPipeline.java#L150
+            
+            for(MatOfPoint contour : contoursList)
+            {
+                analyzeContour(contour, input);
+            }
+            
+            /*MatOfPoint2f[] contoursPoly  = new MatOfPoint2f[contoursList.size()];
+            Rect[] boundRect = new Rect[contoursList.size()];
+            for (int i = 0; i < contoursList.size(); i++) {
+                contoursPoly[i] = new MatOfPoint2f();
+                Imgproc.approxPolyDP(new MatOfPoint2f(contoursList.get(i).toArray()), contoursPoly[i], 3, true);
+                boundRect[i] = Imgproc.boundingRect(new MatOfPoint(contoursPoly[i].toArray()));
+            }*/
+            
+            // Iterate and check whether the bounding boxes
+            // cover left and/or right side of the image
+            double left_x = 420;
+            double right_x = 520;
+            
+            double forward_diff_x = 20;
+            
+            if(contoursList.size() == 1)
+            {
+                Point[] points = contoursList.get(0).toArray();
+                location_leftright = 0;
+                
+                if(points.length >= 4)
+                {
+                    top_left_x = points[0].x;
+                    top_right_x = points[1].x;
+                    bottom_left_x = points[2].x;
+                    bottom_right_x = points[3].x;
+                    
+                    if(top_left_x < left_x)
+                    {
+                        location_leftright--;
+                    }
+                    if(bottom_left_x < left_x)
+                    {
+                        location_leftright--;
+                    }
+                    if(top_right_x < left_x)
+                    {
+                        location_leftright--;
+                    }
+                    if(top_right_x < left_x)
+                    {
+                        location_leftright--;
+                    }
+    
+                    if(top_left_x > right_x)
+                    {
+                        location_leftright++;
+                    }
+                    if(bottom_left_x > right_x)
+                    {
+                        location_leftright++;
+                    }
+                    if(top_right_x > right_x)
+                    {
+                        location_leftright++;
+                    }
+                    if(top_right_x > right_x)
+                    {
+                        location_leftright++;
+                    }
+                }
+            }
+    
+    /*
+            input.copyTo(contoursOnPlainImageMat);
+            for (int i = 0; i != boundRect.length; i++) {
+                if (boundRect[i].x < left_x)
+                    left = true;
+                if (boundRect[i].x + boundRect[i].width > right_x)
+                    right = true;
+                
+                // draw red bounding rectangles on mat
+                // the mat has been converted to HSV so we need to use HSV as well
+                //Imgproc.rectangle(hSVChanMat, boundRect[i], new Scalar(0.5, 76.9, 89.8));
+                Imgproc.rectangle(contoursOnPlainImageMat, boundRect[i], new Scalar(0.5, 76.9, 89.8));
+            }
+    */
+    
+            switch (stageToRenderToViewport)
+            {
+                case HSV_CHAN:
+                {
+                    return hSVChanMat;
+                }
+    
+                case THRESHOLD:
+                {
+                    return thresholdMat;
+                }
+                
+                case MORPHED:
+                    return morphedThreshold;
+    
+                case EDGE:
+                {
+                    return edgesMat;
+                }
+    
+                //case CONTOURS_OVERLAYED_ON_FRAME:
+                //{
+                //    return contoursOnPlainImageMat;
+                //}
+    
+                default: //RAW_IMAGE
+                {
+                    return input;
+                }
+            }
+            
+            //return input;
+        }
+    
+        private int minX, minY = Integer.MAX_VALUE;
+        private int maxX, maxY = -1 * Integer.MAX_VALUE;
+        private void filterContours(List<MatOfPoint> contours, List<MatOfPoint> outputContours, double minContourArea, double minContourPerimeter, double minContourWidth,
+                                    double minContourHeight)
+        {
+            //resetRectangle();
+            Log.d("NumContours", contours.size() + "");
+            for (MatOfPoint contour : contours)
+            {
+                Rect rect = Imgproc.boundingRect(contour);
+                int x = rect.x;
+                int y = rect.y;
+                int w = rect.width;
+                int h = rect.height;
+    
+                if (w < minContourWidth)
+                    continue;
+                if (rect.area() < minContourArea)
+                    continue;
+                if ((2 * w + 2 * h) < minContourPerimeter)
+                    continue;
+                if (h < minContourHeight)
+                    continue;
+                outputContours.add(contour);
+    
+                if (x < minX) minX = x;
+                if (y < minY) minY = y;
+                if (x + w > maxX) maxX = x + w;
+                if (y + h > maxY) maxY = y + h;
+            }
+        }
+        
+        void analyzeContour(MatOfPoint contour, Mat input)
+        {
+            // Transform the contour to a different format
+            Point[] points = new Point[4];
+            MatOfPoint2f contour2f = new MatOfPoint2f(contour.toArray());
+    
+            // Do a rect fit to the contour, and draw it on the screen
+            RotatedRect rotatedRectFitToContour = Imgproc.minAreaRect(contour2f);
+            drawRotatedRect(rotatedRectFitToContour, input);
+    
+            rotatedRectFitToContour.points(points);
+            //if(points.length >= 4)
+            {
+                top_left_x = points[0].x;
+                top_right_x = points[1].x;
+                bottom_left_x = points[2].x;
+                bottom_right_x = points[3].x;
+            }
+        }
+        
+        public double top_left_x = 0;
+        public double top_right_x = 0;
+        public double bottom_left_x = 0;
+        public double bottom_right_x = 0;
+    
+        void morphMask(Mat input, Mat output)
+        {
+            /*
+             * Apply some erosion and dilation for noise reduction
+             */
+            Imgproc.erode(input, output, erodeElement);
+            Imgproc.erode(output, output, erodeElement);
+        
+            Imgproc.dilate(output, output, dilateElement);
+            Imgproc.dilate(output, output, dilateElement);
+        }
+    
+    
+        static final Scalar RED = new Scalar(255, 0, 0);
+        static void drawRotatedRect(RotatedRect rect, Mat drawOn)
+        {
+            /*
+             * Draws a rotated rect by drawing each of the 4 lines individually
+             */
+        
+            Point[] points = new Point[4];
+            rect.points(points);
+        
+            for(int i = 0; i < 4; ++i)
+            {
+                Imgproc.line(drawOn, points[i], points[(i+1)%4], RED, 2);
+            }
+        }
+    
+        private Mat crop(Mat image, Point topLeftCorner, Point bottomRightCorner) {
+            Rect cropRect = new Rect(topLeftCorner, bottomRightCorner);
+            return new Mat(image, cropRect);
+        }
+        
+        public int getLocation_leftright() {
+            return this.location_leftright;
         }
     }
 }
