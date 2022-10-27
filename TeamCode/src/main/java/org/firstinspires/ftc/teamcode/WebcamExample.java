@@ -124,6 +124,8 @@ public class WebcamExample extends LinearOpMode
             telemetry.addData("top_right", yellowPipeline.top_right_x);
             telemetry.addData("bottom_left", yellowPipeline.bottom_left_x);
             telemetry.addData("bottom_right", yellowPipeline.bottom_right_x);
+            telemetry.addData("pole angle", yellowPipeline.line_angle);
+            
             
             telemetry.update();
     
@@ -550,7 +552,7 @@ public class WebcamExample extends LinearOpMode
             HSV_CHAN,
             THRESHOLD,
             MORPHED,
-            EDGE,
+            //EDGE,
             //HIERARCHY,
             //CONTOURS_OVERLAYED_ON_FRAME,
             RAW_IMAGE,
@@ -562,6 +564,8 @@ public class WebcamExample extends LinearOpMode
         private int width; // width of the image
         int location_leftright = 0;
         int location_forwardback = 0;
+        
+        public double line_angle = -100;
     
         /*
          * Our working image buffers
@@ -576,16 +580,16 @@ public class WebcamExample extends LinearOpMode
         /*
          * The elements we use for noise reduction
          */
-        Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(6,6));//(3, 3));
+        Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1,1));//(3, 3));
         Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
     
         static final int CB_CHAN_MASK_THRESHOLD = 150;
     
         // THESE NEED TO BE TUNED BASED ON YOUR DISTANCE FROM THE POLE
-        private final double minContourArea = 300.0;
-        private final double minContourPerimeter = 1000.0;
-        private final double minContourWidth = 10.0;
-        private final double minContourHeight = 100.0;
+        private final double minContourArea = 500.0;
+        private final double minContourPerimeter = 100.0;
+        private final double minContourWidth = 40.0;
+        private final double minContourHeight = 80.0;
         
         public YellowPoleDetector() {
         
@@ -647,7 +651,7 @@ public class WebcamExample extends LinearOpMode
             morphMask(thresholdMat, morphedThreshold);
             // Use Canny Edge Detection to find edges
             // you might have to tune the thresholds for hysteresis
-            Imgproc.Canny(morphedThreshold, edgesMat, 100, 300);
+            //Imgproc.Canny(morphedThreshold, edgesMat, 100, 300);
             
             // https://docs.opencv.org/3.4/da/d0c/tutorial_bounding_rects_circles.html
             // Oftentimes the edges are disconnected. findContours connects these edges.
@@ -655,14 +659,14 @@ public class WebcamExample extends LinearOpMode
             List<MatOfPoint> contoursList = new ArrayList<>();
             
             //Imgproc.findContours(edgesMat, contours, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-            Imgproc.findContours(edgesMat, contoursList, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+            Imgproc.findContours(morphedThreshold, contoursList, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
     
             // remove noisy contours
             List<MatOfPoint> outputContours = new ArrayList<>();
             filterContours(contoursList,outputContours, minContourArea, minContourPerimeter, minContourWidth, minContourHeight);
             //https://github.com/Epsilon10/SKYSTONE-CV/blob/19fc8b43450bd660614f579c4a368f628d192def/VisionPipeline.java#L150
             
-            for(MatOfPoint contour : contoursList)
+            for(MatOfPoint contour : outputContours)
             {
                 analyzeContour(contour, input);
             }
@@ -677,8 +681,8 @@ public class WebcamExample extends LinearOpMode
             
             // Iterate and check whether the bounding boxes
             // cover left and/or right side of the image
-            double left_x = 420;
-            double right_x = 520;
+            double left_x = 380;
+            double right_x = 500;
             
             double forward_diff_x = 20;
             
@@ -747,28 +751,20 @@ public class WebcamExample extends LinearOpMode
     
             switch (stageToRenderToViewport)
             {
-                case HSV_CHAN:
-                {
+                /*case HSV_CHAN:
                     return hSVChanMat;
-                }
-    
+                
                 case THRESHOLD:
-                {
                     return thresholdMat;
-                }
                 
                 case MORPHED:
-                    return morphedThreshold;
+                    return morphedThreshold;*/
     
-                case EDGE:
-                {
-                    return edgesMat;
-                }
+                //case EDGE:
+                //    return edgesMat;
     
                 //case CONTOURS_OVERLAYED_ON_FRAME:
-                //{
                 //    return contoursOnPlainImageMat;
-                //}
     
                 default: //RAW_IMAGE
                 {
@@ -784,8 +780,7 @@ public class WebcamExample extends LinearOpMode
         private void filterContours(List<MatOfPoint> contours, List<MatOfPoint> outputContours, double minContourArea, double minContourPerimeter, double minContourWidth,
                                     double minContourHeight)
         {
-            //resetRectangle();
-            Log.d("NumContours", contours.size() + "");
+            //Log.d("NumContours", contours.size() + "");
             for (MatOfPoint contour : contours)
             {
                 Rect rect = Imgproc.boundingRect(contour);
@@ -793,6 +788,7 @@ public class WebcamExample extends LinearOpMode
                 int y = rect.y;
                 int w = rect.width;
                 int h = rect.height;
+                
     
                 if (w < minContourWidth)
                     continue;
@@ -821,12 +817,20 @@ public class WebcamExample extends LinearOpMode
             RotatedRect rotatedRectFitToContour = Imgproc.minAreaRect(contour2f);
             drawRotatedRect(rotatedRectFitToContour, input);
     
+            line_angle = rotatedRectFitToContour.angle;
+            
+            String lb = String.format("Deg:%d, W:%d, H:%d",
+                    (int) Math.round(line_angle),
+                    (int)rotatedRectFitToContour.size.width,
+                    (int)rotatedRectFitToContour.size.height);
+            drawTagText(rotatedRectFitToContour, lb, input);
+    
             rotatedRectFitToContour.points(points);
             //if(points.length >= 4)
             {
-                top_left_x = points[0].x;
-                top_right_x = points[1].x;
-                bottom_left_x = points[2].x;
+                bottom_left_x = points[0].x;
+                top_left_x = points[1].x;
+                top_right_x = points[2].x;
                 bottom_right_x = points[3].x;
             }
         }
@@ -850,6 +854,7 @@ public class WebcamExample extends LinearOpMode
     
     
         static final Scalar RED = new Scalar(255, 0, 0);
+        static final Scalar GREEN = new Scalar(0, 255, 0);
         static void drawRotatedRect(RotatedRect rect, Mat drawOn)
         {
             /*
@@ -861,13 +866,33 @@ public class WebcamExample extends LinearOpMode
         
             for(int i = 0; i < 4; ++i)
             {
+                String lb = String.format("%d(%4.0f,%4.0f)", i, points[i].x, points[i].y);
                 Imgproc.line(drawOn, points[i], points[(i+1)%4], RED, 2);
+                Imgproc.putText(drawOn, lb,
+                        points[i], Imgproc.FONT_HERSHEY_PLAIN, // Font
+                        0.5, // Font size
+                        GREEN, // Font color
+                        1);
             }
         }
     
         private Mat crop(Mat image, Point topLeftCorner, Point bottomRightCorner) {
             Rect cropRect = new Rect(topLeftCorner, bottomRightCorner);
             return new Mat(image, cropRect);
+        }
+    
+        static void drawTagText(RotatedRect rect, String text, Mat mat)
+        {
+            Imgproc.putText(
+                    mat, // The buffer we're drawing on
+                    text, // The text we're drawing
+                    new Point( // The anchor point for the text
+                            rect.center.x-50,  // x anchor point
+                            rect.center.y+25), // y anchor point
+                    Imgproc.FONT_HERSHEY_PLAIN, // Font
+                    1, // Font size
+                    RED, // Font color
+                    1); // Font thickness
         }
         
         public int getLocation_leftright() {
