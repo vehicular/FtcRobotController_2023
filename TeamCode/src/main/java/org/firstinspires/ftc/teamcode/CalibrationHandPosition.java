@@ -33,6 +33,7 @@ import android.os.Environment;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -263,10 +264,10 @@ public class CalibrationHandPosition extends LinearOpMode
         
         PredefinedPosition.Pickup_up.LifterMotor = 0;
         PredefinedPosition.Pickup_up.RotatorMotor = 0;
-        PredefinedPosition.Pickup_up.ArmMotor = -450;
-        PredefinedPosition.Pickup_up.WristServo = 0.78;
-        PredefinedPosition.Pickup_up.PalmServo = 0.58;
-        PredefinedPosition.Pickup_up.KnuckleServo = 0.32;
+        PredefinedPosition.Pickup_up.ArmMotor = -445;
+        PredefinedPosition.Pickup_up.WristServo = 0.82;
+        PredefinedPosition.Pickup_up.PalmServo = 0.28;
+        PredefinedPosition.Pickup_up.KnuckleServo = 0.33;
         PredefinedPosition.Pickup_up.FingerServo = 0.9;
         
         PredefinedPosition.Pickup_down.LifterMotor = 0;
@@ -295,26 +296,26 @@ public class CalibrationHandPosition extends LinearOpMode
         
         PredefinedPosition.Drop_A_1.LifterMotor = 0;
         PredefinedPosition.Drop_A_1.RotatorMotor = 0;
-        PredefinedPosition.Drop_A_1.ArmMotor = -410;
-        PredefinedPosition.Drop_A_1.WristServo = 0.85;
-        PredefinedPosition.Drop_A_1.PalmServo = 0.53;
+        PredefinedPosition.Drop_A_1.ArmMotor = -442;
+        PredefinedPosition.Drop_A_1.WristServo = 0.64;
+        PredefinedPosition.Drop_A_1.PalmServo = 0.48;
         PredefinedPosition.Drop_A_1.KnuckleServo = 0.33;
         PredefinedPosition.Drop_A_1.FingerServo = 0.1;
         
         PredefinedPosition.Drop_B_2.LifterMotor = 0;
         PredefinedPosition.Drop_B_2.RotatorMotor = 0;
-        PredefinedPosition.Drop_B_2.ArmMotor = 150;
-        PredefinedPosition.Drop_B_2.WristServo = 0.9;
-        PredefinedPosition.Drop_B_2.PalmServo = 0.62;
-        PredefinedPosition.Drop_B_2.KnuckleServo = 0.33;
+        PredefinedPosition.Drop_B_2.ArmMotor = 172;
+        PredefinedPosition.Drop_B_2.WristServo = 0.68;
+        PredefinedPosition.Drop_B_2.PalmServo = 0.57;
+        PredefinedPosition.Drop_B_2.KnuckleServo = 0.34;
         PredefinedPosition.Drop_B_2.FingerServo = 0.1;
         
         PredefinedPosition.Drop_X_3.LifterMotor = 0;
         PredefinedPosition.Drop_X_3.RotatorMotor = 0;
         PredefinedPosition.Drop_X_3.ArmMotor = 725;
-        PredefinedPosition.Drop_X_3.WristServo = 0.92;
-        PredefinedPosition.Drop_X_3.PalmServo = 0.75;
-        PredefinedPosition.Drop_X_3.KnuckleServo = 0.32;
+        PredefinedPosition.Drop_X_3.WristServo = 0.76;
+        PredefinedPosition.Drop_X_3.PalmServo = 0.61;
+        PredefinedPosition.Drop_X_3.KnuckleServo = 0.34;
         PredefinedPosition.Drop_X_3.FingerServo = 0.1;
         
         PredefinedPosition.Drop_Y_4.LifterMotor = 300;
@@ -322,7 +323,7 @@ public class CalibrationHandPosition extends LinearOpMode
         PredefinedPosition.Drop_Y_4.ArmMotor = 1150;
         PredefinedPosition.Drop_Y_4.WristServo = 0.91;
         PredefinedPosition.Drop_Y_4.PalmServo = 0.96;
-        PredefinedPosition.Drop_Y_4.KnuckleServo = 0.32;
+        PredefinedPosition.Drop_Y_4.KnuckleServo = 0.34;
         PredefinedPosition.Drop_Y_4.FingerServo = 0.1;
         
         SavePositonsToFile("InitMotorsPosition.json", PredefinedPosition.InitPosition);
