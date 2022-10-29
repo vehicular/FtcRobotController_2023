@@ -182,6 +182,13 @@ public class ChassisTank extends Subsystem
         leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
+    
+    @Override
+    
+    public void autoControls(boolean isOpActive)
+    {
+    
+    }
 
 
     @Override

@@ -19,18 +19,17 @@ public abstract class Subsystem
     {
         this.hardwaremap = map;
     }
-
-    public abstract void teleopControls(Gamepad gamepad1, Gamepad gamepad2);
-
-    public abstract String addTelemetry();
-
-    public abstract void stop();
-
-    public abstract void autoInit();
-
+    
     public abstract void teleopInit(Subsystem otherSys);
-
+    public abstract void teleopControls(Gamepad gamepad1, Gamepad gamepad2);
+    
+    public abstract void autoInit();
+    public abstract void autoControls(boolean isOpActive);
+    
+    public abstract void stop();
     public abstract void crossSubsystemCheck();
+    
+    public abstract String addTelemetry();
     //{
         // 1) finger is too low while driving
         // 2) finger needs chassis's help to reach a specified point(3d)

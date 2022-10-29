@@ -98,25 +98,29 @@ public class Hand extends Subsystem
         lifterMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rotatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        
+    
+        PredefinedPosition.PowerOnHold.SetValue(
+                ReadPositionFromFile(PredefinedPosition.PowerOnHold.GetPositionName()));
+        PredefinedPosition.EyeLowPole.SetValue(
+                ReadPositionFromFile(PredefinedPosition.EyeLowPole.GetPositionName()));
         PredefinedPosition.InitPosition.SetValue(
-                ReadPositionFromFile("InitMotorsPosition.json"));
+                ReadPositionFromFile(PredefinedPosition.InitPosition.GetPositionName()));
         PredefinedPosition.Pickup_up.SetValue(
-                ReadPositionFromFile("PickupUpMotorsPosition.json"));
+                ReadPositionFromFile(PredefinedPosition.Pickup_up.GetPositionName()));
         PredefinedPosition.Pickup_down.SetValue(
-                ReadPositionFromFile("PickupDownMotorsPosition.json"));
+                ReadPositionFromFile(PredefinedPosition.Pickup_down.GetPositionName()));
         PredefinedPosition.Pickup_left.SetValue(
-                ReadPositionFromFile("PickupLeftMotorsPosition.json"));
+                ReadPositionFromFile(PredefinedPosition.Pickup_left.GetPositionName()));
         PredefinedPosition.Pickup_right.SetValue(
-                ReadPositionFromFile("PickupRightMotorsPosition.json"));
+                ReadPositionFromFile(PredefinedPosition.Pickup_right.GetPositionName()));
         PredefinedPosition.Drop_A_1.SetValue(
-                ReadPositionFromFile("DropA1MotorsPosition.json"));
+                ReadPositionFromFile(PredefinedPosition.Drop_A_1.GetPositionName()));
         PredefinedPosition.Drop_B_2.SetValue(
-                ReadPositionFromFile("DropB2MotorsPosition.json"));
+                ReadPositionFromFile(PredefinedPosition.Drop_B_2.GetPositionName()));
         PredefinedPosition.Drop_X_3.SetValue(
-                ReadPositionFromFile("DropX3MotorsPosition.json"));
+                ReadPositionFromFile(PredefinedPosition.Drop_X_3.GetPositionName()));
         PredefinedPosition.Drop_Y_4.SetValue(
-                ReadPositionFromFile("DropY4MotorsPosition.json"));
+                ReadPositionFromFile(PredefinedPosition.Drop_Y_4.GetPositionName()));
     }
     
     @Override
@@ -132,11 +136,6 @@ public class Hand extends Subsystem
         s += "fingerServo: " + fingerServo.getPosition() + "\n";
         s += FileOpTele + "\n";
         return s;
-    }
-    
-    @Override
-    public void autoInit()
-    {
     }
     
     @Override
@@ -156,6 +155,7 @@ public class Hand extends Subsystem
     @Override
     public void stop()
     {
+        /*
         // slowly move the arm and lifter down
         armMotor.setTargetPosition(-220);
         runtimeArm.reset();
@@ -174,7 +174,7 @@ public class Hand extends Subsystem
                     (lifterMotor.isBusy()))
             {
             }
-        }
+        }*/
     }
     
     /**
@@ -533,11 +533,11 @@ public class Hand extends Subsystem
         }
         if (gamepad.y)
         {
-            fingerServo.setPosition(1);//open
+            fingerServo.setPosition(0.8);//open
         }
         if (gamepad.a)
         {
-            fingerServo.setPosition(0);// close
+            fingerServo.setPosition(0.2);// close
         }
         
         
@@ -659,58 +659,56 @@ public class Hand extends Subsystem
     {
         if (CurState == SysState.RECALIBRATION)
         {
+            GetMotorsPosition(CurrentPositionBySet);
+            SavePositonsToFile(CurrentPositionBySet);
+            /*
             if (CurrentPositionBySet == PredefinedPosition.Pickup_up)
             {
                 GetMotorsPosition(PredefinedPosition.Pickup_up);
-                SavePositonsToFile("PickupUpMotorsPosition.json",
-                        PredefinedPosition.Pickup_up);
+                SavePositonsToFile(PredefinedPosition.Pickup_up);
             }
             else if (CurrentPositionBySet == PredefinedPosition.Pickup_down)
             {
                 GetMotorsPosition(PredefinedPosition.Pickup_down);
-                SavePositonsToFile("PickupDownMotorsPosition.json",
-                        PredefinedPosition.Pickup_down);
+                SavePositonsToFile(PredefinedPosition.Pickup_down);
             }
             else if (CurrentPositionBySet == PredefinedPosition.Pickup_left)
             {
                 GetMotorsPosition(PredefinedPosition.Pickup_left);
-                SavePositonsToFile("PickupLeftMotorsPosition.json",
-                        PredefinedPosition.Pickup_left);
+                SavePositonsToFile(PredefinedPosition.Pickup_left);
             }
             else if (CurrentPositionBySet == PredefinedPosition.Pickup_right)
             {
                 GetMotorsPosition(PredefinedPosition.Pickup_right);
-                SavePositonsToFile("PickupRightMotorsPosition.json",
-                        PredefinedPosition.Pickup_right);
+                SavePositonsToFile(PredefinedPosition.Pickup_right);
             }
             else if (CurrentPositionBySet == PredefinedPosition.Drop_A_1)
             {
                 GetMotorsPosition(PredefinedPosition.Drop_A_1);
-                SavePositonsToFile("DropA1MotorsPosition.json",
-                        PredefinedPosition.Drop_A_1);
+                SavePositonsToFile(PredefinedPosition.Drop_A_1);
             }
             else if (CurrentPositionBySet == PredefinedPosition.Drop_B_2)
             {
                 GetMotorsPosition(PredefinedPosition.Drop_B_2);
-                SavePositonsToFile("DropB2MotorsPosition.json",
-                        PredefinedPosition.Drop_B_2);
+                SavePositonsToFile(PredefinedPosition.Drop_B_2);
             }
             else if (CurrentPositionBySet == PredefinedPosition.Drop_X_3)
             {
                 GetMotorsPosition(PredefinedPosition.Drop_X_3);
-                SavePositonsToFile("DropX3MotorsPosition.json",
-                        PredefinedPosition.Drop_X_3);
+                SavePositonsToFile(PredefinedPosition.Drop_X_3);
             }
             else if (CurrentPositionBySet == PredefinedPosition.Drop_Y_4)
             {
                 GetMotorsPosition(PredefinedPosition.Drop_Y_4);
-                SavePositonsToFile("DropY4MotorsPosition.json",
-                        PredefinedPosition.Drop_Y_4);
-            }
+                SavePositonsToFile(PredefinedPosition.Drop_Y_4);
+            }*/
         }
         else if (CurState == SysState.RECOVER)
         {
-            if (CurrentPositionBySet == PredefinedPosition.Pickup_up)
+            RecoverPositionFile(CurrentPositionBySet.GetPositionName());
+            CurrentPositionBySet.SetValue(
+                    ReadPositionFromFile(CurrentPositionBySet.GetPositionName()));
+            /*if (CurrentPositionBySet == PredefinedPosition.Pickup_up)
             {
                 RecoverPositionFile("PickupUpMotorsPosition.json");
                 PredefinedPosition.Pickup_up.SetValue(
@@ -757,7 +755,7 @@ public class Hand extends Subsystem
                 RecoverPositionFile("DropY4MotorsPosition.json");
                 PredefinedPosition.Drop_Y_4.SetValue(
                         ReadPositionFromFile("DropY4MotorsPosition.json"));
-            }
+            }*/
         }
     }
     
@@ -805,8 +803,9 @@ public class Hand extends Subsystem
         return data;
     }
     
-    private void SavePositonsToFile(String fileName, MotorPositionCal.SubsystemPosition positions)
+    private void SavePositonsToFile(MotorPositionCal.SubsystemPosition positions)
     {
+        String fileName = positions.GetPositionName();
         JSONObject InitData = new JSONObject();
         try
         {
@@ -943,5 +942,125 @@ public class Hand extends Subsystem
         position.ArmMotor = armMotor.getCurrentPosition();
         position.RotatorMotor = rotatorMotor.getCurrentPosition();
         position.LifterMotor = lifterMotor.getCurrentPosition();
+    }
+    
+    
+    ///////////////////   AUTONOMOUS MODE   /////////////////////////////////
+    
+    @Override
+    public void autoInit()
+    {
+    }
+    @Override
+    
+    public void autoControls(boolean isOpActive)
+    {
+    
+    }
+    public void HoldLoad()
+    {
+        fingerServo.setPosition(PredefinedPosition.PowerOnHold.FingerServo);
+    }
+    // When PowerOn, fingers holds the preload, and move arm up.
+    public void PoweronSetup()
+    {
+        //RotatorToAngle(PredefinedPosition.PowerOnHold.RotatorMotor, 2);
+        
+        //wristServo.setPosition(PredefinedPosition.PowerOnHold.WristServo);
+        palmServo.setPosition(PredefinedPosition.PowerOnHold.PalmServo);
+        knuckleServo.setPosition(PredefinedPosition.PowerOnHold.KnuckleServo);
+    
+        armPosition = -430;
+        armMotor.setTargetPosition(armPosition);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        runtimeArm.reset();
+        armMotor.setPower(0.3);
+        while ((runtimeArm.seconds() < 1) &&
+                (armMotor.isBusy()))
+        {
+        }
+        
+        wristServo.setPosition(PredefinedPosition.PowerOnHold.WristServo);
+        //palmServo.setPosition(PredefinedPosition.PowerOnHold.PalmServo);
+        //knuckleServo.setPosition(PredefinedPosition.PowerOnHold.KnuckleServo);
+        //runtimeArm.reset();
+        //while (wristServo.getPosition() < PredefinedPosition.PowerOnHold.WristServo)
+        //while ((runtimeArm.milliseconds() < 300))
+        {
+        }
+        
+        armPosition = 500;
+        armMotor.setTargetPosition(armPosition);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        runtimeArm.reset();
+        armMotor.setPower(0.3);
+        while ((runtimeArm.seconds() < 2) &&
+                (armMotor.isBusy()))
+        {
+        }
+    
+        wristServo.setPosition(0.45);//PredefinedPosition.EyeLowPole.WristServo);
+        palmServo.setPosition(0.35);//0.52);//PredefinedPosition.EyeLowPole.PalmServo);
+        knuckleServo.setPosition(0.34);//PredefinedPosition.EyeLowPole.KnuckleServo);
+        //runtimeArm.reset();
+        //while ((runtimeArm.seconds() < 1))
+        {
+        }
+    
+        armPosition = 400;
+        armMotor.setTargetPosition(armPosition);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        runtimeArm.reset();
+        armMotor.setPower(0.1);
+        while ((runtimeArm.seconds() < 2) &&
+                (armMotor.isBusy()))
+        {
+        }
+        
+    }
+    
+    public void EyeOnSideWallSetup()
+    {
+    
+    }
+    
+    public void EyeOnLowPoleSetup()
+    {
+        SetMotorsPosition(PredefinedPosition.EyeLowPole);
+    }
+    
+    ElapsedTime runtimeRotator = new ElapsedTime();
+    public void RotatorToAngle( int targetAngle, int timeoutSecond )
+    {
+        rotatorMotor.setTargetPosition(targetAngle);
+        rotatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        runtimeRotator.reset();
+        rotatorMotor.setPower(0.3);
+        while ((runtimeRotator.seconds() < timeoutSecond) &&
+                (rotatorMotor.isBusy()))
+        {
+        }
+        rotatorMotor.setPower(0);
+    }
+    public void RotatorAngle( int addAngle, int timeoutSecond )
+    {
+        rotatorMotor.setTargetPosition(rotatorMotor.getCurrentPosition() + addAngle);
+        rotatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        runtimeRotator.reset();
+        rotatorMotor.setPower(0.3);
+        while ((runtimeRotator.seconds() < timeoutSecond) &&
+                (rotatorMotor.isBusy()))
+        {
+        }
+        rotatorMotor.setPower(0);
+    }
+    
+    public void DropCone()
+    {
+        //if(CurrentPositionBySet == PredefinedPosition.EyeLowPole)
+        {
+            //SetMotorsPosition(PredefinedPosition.Drop_B_2);
+            fingerServo.setPosition(0.8);//open
+        }
     }
 }

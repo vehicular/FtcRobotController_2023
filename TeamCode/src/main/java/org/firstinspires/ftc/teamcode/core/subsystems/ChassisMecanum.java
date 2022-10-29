@@ -4,6 +4,7 @@ import android.graphics.Color;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 
@@ -33,7 +34,6 @@ import java.util.Locale;
 
 public class ChassisMecanum extends Subsystem
 {
-    
     private final double TRIGGER_THRESHOLD = 0.75;
     
     Subsystem crossSubsystem;
@@ -53,6 +53,7 @@ public class ChassisMecanum extends Subsystem
      * The colorSensor field will contain a reference to our color sensor hardware object
      */
     private NormalizedColorSensor colorSensor = null;
+    
     
     private HardwareMap hardMap = null;
     private Telemetry telemetry = null;
@@ -160,12 +161,6 @@ public class ChassisMecanum extends Subsystem
     }
     
     @Override
-    public void autoInit()
-    {
-    
-    }
-    
-    @Override
     public void teleopInit(Subsystem otherSys)
     {
         
@@ -198,9 +193,20 @@ public class ChassisMecanum extends Subsystem
         
         s += "left Front Wheel: " + frontLeft.getCurrentPosition() + "\n";
         s += "Left Back Wheel: " + backLeft.getCurrentPosition() + "\n";
-        ;
+        
         s += "Right Front Wheel: " + frontRight.getCurrentPosition() + "\n";
         s += "Right Back Wheel: " + backRight.getCurrentPosition() + "\n";
+    
+        s += "\n";
+        s += "Red: " + colors.red + "\n";
+        s += "Green: " + colors.green + "\n";
+        s += "Blue: " + colors.blue + "\n";
+        s += "\n";
+        s += "Hue: " + hsvValues[0] + "\n";
+        s += "Saturation: " + hsvValues[1] + "\n";
+        s += "Value: " + hsvValues[2] + "\n";
+        s += "Alpha: " + colors.alpha + "\n";
+        
         
         return s;
     }
@@ -262,6 +268,10 @@ public class ChassisMecanum extends Subsystem
             }
         }
         xButtonPreviouslyPressed = xButtonCurrentlyPressed;
+    
+        NormalizedRGBA colors = colorSensor.getNormalizedColors();
+    
+        Color.colorToHSV(colors.toColor(), hsvValues);
     }
     
     private void FastControl(Gamepad gamepad)
@@ -909,6 +919,19 @@ public class ChassisMecanum extends Subsystem
             hatz.seekTo(0);
             hatz.start();
         }*/
+    }
+    
+    ///////////////////  AUTO ////////////////
+    
+    @Override
+    public void autoInit()
+    {
+    }
+    @Override
+    
+    public void autoControls(boolean isOpActive)
+    {
+    
     }
     
 }
