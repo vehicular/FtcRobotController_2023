@@ -30,7 +30,7 @@ public class MotorPositionCal
         public double KnuckleServo;
         public double FingerServo;
         
-        private String positionName;
+        private String positionName; //file name too
 
         public SubsystemPosition(String name)
         {
@@ -84,6 +84,9 @@ public class MotorPositionCal
     public SubsystemPosition Drop_B_2 = new SubsystemPosition("DropB2MotorsPosition.json"); // 10-15 inches
     public SubsystemPosition Drop_X_3 = new SubsystemPosition("DropX3MotorsPosition.json"); // 20-25 inches
     public SubsystemPosition Drop_Y_4 = new SubsystemPosition("DropY4MotorsPosition.json"); // 30-35 inches
+    
+    public SubsystemPosition PowerOnHold = new SubsystemPosition("PowerOnHoldPosition.json");;
+    public SubsystemPosition EyeLowPole = new SubsystemPosition("EyeLowPolePosition.json");;
 
     public MotorPositionCal()
     {}

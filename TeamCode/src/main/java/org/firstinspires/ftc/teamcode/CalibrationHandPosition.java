@@ -86,7 +86,7 @@ public class CalibrationHandPosition extends LinearOpMode
     private Servo fingerServo;
     
     // The IMU sensor object
-    BNO055IMU imu;
+    //BNO055IMU imu;
     
     // State used for updating telemetry
     Orientation angles;
@@ -97,8 +97,9 @@ public class CalibrationHandPosition extends LinearOpMode
     
     String directoryPath = Environment.getExternalStorageDirectory().getPath() + "/MOTORS";
     
-    private void SavePositonsToFile(String fileName, MotorPositionCal.SubsystemPosition positions)
+    private void SavePositonsToFile(MotorPositionCal.SubsystemPosition positions)
     {
+        String fileName = positions.GetPositionName();
         JSONObject InitData = new JSONObject();
         try
         {
@@ -169,10 +170,10 @@ public class CalibrationHandPosition extends LinearOpMode
     
     private void SetMotorsPosition(MotorPositionCal.SubsystemPosition positions)
     {
-        wristServo.setPosition(positions.WristServo);
+        /*wristServo.setPosition(positions.WristServo);
         palmServo.setPosition(positions.PalmServo);
         knukcleServo.setPosition(positions.KnuckleServo);
-        fingerServo.setPosition(positions.FingerServo);
+        fingerServo.setPosition(positions.FingerServo);*/
     }
     //----------------------------------------------------------------------------------------------
     // Main logic
@@ -233,27 +234,47 @@ public class CalibrationHandPosition extends LinearOpMode
         // Set up the parameters with which we will use our IMU. Note that integration
         // algorithm here just reports accelerations to the logcat log; it doesn't actually
         // provide positional information.
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
-        parameters.loggingEnabled = true;
-        parameters.loggingTag = "IMU";
-        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+        //BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        //parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        //parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        //parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        //parameters.loggingEnabled = true;
+        //parameters.loggingTag = "IMU";
+        //parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         
         // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
         // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
         // and named "imu".
-        imu = hardwareMap.get(BNO055IMU.class, Constants.imu);
-        imu.initialize(parameters);
+        //imu = hardwareMap.get(BNO055IMU.class, Constants.imu);
+        //imu.initialize(parameters);
         
         //hand = new Hand(hardwareMap);
         
         // Set up our telemetry dashboard
-        composeTelemetry();
+        //composeTelemetry();
 
 
 // Start to Save files
+        
+        // palm: max 0.7, min 0.05
+        // wrist max, 0.72, min 0
+        
+        PredefinedPosition.PowerOnHold.LifterMotor = 0;
+        PredefinedPosition.PowerOnHold.RotatorMotor = 0;
+        PredefinedPosition.PowerOnHold.ArmMotor = 0;
+        PredefinedPosition.PowerOnHold.WristServo = 0.74;
+        PredefinedPosition.PowerOnHold.PalmServo = 0.7;
+        PredefinedPosition.PowerOnHold.KnuckleServo = 0.33;
+        PredefinedPosition.PowerOnHold.FingerServo = 0.1;
+    
+        PredefinedPosition.EyeLowPole.LifterMotor = 0;
+        PredefinedPosition.EyeLowPole.RotatorMotor = 0;
+        PredefinedPosition.EyeLowPole.ArmMotor = 202;
+        PredefinedPosition.EyeLowPole.WristServo = 0.5;
+        PredefinedPosition.EyeLowPole.PalmServo = 0.52;
+        PredefinedPosition.EyeLowPole.KnuckleServo = 0.34;
+        PredefinedPosition.EyeLowPole.FingerServo = 0.1;
+        
         PredefinedPosition.InitPosition.LifterMotor = 0;
         PredefinedPosition.InitPosition.RotatorMotor = 0;
         PredefinedPosition.InitPosition.ArmMotor = 0;
@@ -326,29 +347,43 @@ public class CalibrationHandPosition extends LinearOpMode
         PredefinedPosition.Drop_Y_4.KnuckleServo = 0.34;
         PredefinedPosition.Drop_Y_4.FingerServo = 0.1;
         
-        SavePositonsToFile("InitMotorsPosition.json", PredefinedPosition.InitPosition);
+        SavePositonsToFile(PredefinedPosition.PowerOnHold);
+        SavePositonsToFile(PredefinedPosition.EyeLowPole);
+        SavePositonsToFile(PredefinedPosition.InitPosition);
         
-        SavePositonsToFile("PickupUpMotorsPosition.json", PredefinedPosition.Pickup_up);
-        SavePositonsToFile("PickupDownMotorsPosition.json", PredefinedPosition.Pickup_down);
-        SavePositonsToFile("PickupLeftMotorsPosition.json", PredefinedPosition.Pickup_left);
-        SavePositonsToFile("PickupRightMotorsPosition.json", PredefinedPosition.Pickup_right);
+        SavePositonsToFile(PredefinedPosition.Pickup_up);
+        SavePositonsToFile(PredefinedPosition.Pickup_down);
+        SavePositonsToFile(PredefinedPosition.Pickup_left);
+        SavePositonsToFile(PredefinedPosition.Pickup_right);
         
-        SavePositonsToFile("DropA1MotorsPosition.json", PredefinedPosition.Drop_A_1);
-        SavePositonsToFile("DropB2MotorsPosition.json", PredefinedPosition.Drop_B_2);
-        SavePositonsToFile("DropX3MotorsPosition.json", PredefinedPosition.Drop_X_3);
-        SavePositonsToFile("DropY4MotorsPosition.json", PredefinedPosition.Drop_Y_4);
+        SavePositonsToFile(PredefinedPosition.Drop_A_1);
+        SavePositonsToFile(PredefinedPosition.Drop_B_2);
+        SavePositonsToFile(PredefinedPosition.Drop_X_3);
+        SavePositonsToFile(PredefinedPosition.Drop_Y_4);
 // End of Saving
-        
-        
-        PredefinedPosition.InitPosition.SetValue(ReadPositionFromFile("InitMotorsPosition.json"));
-        PredefinedPosition.Pickup_up.SetValue(ReadPositionFromFile("PickupUpMotorsPosition.json"));
-        PredefinedPosition.Pickup_down.SetValue(ReadPositionFromFile("PickupDownMotorsPosition.json"));
-        PredefinedPosition.Pickup_left.SetValue(ReadPositionFromFile("PickupLeftMotorsPosition.json"));
-        PredefinedPosition.Pickup_right.SetValue(ReadPositionFromFile("PickupRightMotorsPosition.json"));
-        PredefinedPosition.Drop_A_1.SetValue(ReadPositionFromFile("DropA1MotorsPosition.json"));
-        PredefinedPosition.Drop_B_2.SetValue(ReadPositionFromFile("DropB2MotorsPosition.json"));
-        PredefinedPosition.Drop_X_3.SetValue(ReadPositionFromFile("DropX3MotorsPosition.json"));
-        PredefinedPosition.Drop_Y_4.SetValue(ReadPositionFromFile("DropY4MotorsPosition.json"));
+    
+        PredefinedPosition.PowerOnHold.SetValue(
+                ReadPositionFromFile(PredefinedPosition.PowerOnHold.GetPositionName()));
+        PredefinedPosition.EyeLowPole.SetValue(
+                ReadPositionFromFile(PredefinedPosition.EyeLowPole.GetPositionName()));
+        PredefinedPosition.InitPosition.SetValue(
+                ReadPositionFromFile(PredefinedPosition.InitPosition.GetPositionName()));
+        PredefinedPosition.Pickup_up.SetValue(
+                ReadPositionFromFile(PredefinedPosition.Pickup_up.GetPositionName()));
+        PredefinedPosition.Pickup_down.SetValue(
+                ReadPositionFromFile(PredefinedPosition.Pickup_down.GetPositionName()));
+        PredefinedPosition.Pickup_left.SetValue(
+                ReadPositionFromFile(PredefinedPosition.Pickup_left.GetPositionName()));
+        PredefinedPosition.Pickup_right.SetValue(
+                ReadPositionFromFile(PredefinedPosition.Pickup_right.GetPositionName()));
+        PredefinedPosition.Drop_A_1.SetValue(
+                ReadPositionFromFile(PredefinedPosition.Drop_A_1.GetPositionName()));
+        PredefinedPosition.Drop_B_2.SetValue(
+                ReadPositionFromFile(PredefinedPosition.Drop_B_2.GetPositionName()));
+        PredefinedPosition.Drop_X_3.SetValue(
+                ReadPositionFromFile(PredefinedPosition.Drop_X_3.GetPositionName()));
+        PredefinedPosition.Drop_Y_4.SetValue(
+                ReadPositionFromFile(PredefinedPosition.Drop_Y_4.GetPositionName()));
         
         
         telemetry.addLine("Init Position at: " +
@@ -363,12 +398,12 @@ public class CalibrationHandPosition extends LinearOpMode
         waitForStart();
         
         // Start the logging of measured acceleration
-        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
+        //imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
         
         // Loop and update the dashboard
         while (opModeIsActive())
         {
-            telemetry.addLine().addData("Lifter Position at ", "%7d",
+            /*telemetry.addLine().addData("Lifter Position at ", "%7d",
                     lifterMotor.getCurrentPosition());
             
             telemetry.addLine().addData("Rotator Currently at ", "%7d",
@@ -387,7 +422,7 @@ public class CalibrationHandPosition extends LinearOpMode
                     knukcleServo.getPosition());
             
             telemetry.addLine().addData("fingerServo Currently at ", "%7f",
-                    fingerServo.getPosition());
+                    fingerServo.getPosition());*/
 
             /*telemetry.addLine().addData("Back Drive Pos L:R ", "%7d : %7d",
                     backLeft.getCurrentPosition(),
@@ -403,7 +438,7 @@ public class CalibrationHandPosition extends LinearOpMode
     //----------------------------------------------------------------------------------------------
     // Telemetry Configuration
     //----------------------------------------------------------------------------------------------
-    
+    /*
     void composeTelemetry()
     {
         // At the beginning of each telemetry update, grab a bunch of data
@@ -416,8 +451,8 @@ public class CalibrationHandPosition extends LinearOpMode
                 // Acquiring the angles is relatively expensive; we don't want
                 // to do that in each of the three items that need that info, as that's
                 // three times the necessary expense.
-                angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-                gravity = imu.getGravity();
+                //angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+                //gravity = imu.getGravity();
             }
         });
         
@@ -486,7 +521,7 @@ public class CalibrationHandPosition extends LinearOpMode
                     }
                 });
     }
-    
+    */
     //----------------------------------------------------------------------------------------------
     // Formatting
     //----------------------------------------------------------------------------------------------
