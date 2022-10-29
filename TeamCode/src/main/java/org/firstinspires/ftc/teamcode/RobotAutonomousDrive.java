@@ -33,16 +33,25 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.teamcode.core.subsystems.ChassisMecanum;
+import org.firstinspires.ftc.teamcode.core.subsystems.Eye;
+import org.firstinspires.ftc.teamcode.core.subsystems.Hand;
 import org.firstinspires.ftc.teamcode.util.Constants;
+
+import java.util.Locale;
 
 /**
  *  This file illustrates the concept of driving an autonomous path based on Gyro heading and encoder counts.
@@ -91,15 +100,24 @@ import org.firstinspires.ftc.teamcode.util.Constants;
  *  Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@TeleOp(name="JD Auto Drive", group="Run")
-//@Autonomous(name="JD Autonomous Drive", group="Robot")
+@Autonomous(name="Game Robot", group="Robot") //Autonomous Drive
 //@Disabled
-public class RobotAutonomousDrive extends LinearOpMode {
+public class RobotAutonomousDrive extends OpMode
+{
 
     /* Declare OpMode members. */
     private DcMotor         leftDrive   = null;
     private DcMotor         rightDrive  = null;
     private BNO055IMU       imu         = null;      // Control/Expansion Hub IMU
+    
+    private DcMotor lifterMotor;
+    private DcMotor rotatorMotor;
+    private DcMotor armMotor;
+    
+    private Servo wristServo;
+    private Servo palmServo;
+    private Servo knuckleServo;
+    private Servo fingerServo;
 
     private double          robotHeading  = 0;
     private double          headingOffset = 0;
@@ -140,48 +158,241 @@ public class RobotAutonomousDrive extends LinearOpMode {
     static final double     P_TURN_GAIN            = 0.02;     // Larger is more responsive, but also less stable
     static final double     P_DRIVE_GAIN           = 0.03;     // Larger is more responsive, but also less stable
 
-
+    Hand hand;
+    Eye eye;
+    
+    public ElapsedTime runtimeout = new ElapsedTime();
+    
+    /**
+     * Initialize any subsystems that need initializing before the game starts.
+     */
     @Override
-    public void runOpMode() {
-
+    public void init()
+    {
+        hand = new Hand(hardwareMap);
+        eye = new Eye(hardwareMap);
+        
+        hand.autoInit();
+        eye.autoInit();
+    
         // Initialize the drive system variables.
         leftDrive  = hardwareMap.get(DcMotor.class, Constants.leftbackMotor);
         rightDrive = hardwareMap.get(DcMotor.class, Constants.rightbackMotor);
-
+    
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
         leftDrive.setDirection(DcMotor.Direction.REVERSE);
         rightDrive.setDirection(DcMotor.Direction.FORWARD);
-
+    
         // define initialization values for IMU, and then initialize it.
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit            = BNO055IMU.AngleUnit.DEGREES;
         imu = hardwareMap.get(BNO055IMU.class, Constants.imu);
         imu.initialize(parameters);
-
+    
         // Ensure the robot is stationary.  Reset the encoders and set the motors to BRAKE mode
         leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        // Wait for the game to start (Display Gyro value while waiting)
-        while (opModeInInit()) {
-            telemetry.addData(">", "Robot Heading = %4.0f", getRawHeading());
-            telemetry.update();
-        }
-
+    
         // Set the encoders for closed loop speed control, and reset the heading.
         leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    
+        fingerServo = hardwareMap.servo.get(Constants.fingerServo);
+        wristServo = hardwareMap.servo.get(Constants.wristServo);
+        palmServo = hardwareMap.servo.get(Constants.palmServo);
+        knuckleServo = hardwareMap.servo.get(Constants.knuckleServo);
+    
+        lifterMotor = hardwareMap.get(DcMotor.class, Constants.lifterMotor);
+        rotatorMotor = hardwareMap.get(DcMotor.class, Constants.rotatorMotor);
+        armMotor = hardwareMap.get(DcMotor.class, Constants.armMotor);
+    
+        //lifterMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        rotatorMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+    
+        // reset all motors encoder to zero. remove them since we use saved cali data
+        //lifterMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //rotatorMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    
+        lifterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rotatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    
+        lifterMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rotatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        
         resetHeading();
-
+        
+        // Wait for the game to start (Display Gyro value while waiting)
+        telemetry.addData(">", "Robot Heading = %4.0f", getRawHeading());
+        telemetry.update();
+        
+        composeTelemetry();
+    }
+    
+    /*
+     * Code to run ONCE after the driver hits STOP
+     */
+    @Override
+    public void stop() {
+    }
+    
+    /*
+     * Code to run REPEATEDLY after the driver hits INIT, but before they hit PLAY
+     */
+    @Override
+    public void init_loop() {
+        hand.HoldLoad();
+    }
+    
+    /*
+     * Code to run ONCE when the driver hits PLAY
+     */
+    @Override
+    public void start() {
+        // hold the Wrist and Fingers, to move up arm, camera ready
+        hand.PoweronSetup();
+    }
+    
+    // SPOT is loop-able function, MOVE is onetime execution function
+    enum Mission
+    {
+        SPOT_A, // init position
+        MOVE_A2B,
+        SPOT_B, // cone stock
+        MOVE_B2C,
+        MOVE_B2D,
+        SPOT_C, // junction
+        MOVE_C2B,
+        MOVE_C2D,
+        SPOT_D // parking zone, final stop
+    }
+    private Mission currentMission = Mission.SPOT_A;
+    private Mission previousMission = Mission.SPOT_A;
+    private void setMissionTo(Mission newMission)
+    {
+        previousMission = currentMission;
+        currentMission = newMission;
+    }
+    
+    /*
+     * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
+     */
+    @Override
+    public void loop()
+    {
+     switch (currentMission)
+     {
+         case SPOT_A:
+             spotA_loop();
+             break;
+         case SPOT_B:
+             break;
+         case SPOT_C:
+             break;
+         case SPOT_D:
+             break;
+         case MOVE_A2B:
+             moveA2B();
+             break;
+         case MOVE_B2C:
+             break;
+         case MOVE_B2D:
+             break;
+         case MOVE_C2B:
+             break;
+         case MOVE_C2D:
+             break;
+         default:
+             break;
+     }
+        telemetry.update();
+        //sleep(1000);  // Pause to display last telemetry message.
+    }
+    
+    private void spotA_loop()
+    {
+        boolean foundPole = false;
+        while( !foundPole && runtimeout.seconds() < 5 )
+        {
+            Eye.PolePosition isCenter = eye.CheckLowPoleOnCenter();
+            if(isCenter == Eye.PolePosition.CENTER)
+            {
+                foundPole = true;
+                break;
+            }
+            else if(isCenter == Eye.PolePosition.LEFT)
+            {
+                hand.RotatorAngle(20, 1);
+            }
+            else // right, front, back
+            {
+                hand.RotatorToAngle(-20, 1);
+            }
+        }
+        if(!foundPole)
+        {
+            // picture it?
+        }
+        hand.DropCone(); ////and ToMovablePosition
+    
+    
+    
+        // Camera to identify parking ID
+        /*Eye.ParkingZone parkingID = eye.ReadParkingID();//wait 5 secs for now
+    
+        // Camera to read position ID, picture is on the side wall
+        hand.EyeOnSideWallSetup();
+        Eye.InitPosition initSlot = Eye.InitPosition.UNKNOWN;
+        runtimeout.reset();
+        while (initSlot == Eye.InitPosition.UNKNOWN && runtimeout.seconds() < 5) // need timeout
+        {
+            hand.RotatorToAngle(rototorAngle, 1);
+            initSlot = eye.ReadLeftWallSlotID(true);
+            if (initSlot == Eye.InitPosition.UNKNOWN)
+            {
+                hand.RotatorToAngle(-1*rototorAngle, 3);
+                initSlot = eye.ReadLeftWallSlotID(false);
+            }
+            rototorAngle = rototorAngle - 25;
+        }
+        
+        // drop the preload cone
+        if(initSlot == Eye.InitPosition.RED_LEFT || initSlot == Eye.InitPosition.BLUE_LEFT)
+        {
+            hand.EyeOnLowPoleSetup();
+            hand.RotatorToAngle(200, 2);
+            rototorAngle = 200;
+        }
+        else if(initSlot == Eye.InitPosition.RED_RIGHT || initSlot == Eye.InitPosition.BLUE_RIGHT)
+        {
+            hand.EyeOnLowPoleSetup();
+            hand.RotatorToAngle(-200, 2);
+            rototorAngle = -200;
+        }
+        else
+        {
+            //move to a best guess postion to try again?
+        }
+        */
+    
+        //turnToHeading( TURN_SPEED, rototorAngle);
+    }
+    
+    private void moveA2B()
+    {
+        /////////////////////         TESTING            ///////////////////
         // Step through each leg of the path,
         // Notes:   Reverse movement is obtained by setting a negative distance (not speed)
         //          holdHeading() is used after turns to let the heading stabilize
         //          Add a sleep(2000) after any step to keep the telemetry data visible for review
-
+/*
         driveStraight(DRIVE_SPEED, 24.0, 0.0);    // Drive Forward 24"
         turnToHeading( TURN_SPEED, -45.0);               // Turn  CW to -45 Degrees
         holdHeading( TURN_SPEED, -45.0, 0.5);   // Hold -45 Deg heading for a 1/2 second
@@ -195,11 +406,139 @@ public class RobotAutonomousDrive extends LinearOpMode {
         holdHeading( TURN_SPEED,   0.0, 1.0);    // Hold  0 Deg heading for 1 second
 
         driveStraight(DRIVE_SPEED,-48.0, 0.0);    // Drive in Reverse 48" (should return to approx. staring position)
-
-        telemetry.addData("Path", "Complete");
-        telemetry.update();
-        sleep(1000);  // Pause to display last telemetry message.
+*/
     }
+    
+    void handMotorsRunnable()
+    {
+        new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                lifterMotor.getCurrentPosition();
+                currentRotatorPosition = rotatorMotor.getCurrentPosition();
+                currentArmPosition = armMotor.getCurrentPosition();
+            }
+        };
+    }
+    void handServosRunnable()
+    {
+        new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                currentWristPosition = wristServo.getPosition();
+                currentPalmPosition = palmServo.getPosition();
+                currentKnucklePosition = knuckleServo.getPosition();
+                currentFingerPosition = fingerServo.getPosition();
+            }
+        };
+    }
+
+    
+    int currentLifterPosition;
+    int currentRotatorPosition;
+    int currentArmPosition;
+    
+    double currentWristPosition;
+    double currentPalmPosition;
+    double currentKnucklePosition;
+    double currentFingerPosition;
+    
+    // State used for updating telemetry
+    Orientation currentRobotAngles;
+    void composeTelemetry() {
+        
+        // At the beginning of each telemetry update, grab a bunch of data
+        // from the IMU that we will then display in separate lines.
+        telemetry.addAction(new Runnable() { @Override public void run()
+        {
+            // Acquiring the angles is relatively expensive; we don't want
+            // to do that in each of the three items that need that info, as that's
+            // three times the necessary expense.
+            currentRobotAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            currentLifterPosition = lifterMotor.getCurrentPosition();
+            currentRotatorPosition = rotatorMotor.getCurrentPosition();
+            currentArmPosition = armMotor.getCurrentPosition();
+            currentWristPosition = wristServo.getPosition();
+            currentPalmPosition =  palmServo.getPosition();
+            currentKnucklePosition = knuckleServo.getPosition();
+            currentFingerPosition = fingerServo.getPosition();
+        }
+        });
+        
+        telemetry.addLine()
+                .addData("Lifter", currentLifterPosition)
+                .addData("Rotator", currentRotatorPosition)
+                .addData("Arm", currentArmPosition);
+    
+        telemetry.addLine()
+                .addData("Wrist", new Func<String>() {
+                    @Override public String value() {
+                        return formatServoPosition(currentWristPosition);
+                    }
+                })
+                .addData("Palm", new Func<String>() {
+                    @Override public String value() {
+                        return formatServoPosition(currentPalmPosition);
+                    }
+                })
+                .addData("Knuckle", new Func<String>() {
+                    @Override public String value() {
+                        return formatServoPosition(currentKnucklePosition);
+                    }
+                })
+                .addData("Finger", new Func<String>() {
+                    @Override public String value() {
+                        return formatServoPosition(currentFingerPosition);
+                    }
+                });
+        
+        telemetry.addLine()
+                .addData("status", new Func<String>() {
+                    @Override public String value() {
+                        return imu.getSystemStatus().toShortString();
+                    }
+                })
+                .addData("calib", new Func<String>() {
+                    @Override public String value() {
+                        return imu.getCalibrationStatus().toString();
+                    }
+                });
+        
+        telemetry.addLine()
+                .addData("heading", new Func<String>() {
+                    @Override public String value() {
+                        return formatAngle(currentRobotAngles.angleUnit, currentRobotAngles.firstAngle);
+                    }
+                })
+                .addData("roll", new Func<String>() {
+                    @Override public String value() {
+                        return formatAngle(currentRobotAngles.angleUnit, currentRobotAngles.secondAngle);
+                    }
+                })
+                .addData("pitch", new Func<String>() {
+                    @Override public String value() {
+                        return formatAngle(currentRobotAngles.angleUnit, currentRobotAngles.thirdAngle);
+                    }
+                });
+    }
+    String formatAngle(AngleUnit angleUnit, double angle) {
+        return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
+    }
+    
+    String formatDegrees(double degrees){
+        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
+    }
+    
+    String formatServoPosition(double servoPosition)
+    {
+        return String.format(Locale.getDefault(), "%.2f", servoPosition);
+    }
+    
+    
 
     /*
      * ====================================================================================================
