@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.util.Constants;
 
 
 @Disabled
-@TeleOp(name = "JD Manual Basic Drive", group = "Test")
+@TeleOp(name = "JD Manual Basic Test", group = "Test")
 
 public class RobotMecanumManualDrive extends OpMode {
     public DcMotor frontLeft;

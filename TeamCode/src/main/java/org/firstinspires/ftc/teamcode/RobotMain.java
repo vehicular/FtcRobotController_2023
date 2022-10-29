@@ -9,7 +9,7 @@ import org.firstinspires.ftc.teamcode.core.Subsystem;
 import org.firstinspires.ftc.teamcode.core.subsystems.ChassisMecanum;
 import org.firstinspires.ftc.teamcode.core.subsystems.Hand;
 //@Disabled
-@TeleOp(name = "Game Robot", group = "Run")
+@TeleOp(name = "Game Robot", group = "Robot")
 public class RobotMain extends OpMode
 {
     private Subsystem chassis;
