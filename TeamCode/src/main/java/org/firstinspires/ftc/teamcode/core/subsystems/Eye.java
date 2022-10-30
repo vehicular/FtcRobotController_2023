@@ -82,11 +82,20 @@ public class Eye extends Subsystem
         return InitPosition.RED_RIGHT;
     }
     
+    int count = 0;
     public PolePosition CheckLowPoleOnCenter()
     {
         timeout.reset();
-        while(timeout.seconds()<1){}
-        return PolePosition.CENTER;
+        while(timeout.milliseconds()<200){}
+        if(count < 20)
+        {
+            count++;
+            return PolePosition.LEFT;
+        }
+        else
+        {
+            return PolePosition.CENTER;
+        }
     }
     
     @Override

@@ -97,7 +97,7 @@ import java.util.Locale;
  *  Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Game Robot", group="Robot") //Autonomous Drive
+@Autonomous(name="Game Robot Autonomous", group="Robot") // Drive
 //@Disabled
 public class RobotAutonomousDrive extends OpMode
 {
@@ -155,7 +155,7 @@ public class RobotAutonomousDrive extends OpMode
     static final double     P_TURN_GAIN            = 0.02;     // Larger is more responsive, but also less stable
     static final double     P_DRIVE_GAIN           = 0.03;     // Larger is more responsive, but also less stable
 
-    Hand hand;
+    //Hand hand;
     Eye eye;
     
     public ElapsedTime taskRunTimeout = new ElapsedTime();
@@ -166,10 +166,10 @@ public class RobotAutonomousDrive extends OpMode
     @Override
     public void init()
     {
-        hand = new Hand(hardwareMap);
+        //hand = new Hand(hardwareMap);
         eye = new Eye(hardwareMap);
         
-        hand.autoInit();
+        //hand.autoInit();
         eye.autoInit();
     
         // Initialize the drive system variables.
@@ -246,7 +246,7 @@ public class RobotAutonomousDrive extends OpMode
     @Override
     public void init_loop()
     {
-        hand.HoldLoad();
+        fingerServo.setPosition(0.2);
     }
     
     /*
@@ -258,7 +258,6 @@ public class RobotAutonomousDrive extends OpMode
         targetPositionLifter = lifterMotor.getCurrentPosition();
         targetPositionRotator = rotatorMotor.getCurrentPosition();
         targetPositionArm = armMotor.getCurrentPosition();
-        // hold the Wrist and Fingers, to move up arm, camera ready
     }
     
     // SPOT is loop-able function, MOVE is onetime execution function
@@ -313,10 +312,15 @@ public class RobotAutonomousDrive extends OpMode
          case MOVE_C2D:
              break;
          default: //EXIT
-             //this.requestOpModeStop();
-             stop();
              break;
      }
+        rotatorMotorRunnable();
+        armMotorRunnable();
+    
+    
+        telemetry.addData("Lifter %d", lifterMotor.getCurrentPosition());
+        telemetry.addData("Rotator %d", rotatorMotor.getCurrentPosition());
+        telemetry.addData("Arm %d", armMotor.getCurrentPosition());
         telemetry.update();
         //sleep(1000);  // Pause to display last telemetry message.
     }
@@ -362,35 +366,34 @@ public class RobotAutonomousDrive extends OpMode
             if(taskRunTimeout.milliseconds() > 300 )
             {
                 targetPositionArm = 400;
-    
+                taskRunTimeout.reset();
+                loopTaskCount = 4;
+            }
+        }
+        else if(loopTaskCount == 4)
+        {
+            if (taskRunTimeout.seconds() < 5)
+            {
+                Eye.PolePosition isCenter = eye.CheckLowPoleOnCenter();
+                if (isCenter == Eye.PolePosition.CENTER)
+                {
+                    fingerServo.setPosition(0.7); // drop it
+                    setMissionTo(Mission.EXIT);
+                }
+                else if (isCenter == Eye.PolePosition.LEFT)
+                {
+                    targetPositionRotator += 50;
+                }
+                else // right, front, back
+                {
+                    targetPositionRotator = -100;
+                }
+            }
+            else // timeout
+            {
                 setMissionTo(Mission.EXIT);
             }
         }
-        
-        /*boolean foundPole = false;
-        while( !foundPole && runtimeout.seconds() < 5 )
-        {
-            Eye.PolePosition isCenter = eye.CheckLowPoleOnCenter();
-            if(isCenter == Eye.PolePosition.CENTER)
-            {
-                foundPole = true;
-                break;
-            }
-            else if(isCenter == Eye.PolePosition.LEFT)
-            {
-                hand.RotatorAngle(20, 1);
-            }
-            else // right, front, back
-            {
-                hand.RotatorToAngle(-20, 1);
-            }
-        }
-        if(!foundPole)
-        {
-            // picture it?
-        }
-        hand.DropCone(); ////and ToMovablePosition*/
-    
     
     
         // Camera to identify parking ID
@@ -466,52 +469,55 @@ public class RobotAutonomousDrive extends OpMode
     double armMovePower = 0.2;
     void armMotorRunnable()
     {
-        new Runnable()
+        //new Runnable()
         {
-            @Override
-            public void run()
+            //@Override
+           // public void run()
             {
-                if(targetPositionArm > armMotor.getCurrentPosition())
+                //while(true)
                 {
-                    armMovePower = 0.3;
-                }
-                else if(targetFingerPosition < armMotor.getCurrentPosition())
-                {
-                    armMovePower = 0.1;
-                    //if over up 45-D, need more power:TODO
-                }
-                else
-                {
-                    armMovePower = 0.2;
-                }
-                armMotor.setTargetPosition(targetPositionArm);
-                armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                //runtimeManual.reset();
-                armMotor.setPower(armMovePower);
+                    if (targetPositionArm > armMotor.getCurrentPosition())
+                    {
+                        armMovePower = 0.3;
+                    }
+                    else if (targetPositionArm < armMotor.getCurrentPosition())
+                    {
+                        armMovePower = 0.1;
+                        //if over up 45-D, need more power:TODO
+                    }
+                    else
+                    {
+                        armMovePower = 0.2;
+                    }
+                    armMotor.setTargetPosition(targetPositionArm);
+                    armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    //runtimeManual.reset();
+                    armMotor.setPower(armMovePower);
                 /*while ((runtimeManual.seconds() < 1) &&
                         (armMotor.isBusy()))
                 {
                 }*/
+                }
             }
         };
     }
     
     int targetPositionRotator;
     ElapsedTime rotatorMotorTimer = new ElapsedTime();
-    int rotatorTimeoutMillsecs = 1000;
+    int rotatorTimeoutMillsecs = 2000;
     double rotatorMovePower = 0.2;
     void rotatorMotorRunnable()
     {
-        new Runnable()
+        //new Runnable()
         {
-            @Override
-            public void run()
+            //@Override
+            //public void run()
             {
                 if(!rotatorMotor.isBusy())
                 {
-                    if (rotatorMotor.getCurrentPosition() != targetPositionLifter)
+                    if (rotatorMotor.getCurrentPosition() != targetPositionRotator)
                     {
-                        rotatorMotor.setTargetPosition(targetPositionLifter);
+                        rotatorMotor.setTargetPosition(targetPositionRotator);
                         rotatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                         //rotatorTimeoutMillsecs = 1000;
                         rotatorMotorTimer.reset();
@@ -527,6 +533,7 @@ public class RobotAutonomousDrive extends OpMode
                     if(rotatorMotorTimer.milliseconds() > rotatorTimeoutMillsecs)
                     {
                         rotatorMotor.setPower(0);
+                        targetPositionRotator = rotatorMotor.getCurrentPosition();
                     }
                 }
             }
@@ -534,7 +541,7 @@ public class RobotAutonomousDrive extends OpMode
     }
     
     
-    double targetWristPosition;
+    /*double targetWristPosition;
     double targetPalmPosition;
     double targetKnucklePosition;
     double targetFingerPosition;
@@ -551,12 +558,9 @@ public class RobotAutonomousDrive extends OpMode
                 fingerServo.setPosition(targetFingerPosition);
             }
         };
-    }
+    }*/
     
     // State used for updating telemetry
-    int currentLifterPosition;
-    int currentRotatorPosition;
-    int currentArmPosition;
     double currentWristPosition;
     double currentPalmPosition;
     double currentKnucklePosition;
@@ -572,9 +576,6 @@ public class RobotAutonomousDrive extends OpMode
             // to do that in each of the three items that need that info, as that's
             // three times the necessary expense.
             currentRobotAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            currentLifterPosition = lifterMotor.getCurrentPosition();
-            currentRotatorPosition = rotatorMotor.getCurrentPosition();
-            currentArmPosition = armMotor.getCurrentPosition();
             currentWristPosition = wristServo.getPosition();
             currentPalmPosition =  palmServo.getPosition();
             currentKnucklePosition = knuckleServo.getPosition();
@@ -582,10 +583,7 @@ public class RobotAutonomousDrive extends OpMode
         }
         });
         
-        telemetry.addLine()
-                .addData("Lifter", currentLifterPosition)
-                .addData("Rotator", currentRotatorPosition)
-                .addData("Arm", currentArmPosition);
+        
     
         telemetry.addLine()
                 .addData("Wrist", new Func<String>() {
