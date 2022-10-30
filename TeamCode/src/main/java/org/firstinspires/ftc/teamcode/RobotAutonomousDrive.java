@@ -31,10 +31,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -46,10 +43,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.teamcode.core.subsystems.ChassisMecanum;
 import org.firstinspires.ftc.teamcode.core.subsystems.Eye;
 import org.firstinspires.ftc.teamcode.core.subsystems.Hand;
 import org.firstinspires.ftc.teamcode.util.Constants;
+import org.firstinspires.ftc.teamcode.util.Util;
 
 import java.util.Locale;
 
@@ -161,7 +158,7 @@ public class RobotAutonomousDrive extends OpMode
     Hand hand;
     Eye eye;
     
-    public ElapsedTime runtimeout = new ElapsedTime();
+    public ElapsedTime taskRunTimeout = new ElapsedTime();
     
     /**
      * Initialize any subsystems that need initializing before the game starts.
@@ -247,7 +244,8 @@ public class RobotAutonomousDrive extends OpMode
      * Code to run REPEATEDLY after the driver hits INIT, but before they hit PLAY
      */
     @Override
-    public void init_loop() {
+    public void init_loop()
+    {
         hand.HoldLoad();
     }
     
@@ -255,9 +253,12 @@ public class RobotAutonomousDrive extends OpMode
      * Code to run ONCE when the driver hits PLAY
      */
     @Override
-    public void start() {
+    public void start()
+    {
+        targetPositionLifter = lifterMotor.getCurrentPosition();
+        targetPositionRotator = rotatorMotor.getCurrentPosition();
+        targetPositionArm = armMotor.getCurrentPosition();
         // hold the Wrist and Fingers, to move up arm, camera ready
-        hand.PoweronSetup();
     }
     
     // SPOT is loop-able function, MOVE is onetime execution function
@@ -271,12 +272,14 @@ public class RobotAutonomousDrive extends OpMode
         SPOT_C, // junction
         MOVE_C2B,
         MOVE_C2D,
-        SPOT_D // parking zone, final stop
+        SPOT_D, // parking zone, final stop
+        EXIT
     }
     private Mission currentMission = Mission.SPOT_A;
     private Mission previousMission = Mission.SPOT_A;
     private void setMissionTo(Mission newMission)
     {
+        loopTaskCount = 0;
         previousMission = currentMission;
         currentMission = newMission;
     }
@@ -309,16 +312,62 @@ public class RobotAutonomousDrive extends OpMode
              break;
          case MOVE_C2D:
              break;
-         default:
+         default: //EXIT
+             //this.requestOpModeStop();
+             stop();
              break;
      }
         telemetry.update();
         //sleep(1000);  // Pause to display last telemetry message.
     }
     
+    int loopTaskCount = 0;
     private void spotA_loop()
     {
-        boolean foundPole = false;
+        if(loopTaskCount == 0)
+        {
+            palmServo.setPosition(0.7);//PredefinedPosition.PowerOnHold.PalmServo);
+            knuckleServo.setPosition(0.33);//PredefinedPosition.PowerOnHold.KnuckleServo);
+            targetPositionArm = -430;
+            taskRunTimeout.reset();
+            loopTaskCount = 1;
+        }
+        else if(loopTaskCount == 1)
+        {
+            boolean done = Util.inRange(armMotor.getCurrentPosition(),
+                    targetPositionArm-10, targetPositionArm+10);
+            if(done || taskRunTimeout.seconds() >= 1)
+            {
+                wristServo.setPosition(0.74);//PredefinedPosition.PowerOnHold.WristServo);
+                targetPositionArm = 500;
+                taskRunTimeout.reset();
+                loopTaskCount = 2;
+            }
+        }
+        else if(loopTaskCount == 2)
+        {
+            boolean done = Util.inRange(armMotor.getCurrentPosition(),
+                targetPositionArm-10, targetPositionArm+10);
+            if(done || taskRunTimeout.seconds() >= 3)
+            {
+                wristServo.setPosition(0.45);//PredefinedPosition.EyeLowPole.WristServo);
+                palmServo.setPosition(0.35);//0.52);//PredefinedPosition.EyeLowPole.PalmServo);
+                knuckleServo.setPosition(0.34);//PredefinedPosition.EyeLowPole.KnuckleServo);
+                taskRunTimeout.reset();
+                loopTaskCount = 3;
+            }
+        }
+        else if(loopTaskCount == 3)
+        {
+            if(taskRunTimeout.milliseconds() > 300 )
+            {
+                targetPositionArm = 400;
+    
+                setMissionTo(Mission.EXIT);
+            }
+        }
+        
+        /*boolean foundPole = false;
         while( !foundPole && runtimeout.seconds() < 5 )
         {
             Eye.PolePosition isCenter = eye.CheckLowPoleOnCenter();
@@ -340,7 +389,7 @@ public class RobotAutonomousDrive extends OpMode
         {
             // picture it?
         }
-        hand.DropCone(); ////and ToMovablePosition
+        hand.DropCone(); ////and ToMovablePosition*/
     
     
     
@@ -409,19 +458,86 @@ public class RobotAutonomousDrive extends OpMode
 */
     }
     
-    void handMotorsRunnable()
+    int targetPositionLifter;
+    
+    int targetPositionArm;
+    ElapsedTime armMotorTimer = new ElapsedTime();
+    int armTimeoutMillsecs = 1000;
+    double armMovePower = 0.2;
+    void armMotorRunnable()
     {
         new Runnable()
         {
             @Override
             public void run()
             {
-                lifterMotor.getCurrentPosition();
-                currentRotatorPosition = rotatorMotor.getCurrentPosition();
-                currentArmPosition = armMotor.getCurrentPosition();
+                if(targetPositionArm > armMotor.getCurrentPosition())
+                {
+                    armMovePower = 0.3;
+                }
+                else if(targetFingerPosition < armMotor.getCurrentPosition())
+                {
+                    armMovePower = 0.1;
+                    //if over up 45-D, need more power:TODO
+                }
+                else
+                {
+                    armMovePower = 0.2;
+                }
+                armMotor.setTargetPosition(targetPositionArm);
+                armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                //runtimeManual.reset();
+                armMotor.setPower(armMovePower);
+                /*while ((runtimeManual.seconds() < 1) &&
+                        (armMotor.isBusy()))
+                {
+                }*/
             }
         };
     }
+    
+    int targetPositionRotator;
+    ElapsedTime rotatorMotorTimer = new ElapsedTime();
+    int rotatorTimeoutMillsecs = 1000;
+    double rotatorMovePower = 0.2;
+    void rotatorMotorRunnable()
+    {
+        new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                if(!rotatorMotor.isBusy())
+                {
+                    if (rotatorMotor.getCurrentPosition() != targetPositionLifter)
+                    {
+                        rotatorMotor.setTargetPosition(targetPositionLifter);
+                        rotatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                        //rotatorTimeoutMillsecs = 1000;
+                        rotatorMotorTimer.reset();
+                        rotatorMotor.setPower(rotatorMovePower);
+                    }
+                    else
+                    {
+                        rotatorMotor.setPower(0);
+                    }
+                }
+                else
+                {
+                    if(rotatorMotorTimer.milliseconds() > rotatorTimeoutMillsecs)
+                    {
+                        rotatorMotor.setPower(0);
+                    }
+                }
+            }
+        };
+    }
+    
+    
+    double targetWristPosition;
+    double targetPalmPosition;
+    double targetKnucklePosition;
+    double targetFingerPosition;
     void handServosRunnable()
     {
         new Runnable()
@@ -429,25 +545,22 @@ public class RobotAutonomousDrive extends OpMode
             @Override
             public void run()
             {
-                currentWristPosition = wristServo.getPosition();
-                currentPalmPosition = palmServo.getPosition();
-                currentKnucklePosition = knuckleServo.getPosition();
-                currentFingerPosition = fingerServo.getPosition();
+                wristServo.setPosition(targetWristPosition);
+                palmServo.setPosition(targetPalmPosition);
+                knuckleServo.setPosition(targetKnucklePosition);
+                fingerServo.setPosition(targetFingerPosition);
             }
         };
     }
-
     
+    // State used for updating telemetry
     int currentLifterPosition;
     int currentRotatorPosition;
     int currentArmPosition;
-    
     double currentWristPosition;
     double currentPalmPosition;
     double currentKnucklePosition;
     double currentFingerPosition;
-    
-    // State used for updating telemetry
     Orientation currentRobotAngles;
     void composeTelemetry() {
         
@@ -566,7 +679,8 @@ public class RobotAutonomousDrive extends OpMode
                               double heading) {
 
         // Ensure that the opmode is still active
-        if (opModeIsActive()) {
+        //TODO if (opModeIsActive())
+        {
 
             // Determine new target position, and pass to motor controller
             int moveCounts = (int)(distance * COUNTS_PER_INCH);
@@ -586,8 +700,9 @@ public class RobotAutonomousDrive extends OpMode
             moveRobot(maxDriveSpeed, 0);
 
             // keep looping while we are still active, and BOTH motors are running.
-            while (opModeIsActive() &&
-                   (leftDrive.isBusy() && rightDrive.isBusy())) {
+            //TODO while (opModeIsActive() &&
+            //       (leftDrive.isBusy() && rightDrive.isBusy()))
+            {
 
                 // Determine required steering to keep on heading
                 turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN);
@@ -627,7 +742,8 @@ public class RobotAutonomousDrive extends OpMode
         getSteeringCorrection(heading, P_DRIVE_GAIN);
 
         // keep looping while we are still active, and not on heading.
-        while (opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD)) {
+        //TODO while (opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD))
+        {
 
             // Determine required steering to keep on heading
             turnSpeed = getSteeringCorrection(heading, P_TURN_GAIN);
@@ -663,7 +779,8 @@ public class RobotAutonomousDrive extends OpMode
         holdTimer.reset();
 
         // keep looping while we have time remaining.
-        while (opModeIsActive() && (holdTimer.time() < holdTime)) {
+        // TODO while (opModeIsActive() && (holdTimer.time() < holdTime))
+        {
             // Determine required steering to keep on heading
             turnSpeed = getSteeringCorrection(heading, P_TURN_GAIN);
 
