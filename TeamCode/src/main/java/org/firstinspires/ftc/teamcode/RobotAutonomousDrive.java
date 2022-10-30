@@ -103,8 +103,10 @@ public class RobotAutonomousDrive extends OpMode
 {
 
     /* Declare OpMode members. */
-    private DcMotor         leftDrive   = null;
-    private DcMotor         rightDrive  = null;
+    public DcMotor frontLeft;
+    public DcMotor frontRight;
+    public DcMotor backLeft;
+    public DcMotor backRight;
     private BNO055IMU       imu         = null;      // Control/Expansion Hub IMU
     
     private DcMotor lifterMotor;
@@ -173,14 +175,19 @@ public class RobotAutonomousDrive extends OpMode
         eye.autoInit();
     
         // Initialize the drive system variables.
-        leftDrive  = hardwareMap.get(DcMotor.class, Constants.leftbackMotor);
-        rightDrive = hardwareMap.get(DcMotor.class, Constants.rightbackMotor);
+        frontLeft = hardwareMap.get(DcMotor.class, Constants.leftfrontMotor);
+        frontRight = hardwareMap.get(DcMotor.class, Constants.rightfrontMotor);
+        backLeft = hardwareMap.get(DcMotor.class, Constants.leftbackMotor);
+        backRight = hardwareMap.get(DcMotor.class, Constants.rightbackMotor);
     
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        leftDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontRight.setDirection(DcMotorSimple.Direction.FORWARD);
+        frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRight.setDirection(DcMotorSimple.Direction.FORWARD);
+
     
         // define initialization values for IMU, and then initialize it.
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -189,14 +196,20 @@ public class RobotAutonomousDrive extends OpMode
         imu.initialize(parameters);
     
         // Ensure the robot is stationary.  Reset the encoders and set the motors to BRAKE mode
-        leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     
         // Set the encoders for closed loop speed control, and reset the heading.
-        leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    
+        resetHeading();
     
         fingerServo = hardwareMap.servo.get(Constants.fingerServo);
         wristServo = hardwareMap.servo.get(Constants.wristServo);
@@ -224,7 +237,7 @@ public class RobotAutonomousDrive extends OpMode
         rotatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         
-        resetHeading();
+        
         
         // Wait for the game to start (Display Gyro value while waiting)
         telemetry.addData(">", "Robot Heading = %4.0f", getRawHeading());
@@ -247,6 +260,7 @@ public class RobotAutonomousDrive extends OpMode
     public void init_loop()
     {
         fingerServo.setPosition(0.2);
+        telemetry.update(); // show composeTelemetry
     }
     
     /*
@@ -261,7 +275,7 @@ public class RobotAutonomousDrive extends OpMode
     }
     
     // SPOT is loop-able function, MOVE is onetime execution function
-    enum Mission
+    private enum Mission
     {
         SPOT_A, // init position
         MOVE_A2B,
@@ -317,10 +331,15 @@ public class RobotAutonomousDrive extends OpMode
         rotatorMotorRunnable();
         armMotorRunnable();
     
-    
+        telemetry.addData("Angle Target:Current", "%5.2f:%5.0f", targetHeading, robotHeading);
+        telemetry.addData("Error:Steer",  "%5.1f:%5.1f", headingError, turnSpeed);
+        telemetry.addData("Wheel Speeds L:R.", "%5.2f : %5.2f", leftSpeed, rightSpeed);
+        telemetry.addData("Wheel Positions L:R",  "%7d:%7d",      backLeft.getCurrentPosition(),
+                backRight.getCurrentPosition());
         telemetry.addData("Lifter %d", lifterMotor.getCurrentPosition());
         telemetry.addData("Rotator %d", rotatorMotor.getCurrentPosition());
         telemetry.addData("Arm %d", armMotor.getCurrentPosition());
+        
         telemetry.update();
         //sleep(1000);  // Pause to display last telemetry message.
     }
@@ -340,10 +359,10 @@ public class RobotAutonomousDrive extends OpMode
         {
             boolean done = Util.inRange(armMotor.getCurrentPosition(),
                     targetPositionArm-10, targetPositionArm+10);
-            if(done || taskRunTimeout.seconds() >= 1)
+            if(done || taskRunTimeout.seconds() >= 2)
             {
                 wristServo.setPosition(0.74);//PredefinedPosition.PowerOnHold.WristServo);
-                targetPositionArm = 500;
+                targetPositionArm = 680;
                 taskRunTimeout.reset();
                 loopTaskCount = 2;
             }
@@ -354,9 +373,9 @@ public class RobotAutonomousDrive extends OpMode
                 targetPositionArm-10, targetPositionArm+10);
             if(done || taskRunTimeout.seconds() >= 3)
             {
-                wristServo.setPosition(0.45);//PredefinedPosition.EyeLowPole.WristServo);
-                palmServo.setPosition(0.35);//0.52);//PredefinedPosition.EyeLowPole.PalmServo);
-                knuckleServo.setPosition(0.34);//PredefinedPosition.EyeLowPole.KnuckleServo);
+                wristServo.setPosition(0.6);//PredefinedPosition.EyeLowPole.WristServo);
+                palmServo.setPosition(0.29);//0.52);//PredefinedPosition.EyeLowPole.PalmServo);
+                //knuckleServo.setPosition(0.33);//PredefinedPosition.EyeLowPole.KnuckleServo);
                 taskRunTimeout.reset();
                 loopTaskCount = 3;
             }
@@ -365,7 +384,7 @@ public class RobotAutonomousDrive extends OpMode
         {
             if(taskRunTimeout.milliseconds() > 300 )
             {
-                targetPositionArm = 400;
+                targetPositionArm = 460;
                 taskRunTimeout.reset();
                 loopTaskCount = 4;
             }
@@ -377,21 +396,35 @@ public class RobotAutonomousDrive extends OpMode
                 Eye.PolePosition isCenter = eye.CheckLowPoleOnCenter();
                 if (isCenter == Eye.PolePosition.CENTER)
                 {
-                    fingerServo.setPosition(0.7); // drop it
-                    setMissionTo(Mission.EXIT);
+                    // found the location, prepare the drop positions
+                    targetPositionArm = 390;
+                    wristServo.setPosition(0.72);
+                    palmServo.setPosition(0.19);
+                    taskRunTimeout.reset();
+                    loopTaskCount = 5;
                 }
                 else if (isCenter == Eye.PolePosition.LEFT)
                 {
-                    targetPositionRotator += 50;
+                    targetPositionRotator += 5;
                 }
                 else // right, front, back
                 {
-                    targetPositionRotator = -100;
+                    targetPositionRotator = -5;
                 }
             }
             else // timeout
             {
-                setMissionTo(Mission.EXIT);
+                //TODO check other side of robot, repeat this step
+                loopTaskCount = 5; // going to drop the cone randomly, good luck
+            }
+        }
+        else if(loopTaskCount == 5)
+        {
+            if(taskRunTimeout.milliseconds() > 300 )
+            {
+                fingerServo.setPosition(0.7); // drop it
+                setMissionTo(Mission.MOVE_A2B);
+                targetPositionArm = 700; // better to help robot moving around
             }
         }
     
@@ -414,51 +447,92 @@ public class RobotAutonomousDrive extends OpMode
             }
             rototorAngle = rototorAngle - 25;
         }
-        
-        // drop the preload cone
-        if(initSlot == Eye.InitPosition.RED_LEFT || initSlot == Eye.InitPosition.BLUE_LEFT)
-        {
-            hand.EyeOnLowPoleSetup();
-            hand.RotatorToAngle(200, 2);
-            rototorAngle = 200;
-        }
-        else if(initSlot == Eye.InitPosition.RED_RIGHT || initSlot == Eye.InitPosition.BLUE_RIGHT)
-        {
-            hand.EyeOnLowPoleSetup();
-            hand.RotatorToAngle(-200, 2);
-            rototorAngle = -200;
-        }
-        else
-        {
-            //move to a best guess postion to try again?
-        }
         */
-    
-        //turnToHeading( TURN_SPEED, rototorAngle);
     }
     
     private void moveA2B()
     {
-        /////////////////////         TESTING            ///////////////////
-        // Step through each leg of the path,
         // Notes:   Reverse movement is obtained by setting a negative distance (not speed)
         //          holdHeading() is used after turns to let the heading stabilize
-        //          Add a sleep(2000) after any step to keep the telemetry data visible for review
-/*
-        driveStraight(DRIVE_SPEED, 24.0, 0.0);    // Drive Forward 24"
-        turnToHeading( TURN_SPEED, -45.0);               // Turn  CW to -45 Degrees
-        holdHeading( TURN_SPEED, -45.0, 0.5);   // Hold -45 Deg heading for a 1/2 second
-
-        driveStraight(DRIVE_SPEED, 17.0, -45.0);  // Drive Forward 17" at -45 degrees (12"x and 12"y)
-        turnToHeading( TURN_SPEED,  45.0);               // Turn  CCW  to  45 Degrees
-        holdHeading( TURN_SPEED,  45.0, 0.5);    // Hold  45 Deg heading for a 1/2 second
-
-        driveStraight(DRIVE_SPEED, 17.0, 45.0);  // Drive Forward 17" at 45 degrees (-12"x and 12"y)
-        turnToHeading( TURN_SPEED,   0.0);               // Turn  CW  to 0 Degrees
-        holdHeading( TURN_SPEED,   0.0, 1.0);    // Hold  0 Deg heading for 1 second
-
-        driveStraight(DRIVE_SPEED,-48.0, 0.0);    // Drive in Reverse 48" (should return to approx. staring position)
-*/
+        if(loopTaskCount == 0)
+        {
+            driveStrafeInit(24, DRIVE_SPEED, 4, 0.0);    // strafe left 10
+            taskRunTimeout.reset();
+            loopTaskCount = 1;
+        }
+        else if(loopTaskCount == 1)
+        {
+            boolean done = driveStrafeLoop(24, DRIVE_SPEED, 4, 0.0);
+            if(taskRunTimeout.seconds() >= 10)
+            {
+                // timeout, bad! should not happen at all
+                setMissionTo(Mission.EXIT);
+            }
+            else if( done )
+            {
+                driveStraightInit(DRIVE_SPEED, 48.0, 0.0);    // Drive Forward 72"
+                taskRunTimeout.reset();
+                loopTaskCount = 2;
+            }
+        }
+        else if(loopTaskCount == 2)
+        {
+            boolean done = driveStraightLoop(DRIVE_SPEED, 48.0, 0.0);
+            if(taskRunTimeout.seconds() >= 10)
+            {
+                // timeout, bad! should not happen at all
+                setMissionTo(Mission.EXIT);
+            }
+            else if( done )
+            {
+                turnToHeadingInit( TURN_SPEED, -90.0);
+                taskRunTimeout.reset();
+                loopTaskCount = 3;
+            }
+        }
+        else if(loopTaskCount == 3)
+        {
+            boolean done = turnToHeadingLoop(TURN_SPEED, -90.0);
+            if(taskRunTimeout.seconds() >= 10)
+            {
+                // timeout, bad! should not happen at all
+                setMissionTo(Mission.EXIT);
+            }
+            else if( done )
+            {
+                holdHeadingInit( TURN_SPEED, -90.0, 0.5);   // Hold -45 Deg heading for a 1/2 second
+                taskRunTimeout.reset();
+                loopTaskCount = 4;
+            }
+        }
+        else if(loopTaskCount == 4)
+        {
+            boolean done = holdHeadingLoop( TURN_SPEED, -90.0, 0.5);
+            if(taskRunTimeout.seconds() >= 1)
+            {
+                // timeout, bad! should not happen at all
+                setMissionTo(Mission.EXIT);
+            }
+            else if( done )
+            {
+                driveStraightInit(DRIVE_SPEED, 36.0, -90);    // Drive Forward 72"
+                taskRunTimeout.reset();
+                loopTaskCount = 5;
+            }
+        }
+        else if(loopTaskCount == 5)
+        {
+            boolean done = driveStraightLoop(DRIVE_SPEED, 36.0, -90);
+            if(taskRunTimeout.seconds() >= 10)
+            {
+                // timeout, bad! should not happen at all
+                setMissionTo(Mission.EXIT);
+            }
+            else if( done )
+            {
+                setMissionTo(Mission.EXIT);
+            }
+        }
     }
     
     int targetPositionLifter;
@@ -540,26 +614,6 @@ public class RobotAutonomousDrive extends OpMode
         };
     }
     
-    
-    /*double targetWristPosition;
-    double targetPalmPosition;
-    double targetKnucklePosition;
-    double targetFingerPosition;
-    void handServosRunnable()
-    {
-        new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                wristServo.setPosition(targetWristPosition);
-                palmServo.setPosition(targetPalmPosition);
-                knuckleServo.setPosition(targetKnucklePosition);
-                fingerServo.setPosition(targetFingerPosition);
-            }
-        };
-    }*/
-    
     // State used for updating telemetry
     double currentWristPosition;
     double currentPalmPosition;
@@ -625,7 +679,7 @@ public class RobotAutonomousDrive extends OpMode
                         return formatAngle(currentRobotAngles.angleUnit, currentRobotAngles.firstAngle);
                     }
                 })
-                .addData("roll", new Func<String>() {
+                /*.addData("roll", new Func<String>() {
                     @Override public String value() {
                         return formatAngle(currentRobotAngles.angleUnit, currentRobotAngles.secondAngle);
                     }
@@ -634,7 +688,7 @@ public class RobotAutonomousDrive extends OpMode
                     @Override public String value() {
                         return formatAngle(currentRobotAngles.angleUnit, currentRobotAngles.thirdAngle);
                     }
-                });
+                })*/;
     }
     String formatAngle(AngleUnit angleUnit, double angle) {
         return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
@@ -672,54 +726,57 @@ public class RobotAutonomousDrive extends OpMode
     *                   0 = fwd. +ve is CCW from fwd. -ve is CW from forward.
     *                   If a relative angle is required, add/subtract from the current robotHeading.
     */
-    public void driveStraight(double maxDriveSpeed,
+    public void driveStraightInit(double maxDriveSpeed,
                               double distance,
-                              double heading) {
-
-        // Ensure that the opmode is still active
-        //TODO if (opModeIsActive())
+                              double heading)
+    {
+        // Determine new target position, and pass to motor controller
+        int moveCounts = (int) (distance * COUNTS_PER_INCH);
+        leftTarget = backLeft.getCurrentPosition() + moveCounts;
+        rightTarget = backRight.getCurrentPosition() + moveCounts;
+    
+        // Set Target FIRST, then turn on RUN_TO_POSITION
+        backLeft.setTargetPosition(leftTarget);
+        backRight.setTargetPosition(rightTarget);
+    
+        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    
+        // Set the required driving speed  (must be positive for RUN_TO_POSITION)
+        // Start driving straight, and then enter the control loop
+        maxDriveSpeed = Math.abs(maxDriveSpeed);
+        moveRobot(maxDriveSpeed, 0);
+    }
+    
+    private boolean driveStraightLoop(double maxDriveSpeed,
+                               double distance,
+                               double heading)
+    {
+        // keep looping while we are still active, and BOTH motors are running.
+        if (backLeft.isBusy() && backRight.isBusy())
         {
-
-            // Determine new target position, and pass to motor controller
-            int moveCounts = (int)(distance * COUNTS_PER_INCH);
-            leftTarget = leftDrive.getCurrentPosition() + moveCounts;
-            rightTarget = rightDrive.getCurrentPosition() + moveCounts;
-
-            // Set Target FIRST, then turn on RUN_TO_POSITION
-            leftDrive.setTargetPosition(leftTarget);
-            rightDrive.setTargetPosition(rightTarget);
-
-            leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            // Set the required driving speed  (must be positive for RUN_TO_POSITION)
-            // Start driving straight, and then enter the control loop
-            maxDriveSpeed = Math.abs(maxDriveSpeed);
-            moveRobot(maxDriveSpeed, 0);
-
-            // keep looping while we are still active, and BOTH motors are running.
-            //TODO while (opModeIsActive() &&
-            //       (leftDrive.isBusy() && rightDrive.isBusy()))
-            {
-
-                // Determine required steering to keep on heading
-                turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN);
-
-                // if driving in reverse, the motor correction also needs to be reversed
-                if (distance < 0)
-                    turnSpeed *= -1.0;
-
-                // Apply the turning correction to the current driving speed.
-                moveRobot(driveSpeed, turnSpeed);
-
-                // Display drive status for the driver.
-                sendTelemetry(true);
-            }
-
+        
+            // Determine required steering to keep on heading
+            turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN);
+        
+            // if driving in reverse, the motor correction also needs to be reversed
+            if (distance < 0)
+                turnSpeed *= -1.0;
+        
+            // Apply the turning correction to the current driving speed.
+            moveRobot(driveSpeed, turnSpeed);
+        
+            // Display drive status for the driver.
+            //sendTelemetry(true);
+            return false;
+        }
+        else
+        {
             // Stop all motion & Turn off RUN_TO_POSITION
             moveRobot(0, 0);
-            leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            return true;
         }
     }
 
@@ -734,15 +791,16 @@ public class RobotAutonomousDrive extends OpMode
      *              0 = fwd. +ve is CCW from fwd. -ve is CW from forward.
      *              If a relative angle is required, add/subtract from current heading.
      */
-    public void turnToHeading(double maxTurnSpeed, double heading) {
-
+    public void turnToHeadingInit(double maxTurnSpeed, double heading)
+    {
         // Run getSteeringCorrection() once to pre-calculate the current error
         getSteeringCorrection(heading, P_DRIVE_GAIN);
-
+    }
+    public boolean turnToHeadingLoop(double maxTurnSpeed, double heading)
+    {
         // keep looping while we are still active, and not on heading.
-        //TODO while (opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD))
+        if (Math.abs(headingError) > HEADING_THRESHOLD)
         {
-
             // Determine required steering to keep on heading
             turnSpeed = getSteeringCorrection(heading, P_TURN_GAIN);
 
@@ -753,11 +811,15 @@ public class RobotAutonomousDrive extends OpMode
             moveRobot(0, turnSpeed);
 
             // Display drive status for the driver.
-            sendTelemetry(false);
+            //sendTelemetry(false);
+            return false;
         }
-
-        // Stop all motion;
-        moveRobot(0, 0);
+        else
+        {
+            // Stop all motion;
+            moveRobot(0, 0);
+            return true;
+        }
     }
 
     /**
@@ -771,13 +833,15 @@ public class RobotAutonomousDrive extends OpMode
      *                   If a relative angle is required, add/subtract from current heading.
      * @param holdTime   Length of time (in seconds) to hold the specified heading.
      */
-    public void holdHeading(double maxTurnSpeed, double heading, double holdTime) {
 
-        ElapsedTime holdTimer = new ElapsedTime();
+    ElapsedTime holdTimer = new ElapsedTime();
+    public void holdHeadingInit(double maxTurnSpeed, double heading, double holdTime)
+    {
         holdTimer.reset();
-
-        // keep looping while we have time remaining.
-        // TODO while (opModeIsActive() && (holdTimer.time() < holdTime))
+    }
+    public boolean holdHeadingLoop(double maxTurnSpeed, double heading, double holdTime)
+    {
+        if (holdTimer.time() < holdTime)
         {
             // Determine required steering to keep on heading
             turnSpeed = getSteeringCorrection(heading, P_TURN_GAIN);
@@ -789,11 +853,15 @@ public class RobotAutonomousDrive extends OpMode
             moveRobot(0, turnSpeed);
 
             // Display drive status for the driver.
-            sendTelemetry(false);
+            //sendTelemetry(false);
+            return false;
         }
-
-        // Stop all motion;
-        moveRobot(0, 0);
+        else
+        {
+            // Stop all motion;
+            moveRobot(0, 0);
+            return true;
+        }
     }
 
     // **********  LOW Level driving functions.  ********************
@@ -809,7 +877,8 @@ public class RobotAutonomousDrive extends OpMode
         targetHeading = desiredHeading;  // Save for telemetry
 
         // Get the robot heading by applying an offset to the IMU heading
-        robotHeading = getRawHeading() - headingOffset;
+        //robotHeading = getRawHeading() - headingOffset;
+        robotHeading = currentRobotAngles.firstAngle - headingOffset;
 
         // Determine the heading current error
         headingError = targetHeading - robotHeading;
@@ -843,8 +912,8 @@ public class RobotAutonomousDrive extends OpMode
             rightSpeed /= max;
         }
 
-        leftDrive.setPower(leftSpeed);
-        rightDrive.setPower(rightSpeed);
+        backLeft.setPower(leftSpeed);
+        backRight.setPower(rightSpeed);
     }
 
     /**
@@ -864,8 +933,8 @@ public class RobotAutonomousDrive extends OpMode
         telemetry.addData("Angle Target:Current", "%5.2f:%5.0f", targetHeading, robotHeading);
         telemetry.addData("Error:Steer",  "%5.1f:%5.1f", headingError, turnSpeed);
         telemetry.addData("Wheel Speeds L:R.", "%5.2f : %5.2f", leftSpeed, rightSpeed);
-        telemetry.addData("Wheel Positions L:R",  "%7d:%7d",      leftDrive.getCurrentPosition(),
-                rightDrive.getCurrentPosition());
+        telemetry.addData("Wheel Positions L:R",  "%7d:%7d",      backLeft.getCurrentPosition(),
+                backRight.getCurrentPosition());
         telemetry.update();
     }
 
@@ -884,5 +953,95 @@ public class RobotAutonomousDrive extends OpMode
         // Save a new heading offset equal to the current raw heading.
         headingOffset = getRawHeading();
         robotHeading = 0;
+    }
+    
+    public void driveStrafeInit(double Inches, double maxSpeed, int timeoutInSeconds, double target)
+    {
+        int a, b, c, d;
+    // move to right side
+        /*a = frontRight.getCurrentPosition() - (int) (Inches * COUNTS_PER_INCH);
+        b = frontLeft.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
+        c = backRight.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
+        d = backLeft.getCurrentPosition() - (int) (Inches * COUNTS_PER_INCH);*/
+        
+        // move to left side
+        a = frontRight.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
+        b = frontLeft.getCurrentPosition() - (int) (Inches * COUNTS_PER_INCH);
+        c = backRight.getCurrentPosition() - (int) (Inches * COUNTS_PER_INCH);
+        d = backLeft.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
+    
+        //frontRight.setTargetPosition(a); TODO will add it later once cable is ready
+        //frontLeft.setTargetPosition(b);
+        backRight.setTargetPosition(c);
+        backLeft.setTargetPosition(d);
+    
+    
+        //frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        //frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    
+        runtime.reset();
+        
+    // move to right
+        //frontLeft.setPower(0.2);
+        //backRight.setPower(0.2);
+        //frontRight.setPower(-0.2);
+        //backLeft.setPower(-0.2);
+        // move to left
+        frontLeft.setPower(-0.2);
+        backRight.setPower(-0.2);
+        frontRight.setPower(0.2);
+        backLeft.setPower(0.2);
+    }
+    
+        ElapsedTime runtime = new ElapsedTime();
+    
+    public boolean driveStrafeLoop(double Inches, double maxSpeed, int timeoutInSeconds, double target)
+    {
+        if ((runtime.seconds() < timeoutInSeconds)
+                //&& backLeft.isBusy()  && backRight.isBusy()
+                // todo && frontRight.isBusy() && frontLeft.isBusy()
+        )
+        {
+            /*if (Inches < 0)
+            {
+                frontLeft.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                backLeft.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                backRight.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                frontRight.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+            }
+            else
+            {
+                frontLeft.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+                backLeft.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                backRight.setPower(Range.clip(maxSpeed - (getRawHeading() - target) / 100, -1, 1));
+                frontRight.setPower(Range.clip(maxSpeed + (getRawHeading() - target) / 100, -1, 1));
+            }*/
+            if(!backRight.isBusy() || !backLeft.isBusy())
+            {
+                frontRight.setPower(0);
+                frontLeft.setPower(0);
+                backRight.setPower(0);
+                backLeft.setPower(0);
+                return true;
+            }
+            else
+            {
+                frontLeft.setPower(-0.2);
+                backRight.setPower(-0.2);
+                frontRight.setPower(0.2);
+                backLeft.setPower(0.2);
+                return false;
+            }
+        }
+        else
+        {
+            frontRight.setPower(0);
+            frontLeft.setPower(0);
+            backRight.setPower(0);
+            backLeft.setPower(0);
+            return true;
+        }
     }
 }
