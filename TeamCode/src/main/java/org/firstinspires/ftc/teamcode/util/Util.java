@@ -17,6 +17,18 @@ public class Util
         if (num > max) return max;
         return num;
     }
+    
+    public static boolean inRange(double myValue, double min, double max)
+    {
+        if(myValue >= min && myValue <= max)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
     /**
      * Returns 0 if the number is within a threshold of 0.
