@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.util;
 
 import java.util.Locale;
 
-public class MotorPositionCal
+public class HandMotorsPosition
 {
     public final static String LifterMotorStr = "LifterMotor";
     public final static String RotatorMotorStr = "RotatorMotor";
@@ -88,7 +88,7 @@ public class MotorPositionCal
     public SubsystemPosition PowerOnHold = new SubsystemPosition("PowerOnHoldPosition.json");;
     public SubsystemPosition EyeLowPole = new SubsystemPosition("EyeLowPolePosition.json");;
 
-    public MotorPositionCal()
+    public HandMotorsPosition()
     {}
 
 

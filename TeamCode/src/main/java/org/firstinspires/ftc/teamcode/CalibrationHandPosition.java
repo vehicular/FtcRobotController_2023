@@ -31,27 +31,17 @@ package org.firstinspires.ftc.teamcode;
 
 import android.os.Environment;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.teamcode.util.Constants;
-import org.firstinspires.ftc.teamcode.util.MotorPositionCal;
+import org.firstinspires.ftc.teamcode.util.HandMotorsPosition;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -93,23 +83,23 @@ public class CalibrationHandPosition extends LinearOpMode
     Acceleration gravity;
     int armPosition;
     
-    MotorPositionCal PredefinedPosition = new MotorPositionCal();
+    HandMotorsPosition PredefinedPosition = new HandMotorsPosition();
     
     String directoryPath = Environment.getExternalStorageDirectory().getPath() + "/MOTORS";
     
-    private void SavePositonsToFile(MotorPositionCal.SubsystemPosition positions)
+    private void SavePositonsToFile(HandMotorsPosition.SubsystemPosition positions)
     {
         String fileName = positions.GetPositionName();
         JSONObject InitData = new JSONObject();
         try
         {
-            InitData.put(MotorPositionCal.LifterMotorStr, positions.LifterMotor);
-            InitData.put(MotorPositionCal.RotatorMotorStr, positions.RotatorMotor);
-            InitData.put(MotorPositionCal.ArmMotorStr, positions.ArmMotor);
-            InitData.put(MotorPositionCal.WristServoStr, positions.WristServo);
-            InitData.put(MotorPositionCal.PalmServoStr, positions.PalmServo);
-            InitData.put(MotorPositionCal.KnuckleServoStr, positions.KnuckleServo);
-            InitData.put(MotorPositionCal.FingerServoStr, positions.FingerServo);
+            InitData.put(HandMotorsPosition.LifterMotorStr, positions.LifterMotor);
+            InitData.put(HandMotorsPosition.RotatorMotorStr, positions.RotatorMotor);
+            InitData.put(HandMotorsPosition.ArmMotorStr, positions.ArmMotor);
+            InitData.put(HandMotorsPosition.WristServoStr, positions.WristServo);
+            InitData.put(HandMotorsPosition.PalmServoStr, positions.PalmServo);
+            InitData.put(HandMotorsPosition.KnuckleServoStr, positions.KnuckleServo);
+            InitData.put(HandMotorsPosition.FingerServoStr, positions.FingerServo);
             
             // Convert JsonObject to String Format
             String userString = InitData.toString();
@@ -134,7 +124,7 @@ public class CalibrationHandPosition extends LinearOpMode
     
     private String[] ReadPositionFromFile(String fileName)
     {
-        String[] data = new String[MotorPositionCal.maxNumOfMotors];
+        String[] data = new String[HandMotorsPosition.maxNumOfMotors];
         try
         {
             FileReader fileReader = new FileReader(
@@ -153,13 +143,13 @@ public class CalibrationHandPosition extends LinearOpMode
             String responce = stringBuilder.toString();
             
             JSONObject jsonObject = new JSONObject(responce);
-            data[MotorPositionCal.LifterMotorInt] = ((jsonObject.get(MotorPositionCal.LifterMotorStr).toString()));
-            data[MotorPositionCal.RotatorMotorInt] = ((jsonObject.get(MotorPositionCal.RotatorMotorStr).toString()));
-            data[MotorPositionCal.ArmMotorInt] = ((jsonObject.get(MotorPositionCal.ArmMotorStr).toString()));
-            data[MotorPositionCal.WristServoInt] = ((jsonObject.get(MotorPositionCal.WristServoStr).toString()));
-            data[MotorPositionCal.PalmServoInt] = ((jsonObject.get(MotorPositionCal.PalmServoStr).toString()));
-            data[MotorPositionCal.KnuckleServoInt] = ((jsonObject.get(MotorPositionCal.KnuckleServoStr).toString()));
-            data[MotorPositionCal.FingerServoInt] = ((jsonObject.get(MotorPositionCal.FingerServoStr).toString()));
+            data[HandMotorsPosition.LifterMotorInt] = ((jsonObject.get(HandMotorsPosition.LifterMotorStr).toString()));
+            data[HandMotorsPosition.RotatorMotorInt] = ((jsonObject.get(HandMotorsPosition.RotatorMotorStr).toString()));
+            data[HandMotorsPosition.ArmMotorInt] = ((jsonObject.get(HandMotorsPosition.ArmMotorStr).toString()));
+            data[HandMotorsPosition.WristServoInt] = ((jsonObject.get(HandMotorsPosition.WristServoStr).toString()));
+            data[HandMotorsPosition.PalmServoInt] = ((jsonObject.get(HandMotorsPosition.PalmServoStr).toString()));
+            data[HandMotorsPosition.KnuckleServoInt] = ((jsonObject.get(HandMotorsPosition.KnuckleServoStr).toString()));
+            data[HandMotorsPosition.FingerServoInt] = ((jsonObject.get(HandMotorsPosition.FingerServoStr).toString()));
             
         } catch (Exception e)
         {
@@ -168,7 +158,7 @@ public class CalibrationHandPosition extends LinearOpMode
         return data;
     }
     
-    private void SetMotorsPosition(MotorPositionCal.SubsystemPosition positions)
+    private void SetMotorsPosition(HandMotorsPosition.SubsystemPosition positions)
     {
         /*wristServo.setPosition(positions.WristServo);
         palmServo.setPosition(positions.PalmServo);

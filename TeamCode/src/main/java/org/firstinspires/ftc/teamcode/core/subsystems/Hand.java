@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.core.Subsystem;
 import org.firstinspires.ftc.teamcode.util.Constants;
-import org.firstinspires.ftc.teamcode.util.MotorPositionCal;
+import org.firstinspires.ftc.teamcode.util.HandMotorsPosition;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -51,9 +51,9 @@ public class Hand extends Subsystem
             DOWN_RIGHT,
         }
     */
-    MotorPositionCal PredefinedPosition = new MotorPositionCal();
-    MotorPositionCal.SubsystemPosition CurrentPositionBySet;
-    MotorPositionCal.SubsystemPosition PreviousPositionBySet;
+    HandMotorsPosition PredefinedPosition = new HandMotorsPosition();
+    HandMotorsPosition.SubsystemPosition CurrentPositionBySet;
+    HandMotorsPosition.SubsystemPosition PreviousPositionBySet;
     String directoryPath = Environment.getExternalStorageDirectory().getPath() + "/MOTORS";
     
     private DcMotor lifterMotor;
@@ -763,7 +763,7 @@ public class Hand extends Subsystem
     
     private String[] ReadPositionFromFile(String fileName)
     {
-        String[] data = new String[MotorPositionCal.maxNumOfMotors];
+        String[] data = new String[HandMotorsPosition.maxNumOfMotors];
         try
         {
             FileReader fileReader = new FileReader(
@@ -782,20 +782,20 @@ public class Hand extends Subsystem
             String objStr = stringBuilder.toString();
             
             JSONObject jsonObject = new JSONObject(objStr);
-            data[MotorPositionCal.LifterMotorInt] =
-                    ((jsonObject.get(MotorPositionCal.LifterMotorStr).toString()));
-            data[MotorPositionCal.RotatorMotorInt] =
-                    ((jsonObject.get(MotorPositionCal.RotatorMotorStr).toString()));
-            data[MotorPositionCal.ArmMotorInt] =
-                    ((jsonObject.get(MotorPositionCal.ArmMotorStr).toString()));
-            data[MotorPositionCal.WristServoInt] =
-                    ((jsonObject.get(MotorPositionCal.WristServoStr).toString()));
-            data[MotorPositionCal.PalmServoInt] =
-                    ((jsonObject.get(MotorPositionCal.PalmServoStr).toString()));
-            data[MotorPositionCal.KnuckleServoInt] =
-                    ((jsonObject.get(MotorPositionCal.KnuckleServoStr).toString()));
-            data[MotorPositionCal.FingerServoInt] =
-                    ((jsonObject.get(MotorPositionCal.FingerServoStr).toString()));
+            data[HandMotorsPosition.LifterMotorInt] =
+                    ((jsonObject.get(HandMotorsPosition.LifterMotorStr).toString()));
+            data[HandMotorsPosition.RotatorMotorInt] =
+                    ((jsonObject.get(HandMotorsPosition.RotatorMotorStr).toString()));
+            data[HandMotorsPosition.ArmMotorInt] =
+                    ((jsonObject.get(HandMotorsPosition.ArmMotorStr).toString()));
+            data[HandMotorsPosition.WristServoInt] =
+                    ((jsonObject.get(HandMotorsPosition.WristServoStr).toString()));
+            data[HandMotorsPosition.PalmServoInt] =
+                    ((jsonObject.get(HandMotorsPosition.PalmServoStr).toString()));
+            data[HandMotorsPosition.KnuckleServoInt] =
+                    ((jsonObject.get(HandMotorsPosition.KnuckleServoStr).toString()));
+            data[HandMotorsPosition.FingerServoInt] =
+                    ((jsonObject.get(HandMotorsPosition.FingerServoStr).toString()));
         } catch (Exception e)
         {
             FileOpTele = ("Read " + fileName + " Error..." + e.toString());
@@ -803,19 +803,19 @@ public class Hand extends Subsystem
         return data;
     }
     
-    private void SavePositonsToFile(MotorPositionCal.SubsystemPosition positions)
+    private void SavePositonsToFile(HandMotorsPosition.SubsystemPosition positions)
     {
         String fileName = positions.GetPositionName();
         JSONObject InitData = new JSONObject();
         try
         {
-            InitData.put(MotorPositionCal.LifterMotorStr, positions.LifterMotor);
-            InitData.put(MotorPositionCal.RotatorMotorStr, positions.RotatorMotor);
-            InitData.put(MotorPositionCal.ArmMotorStr, positions.ArmMotor);
-            InitData.put(MotorPositionCal.WristServoStr, positions.WristServo);
-            InitData.put(MotorPositionCal.PalmServoStr, positions.PalmServo);
-            InitData.put(MotorPositionCal.KnuckleServoStr, positions.KnuckleServo);
-            InitData.put(MotorPositionCal.FingerServoStr, positions.FingerServo);
+            InitData.put(HandMotorsPosition.LifterMotorStr, positions.LifterMotor);
+            InitData.put(HandMotorsPosition.RotatorMotorStr, positions.RotatorMotor);
+            InitData.put(HandMotorsPosition.ArmMotorStr, positions.ArmMotor);
+            InitData.put(HandMotorsPosition.WristServoStr, positions.WristServo);
+            InitData.put(HandMotorsPosition.PalmServoStr, positions.PalmServo);
+            InitData.put(HandMotorsPosition.KnuckleServoStr, positions.KnuckleServo);
+            InitData.put(HandMotorsPosition.FingerServoStr, positions.FingerServo);
             
             // Convert JsonObject to String Format
             String userString = InitData.toString();
@@ -863,7 +863,7 @@ public class Hand extends Subsystem
         }
     }
     
-    private void SetMotorsPosition(MotorPositionCal.SubsystemPosition targetPosition)
+    private void SetMotorsPosition(HandMotorsPosition.SubsystemPosition targetPosition)
     {
         if (targetPosition != CurrentPositionBySet)
         {
@@ -933,7 +933,7 @@ public class Hand extends Subsystem
         }
     }
     
-    private void GetMotorsPosition(MotorPositionCal.SubsystemPosition position)
+    private void GetMotorsPosition(HandMotorsPosition.SubsystemPosition position)
     {
         position.WristServo = wristServo.getPosition();
         position.PalmServo = palmServo.getPosition();

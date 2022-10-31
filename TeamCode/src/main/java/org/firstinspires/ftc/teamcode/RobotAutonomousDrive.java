@@ -103,10 +103,10 @@ public class RobotAutonomousDrive extends OpMode
 {
 
     /* Declare OpMode members. */
-    public DcMotor frontLeft;
-    public DcMotor frontRight;
-    public DcMotor backLeft;
-    public DcMotor backRight;
+    private DcMotor frontLeft;
+    private DcMotor frontRight;
+    private DcMotor backLeft;
+    private DcMotor backRight;
     private BNO055IMU       imu         = null;      // Control/Expansion Hub IMU
     
     private DcMotor lifterMotor;
@@ -157,10 +157,9 @@ public class RobotAutonomousDrive extends OpMode
     static final double     P_TURN_GAIN            = 0.02;     // Larger is more responsive, but also less stable
     static final double     P_DRIVE_GAIN           = 0.03;     // Larger is more responsive, but also less stable
 
-    //Hand hand;
     Eye eye;
     
-    public ElapsedTime taskRunTimeout = new ElapsedTime();
+    private ElapsedTime taskRunTimeout = new ElapsedTime();
     
     /**
      * Initialize any subsystems that need initializing before the game starts.
@@ -288,14 +287,6 @@ public class RobotAutonomousDrive extends OpMode
         SPOT_D, // parking zone, final stop
         EXIT
     }
-    private Mission currentMission = Mission.SPOT_A;
-    private Mission previousMission = Mission.SPOT_A;
-    private void setMissionTo(Mission newMission)
-    {
-        loopTaskCount = 0;
-        previousMission = currentMission;
-        currentMission = newMission;
-    }
     
     /*
      * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
@@ -306,7 +297,7 @@ public class RobotAutonomousDrive extends OpMode
      switch (currentMission)
      {
          case SPOT_A:
-             spotA_loop();
+             spotA();
              break;
          case SPOT_B:
              break;
@@ -331,21 +322,23 @@ public class RobotAutonomousDrive extends OpMode
         rotatorMotorRunnable();
         armMotorRunnable();
     
-        telemetry.addData("Angle Target:Current", "%5.2f:%5.0f", targetHeading, robotHeading);
-        telemetry.addData("Error:Steer",  "%5.1f:%5.1f", headingError, turnSpeed);
-        telemetry.addData("Wheel Speeds L:R.", "%5.2f : %5.2f", leftSpeed, rightSpeed);
-        telemetry.addData("Wheel Positions L:R",  "%7d:%7d",      backLeft.getCurrentPosition(),
-                backRight.getCurrentPosition());
-        telemetry.addData("Lifter %d", lifterMotor.getCurrentPosition());
-        telemetry.addData("Rotator %d", rotatorMotor.getCurrentPosition());
-        telemetry.addData("Arm %d", armMotor.getCurrentPosition());
+        sendTelemetry(true);
         
         telemetry.update();
         //sleep(1000);  // Pause to display last telemetry message.
     }
     
-    int loopTaskCount = 0;
-    private void spotA_loop()
+    private int loopTaskCount = 0;
+    private Mission currentMission = Mission.SPOT_A;
+    private Mission previousMission = Mission.SPOT_A;
+    private void setMissionTo(Mission newMission)
+    {
+        loopTaskCount = 0;
+        previousMission = currentMission;
+        currentMission = newMission;
+    }
+    
+    private void spotA()
     {
         if(loopTaskCount == 0)
         {
@@ -543,37 +536,23 @@ public class RobotAutonomousDrive extends OpMode
     double armMovePower = 0.2;
     void armMotorRunnable()
     {
-        //new Runnable()
+        if (targetPositionArm > armMotor.getCurrentPosition())
         {
-            //@Override
-           // public void run()
-            {
-                //while(true)
-                {
-                    if (targetPositionArm > armMotor.getCurrentPosition())
-                    {
-                        armMovePower = 0.3;
-                    }
-                    else if (targetPositionArm < armMotor.getCurrentPosition())
-                    {
-                        armMovePower = 0.1;
-                        //if over up 45-D, need more power:TODO
-                    }
-                    else
-                    {
-                        armMovePower = 0.2;
-                    }
-                    armMotor.setTargetPosition(targetPositionArm);
-                    armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    //runtimeManual.reset();
-                    armMotor.setPower(armMovePower);
-                /*while ((runtimeManual.seconds() < 1) &&
-                        (armMotor.isBusy()))
-                {
-                }*/
-                }
-            }
-        };
+            armMovePower = 0.3;
+        }
+        else if (targetPositionArm < armMotor.getCurrentPosition())
+        {
+            armMovePower = 0.1;
+            //if over up 45-D, need more power:TODO
+        }
+        else
+        {
+            armMovePower = 0.2;
+        }
+        armMotor.setTargetPosition(targetPositionArm);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        //runtimeManual.reset();
+        armMotor.setPower(armMovePower);
     }
     
     int targetPositionRotator;
@@ -582,127 +561,30 @@ public class RobotAutonomousDrive extends OpMode
     double rotatorMovePower = 0.2;
     void rotatorMotorRunnable()
     {
-        //new Runnable()
+        if (!rotatorMotor.isBusy())
         {
-            //@Override
-            //public void run()
+            if (rotatorMotor.getCurrentPosition() != targetPositionRotator)
             {
-                if(!rotatorMotor.isBusy())
-                {
-                    if (rotatorMotor.getCurrentPosition() != targetPositionRotator)
-                    {
-                        rotatorMotor.setTargetPosition(targetPositionRotator);
-                        rotatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                        //rotatorTimeoutMillsecs = 1000;
-                        rotatorMotorTimer.reset();
-                        rotatorMotor.setPower(rotatorMovePower);
-                    }
-                    else
-                    {
-                        rotatorMotor.setPower(0);
-                    }
-                }
-                else
-                {
-                    if(rotatorMotorTimer.milliseconds() > rotatorTimeoutMillsecs)
-                    {
-                        rotatorMotor.setPower(0);
-                        targetPositionRotator = rotatorMotor.getCurrentPosition();
-                    }
-                }
+                rotatorMotor.setTargetPosition(targetPositionRotator);
+                rotatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                //rotatorTimeoutMillsecs = 1000;
+                rotatorMotorTimer.reset();
+                rotatorMotor.setPower(rotatorMovePower);
             }
-        };
-    }
-    
-    // State used for updating telemetry
-    double currentWristPosition;
-    double currentPalmPosition;
-    double currentKnucklePosition;
-    double currentFingerPosition;
-    Orientation currentRobotAngles;
-    void composeTelemetry() {
-        
-        // At the beginning of each telemetry update, grab a bunch of data
-        // from the IMU that we will then display in separate lines.
-        telemetry.addAction(new Runnable() { @Override public void run()
-        {
-            // Acquiring the angles is relatively expensive; we don't want
-            // to do that in each of the three items that need that info, as that's
-            // three times the necessary expense.
-            currentRobotAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            currentWristPosition = wristServo.getPosition();
-            currentPalmPosition =  palmServo.getPosition();
-            currentKnucklePosition = knuckleServo.getPosition();
-            currentFingerPosition = fingerServo.getPosition();
+            else
+            {
+                rotatorMotor.setPower(0);
+            }
         }
-        });
-        
-        
-    
-        telemetry.addLine()
-                .addData("Wrist", new Func<String>() {
-                    @Override public String value() {
-                        return formatServoPosition(currentWristPosition);
-                    }
-                })
-                .addData("Palm", new Func<String>() {
-                    @Override public String value() {
-                        return formatServoPosition(currentPalmPosition);
-                    }
-                })
-                .addData("Knuckle", new Func<String>() {
-                    @Override public String value() {
-                        return formatServoPosition(currentKnucklePosition);
-                    }
-                })
-                .addData("Finger", new Func<String>() {
-                    @Override public String value() {
-                        return formatServoPosition(currentFingerPosition);
-                    }
-                });
-        
-        telemetry.addLine()
-                .addData("status", new Func<String>() {
-                    @Override public String value() {
-                        return imu.getSystemStatus().toShortString();
-                    }
-                })
-                .addData("calib", new Func<String>() {
-                    @Override public String value() {
-                        return imu.getCalibrationStatus().toString();
-                    }
-                });
-        
-        telemetry.addLine()
-                .addData("heading", new Func<String>() {
-                    @Override public String value() {
-                        return formatAngle(currentRobotAngles.angleUnit, currentRobotAngles.firstAngle);
-                    }
-                })
-                /*.addData("roll", new Func<String>() {
-                    @Override public String value() {
-                        return formatAngle(currentRobotAngles.angleUnit, currentRobotAngles.secondAngle);
-                    }
-                })
-                .addData("pitch", new Func<String>() {
-                    @Override public String value() {
-                        return formatAngle(currentRobotAngles.angleUnit, currentRobotAngles.thirdAngle);
-                    }
-                })*/;
+        else
+        {
+            if (rotatorMotorTimer.milliseconds() > rotatorTimeoutMillsecs)
+            {
+                rotatorMotor.setPower(0);
+                targetPositionRotator = rotatorMotor.getCurrentPosition();
+            }
+        }
     }
-    String formatAngle(AngleUnit angleUnit, double angle) {
-        return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
-    }
-    
-    String formatDegrees(double degrees){
-        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
-    }
-    
-    String formatServoPosition(double servoPosition)
-    {
-        return String.format(Locale.getDefault(), "%.2f", servoPosition);
-    }
-    
     
 
     /*
@@ -748,7 +630,7 @@ public class RobotAutonomousDrive extends OpMode
         moveRobot(maxDriveSpeed, 0);
     }
     
-    private boolean driveStraightLoop(double maxDriveSpeed,
+    public boolean driveStraightLoop(double maxDriveSpeed,
                                double distance,
                                double heading)
     {
@@ -833,7 +715,6 @@ public class RobotAutonomousDrive extends OpMode
      *                   If a relative angle is required, add/subtract from current heading.
      * @param holdTime   Length of time (in seconds) to hold the specified heading.
      */
-
     ElapsedTime holdTimer = new ElapsedTime();
     public void holdHeadingInit(double maxTurnSpeed, double heading, double holdTime)
     {
@@ -863,102 +744,11 @@ public class RobotAutonomousDrive extends OpMode
             return true;
         }
     }
-
-    // **********  LOW Level driving functions.  ********************
-
-    /**
-     * This method uses a Proportional Controller to determine how much steering correction is required.
-     *
-     * @param desiredHeading        The desired absolute heading (relative to last heading reset)
-     * @param proportionalGain      Gain factor applied to heading error to obtain turning power.
-     * @return                      Turning power needed to get to required heading.
-     */
-    public double getSteeringCorrection(double desiredHeading, double proportionalGain) {
-        targetHeading = desiredHeading;  // Save for telemetry
-
-        // Get the robot heading by applying an offset to the IMU heading
-        //robotHeading = getRawHeading() - headingOffset;
-        robotHeading = currentRobotAngles.firstAngle - headingOffset;
-
-        // Determine the heading current error
-        headingError = targetHeading - robotHeading;
-
-        // Normalize the error to be within +/- 180 degrees
-        while (headingError > 180)  headingError -= 360;
-        while (headingError <= -180) headingError += 360;
-
-        // Multiply the error by the gain to determine the required steering correction/  Limit the result to +/- 1.0
-        return Range.clip(headingError * proportionalGain, -1, 1);
-    }
-
-    /**
-     * This method takes separate drive (fwd/rev) and turn (right/left) requests,
-     * combines them, and applies the appropriate speed commands to the left and right wheel motors.
-     * @param drive forward motor speed
-     * @param turn  clockwise turning motor speed.
-     */
-    public void moveRobot(double drive, double turn) {
-        driveSpeed = drive;     // save this value as a class member so it can be used by telemetry.
-        turnSpeed  = turn;      // save this value as a class member so it can be used by telemetry.
-
-        leftSpeed  = drive - turn;
-        rightSpeed = drive + turn;
-
-        // Scale speeds down if either one exceeds +/- 1.0;
-        double max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
-        if (max > 1.0)
-        {
-            leftSpeed /= max;
-            rightSpeed /= max;
-        }
-
-        backLeft.setPower(leftSpeed);
-        backRight.setPower(rightSpeed);
-    }
-
-    /**
-     *  Display the various control parameters while driving
-     *
-     * @param straight  Set to true if we are driving straight, and the encoder positions should be included in the telemetry.
-     */
-    private void sendTelemetry(boolean straight) {
-
-        if (straight) {
-            telemetry.addData("Motion", "Drive Straight");
-            telemetry.addData("Target Pos L:R",  "%7d:%7d",      leftTarget,  rightTarget);
-        } else {
-            telemetry.addData("Motion", "Turning");
-        }
-
-        telemetry.addData("Angle Target:Current", "%5.2f:%5.0f", targetHeading, robotHeading);
-        telemetry.addData("Error:Steer",  "%5.1f:%5.1f", headingError, turnSpeed);
-        telemetry.addData("Wheel Speeds L:R.", "%5.2f : %5.2f", leftSpeed, rightSpeed);
-        telemetry.addData("Wheel Positions L:R",  "%7d:%7d",      backLeft.getCurrentPosition(),
-                backRight.getCurrentPosition());
-        telemetry.update();
-    }
-
-    /**
-     * read the raw (un-offset Gyro heading) directly from the IMU
-     */
-    public double getRawHeading() {
-        Orientation angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        return angles.firstAngle;
-    }
-
-    /**
-     * Reset the "offset" heading back to zero
-     */
-    public void resetHeading() {
-        // Save a new heading offset equal to the current raw heading.
-        headingOffset = getRawHeading();
-        robotHeading = 0;
-    }
     
     public void driveStrafeInit(double Inches, double maxSpeed, int timeoutInSeconds, double target)
     {
         int a, b, c, d;
-    // move to right side
+        // move to right side
         /*a = frontRight.getCurrentPosition() - (int) (Inches * COUNTS_PER_INCH);
         b = frontLeft.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
         c = backRight.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
@@ -969,21 +759,21 @@ public class RobotAutonomousDrive extends OpMode
         b = frontLeft.getCurrentPosition() - (int) (Inches * COUNTS_PER_INCH);
         c = backRight.getCurrentPosition() - (int) (Inches * COUNTS_PER_INCH);
         d = backLeft.getCurrentPosition() + (int) (Inches * COUNTS_PER_INCH);
-    
+        
         //frontRight.setTargetPosition(a); TODO will add it later once cable is ready
         //frontLeft.setTargetPosition(b);
         backRight.setTargetPosition(c);
         backLeft.setTargetPosition(d);
-    
-    
+        
+        
         //frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         //frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    
+        
         runtime.reset();
         
-    // move to right
+        // move to right
         //frontLeft.setPower(0.2);
         //backRight.setPower(0.2);
         //frontRight.setPower(-0.2);
@@ -995,13 +785,13 @@ public class RobotAutonomousDrive extends OpMode
         backLeft.setPower(0.2);
     }
     
-        ElapsedTime runtime = new ElapsedTime();
+    ElapsedTime runtime = new ElapsedTime();
     
     public boolean driveStrafeLoop(double Inches, double maxSpeed, int timeoutInSeconds, double target)
     {
         if ((runtime.seconds() < timeoutInSeconds)
-                //&& backLeft.isBusy()  && backRight.isBusy()
-                // todo && frontRight.isBusy() && frontLeft.isBusy()
+            //&& backLeft.isBusy()  && backRight.isBusy()
+            // todo && frontRight.isBusy() && frontLeft.isBusy()
         )
         {
             /*if (Inches < 0)
@@ -1043,5 +833,182 @@ public class RobotAutonomousDrive extends OpMode
             backLeft.setPower(0);
             return true;
         }
+    }
+    
+    // **********  LOW Level driving functions.  ********************
+
+    /**
+     * This method uses a Proportional Controller to determine how much steering correction is required.
+     *
+     * @param desiredHeading        The desired absolute heading (relative to last heading reset)
+     * @param proportionalGain      Gain factor applied to heading error to obtain turning power.
+     * @return                      Turning power needed to get to required heading.
+     */
+    private double getSteeringCorrection(double desiredHeading, double proportionalGain) {
+        targetHeading = desiredHeading;  // Save for telemetry
+
+        // Get the robot heading by applying an offset to the IMU heading
+        //robotHeading = getRawHeading() - headingOffset;
+        robotHeading = currentRobotAngles.firstAngle - headingOffset;
+
+        // Determine the heading current error
+        headingError = targetHeading - robotHeading;
+
+        // Normalize the error to be within +/- 180 degrees
+        while (headingError > 180)  headingError -= 360;
+        while (headingError <= -180) headingError += 360;
+
+        // Multiply the error by the gain to determine the required steering correction/  Limit the result to +/- 1.0
+        return Range.clip(headingError * proportionalGain, -1, 1);
+    }
+
+    /**
+     * This method takes separate drive (fwd/rev) and turn (right/left) requests,
+     * combines them, and applies the appropriate speed commands to the left and right wheel motors.
+     * @param drive forward motor speed
+     * @param turn  clockwise turning motor speed.
+     */
+    private void moveRobot(double drive, double turn) {
+        driveSpeed = drive;     // save this value as a class member so it can be used by telemetry.
+        turnSpeed  = turn;      // save this value as a class member so it can be used by telemetry.
+
+        leftSpeed  = drive - turn;
+        rightSpeed = drive + turn;
+
+        // Scale speeds down if either one exceeds +/- 1.0;
+        double max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
+        if (max > 1.0)
+        {
+            leftSpeed /= max;
+            rightSpeed /= max;
+        }
+
+        backLeft.setPower(leftSpeed);
+        backRight.setPower(rightSpeed);
+    }
+    
+    /**
+     * read the raw (un-offset Gyro heading) directly from the IMU
+     */
+    private double getRawHeading() {
+        Orientation angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        return angles.firstAngle;
+    }
+
+    /**
+     * Reset the "offset" heading back to zero
+     */
+    private void resetHeading() {
+        // Save a new heading offset equal to the current raw heading.
+        headingOffset = getRawHeading();
+        robotHeading = 0;
+    }
+    
+    // ****************  updating telemetry **********************
+    double currentWristPosition;
+    double currentPalmPosition;
+    double currentKnucklePosition;
+    double currentFingerPosition;
+    Orientation currentRobotAngles;
+    private void composeTelemetry() {
+        
+        // At the beginning of each telemetry update, grab a bunch of data
+        // from the IMU that we will then display in separate lines.
+        telemetry.addAction(new Runnable() { @Override public void run()
+        {
+            // Acquiring the angles is relatively expensive; we don't want
+            // to do that in each of the three items that need that info, as that's
+            // three times the necessary expense.
+            currentRobotAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            currentWristPosition = wristServo.getPosition();
+            currentPalmPosition =  palmServo.getPosition();
+            currentKnucklePosition = knuckleServo.getPosition();
+            currentFingerPosition = fingerServo.getPosition();
+        }
+        });
+        
+        telemetry.addLine()
+                .addData("Wrist", new Func<String>() {
+                    @Override public String value() {
+                        return formatServoPosition(currentWristPosition);
+                    }
+                })
+                .addData("Palm", new Func<String>() {
+                    @Override public String value() {
+                        return formatServoPosition(currentPalmPosition);
+                    }
+                })
+                .addData("Knuckle", new Func<String>() {
+                    @Override public String value() {
+                        return formatServoPosition(currentKnucklePosition);
+                    }
+                })
+                .addData("Finger", new Func<String>() {
+                    @Override public String value() {
+                        return formatServoPosition(currentFingerPosition);
+                    }
+                });
+        
+        telemetry.addLine()
+                .addData("status", new Func<String>() {
+                    @Override public String value() {
+                        return imu.getSystemStatus().toShortString();
+                    }
+                })
+                .addData("calib", new Func<String>() {
+                    @Override public String value() {
+                        return imu.getCalibrationStatus().toString();
+                    }
+                });
+        
+        telemetry.addLine()
+                .addData("heading", new Func<String>() {
+                    @Override public String value() {
+                        return formatAngle(currentRobotAngles.angleUnit, currentRobotAngles.firstAngle);
+                    }
+                })
+                /*.addData("roll", new Func<String>() {
+                    @Override public String value() {
+                        return formatAngle(currentRobotAngles.angleUnit, currentRobotAngles.secondAngle);
+                    }
+                })
+                .addData("pitch", new Func<String>() {
+                    @Override public String value() {
+                        return formatAngle(currentRobotAngles.angleUnit, currentRobotAngles.thirdAngle);
+                    }
+                })*/;
+    }
+    
+    private void sendTelemetry(boolean straight)
+    {
+        telemetry.addData("Lifter %d", lifterMotor.getCurrentPosition());
+        telemetry.addData("Rotator %d", rotatorMotor.getCurrentPosition());
+        telemetry.addData("Arm %d", armMotor.getCurrentPosition());
+        
+        if (straight) {
+            telemetry.addData("Motion", "Drive Straight");
+            telemetry.addData("Target Pos L:R",  "%7d:%7d",      leftTarget,  rightTarget);
+        } else {
+            telemetry.addData("Motion", "Turning");
+        }
+        
+        telemetry.addData("Angle Target:Current", "%5.2f:%5.0f", targetHeading, robotHeading);
+        telemetry.addData("Error:Steer",  "%5.1f:%5.1f", headingError, turnSpeed);
+        telemetry.addData("Wheel Speeds L:R.", "%5.2f : %5.2f", leftSpeed, rightSpeed);
+        telemetry.addData("Wheel Positions L:R",  "%7d:%7d",      backLeft.getCurrentPosition(),
+                backRight.getCurrentPosition());
+    }
+    
+    private String formatAngle(AngleUnit angleUnit, double angle) {
+        return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
+    }
+    
+    private String formatDegrees(double degrees){
+        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
+    }
+    
+    private String formatServoPosition(double servoPosition)
+    {
+        return String.format(Locale.getDefault(), "%.2f", servoPosition);
     }
 }
