@@ -58,7 +58,7 @@ public class Eye extends Subsystem
         BLUE_LEFT,
         BLUE_RIGHT,
     }
-    public enum PolePosition
+    public enum ObjectLocation
     {
         UNKNOWN,
         CENTER,
@@ -83,18 +83,35 @@ public class Eye extends Subsystem
     }
     
     int count = 0;
-    public PolePosition CheckLowPoleOnCenter()
+    public ObjectLocation CheckLowPoleOnCenter()
     {
         timeout.reset();
         while(timeout.milliseconds()<200){}
         if(count < 20)
         {
             count++;
-            return PolePosition.LEFT;
+            return ObjectLocation.LEFT;
         }
         else
         {
-            return PolePosition.CENTER;
+            count = 0;
+            return ObjectLocation.CENTER;
+        }
+    }
+    
+    public ObjectLocation CheckConeOnCenter()
+    {
+        timeout.reset();
+        while(timeout.milliseconds()<200){}
+        if(count < 2)
+        {
+            count++;
+            return ObjectLocation.LEFT;
+        }
+        else
+        {
+            count = 0;
+            return ObjectLocation.CENTER;
         }
     }
     

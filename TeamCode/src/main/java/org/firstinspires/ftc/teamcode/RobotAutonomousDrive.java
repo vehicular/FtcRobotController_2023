@@ -44,7 +44,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.core.subsystems.Eye;
-import org.firstinspires.ftc.teamcode.core.subsystems.Hand;
 import org.firstinspires.ftc.teamcode.util.Constants;
 import org.firstinspires.ftc.teamcode.util.Util;
 
@@ -297,9 +296,12 @@ public class RobotAutonomousDrive extends OpMode
      switch (currentMission)
      {
          case SPOT_A:
+             // find self init position, read parking zone picture, drop preload to low junction
              spotA();
              break;
          case SPOT_B:
+             // pick up a cone
+             sportB();
              break;
          case SPOT_C:
              break;
@@ -386,8 +388,8 @@ public class RobotAutonomousDrive extends OpMode
         {
             if (taskRunTimeout.seconds() < 5)
             {
-                Eye.PolePosition isCenter = eye.CheckLowPoleOnCenter();
-                if (isCenter == Eye.PolePosition.CENTER)
+                Eye.ObjectLocation isCenter = eye.CheckLowPoleOnCenter();
+                if (isCenter == Eye.ObjectLocation.CENTER)
                 {
                     // found the location, prepare the drop positions
                     targetPositionArm = 390;
@@ -396,7 +398,7 @@ public class RobotAutonomousDrive extends OpMode
                     taskRunTimeout.reset();
                     loopTaskCount = 5;
                 }
-                else if (isCenter == Eye.PolePosition.LEFT)
+                else if (isCenter == Eye.ObjectLocation.LEFT)
                 {
                     targetPositionRotator += 5;
                 }
@@ -508,7 +510,9 @@ public class RobotAutonomousDrive extends OpMode
             }
             else if( done )
             {
-                driveStraightInit(DRIVE_SPEED, 36.0, -90);    // Drive Forward 72"
+                driveStraightInit(DRIVE_SPEED, 36.0, -90);    // Drive Forward 36
+                wristServo.setPosition(0.6); // let camera ready
+                palmServo.setPosition(0.29);
                 taskRunTimeout.reset();
                 loopTaskCount = 5;
             }
@@ -523,8 +527,57 @@ public class RobotAutonomousDrive extends OpMode
             }
             else if( done )
             {
-                setMissionTo(Mission.EXIT);
+                targetPositionArm = 0; // prepare to pick up
+                setMissionTo(Mission.SPOT_B);
+                taskRunTimeout.reset();
             }
+        }
+    }
+    
+    private void sportB()
+    {
+        if(loopTaskCount == 0)
+        {
+            if (taskRunTimeout.seconds() < 5)
+            {
+                Eye.ObjectLocation isCenter = eye.CheckConeOnCenter();
+                if (isCenter == Eye.ObjectLocation.CENTER)
+                {
+                    // found the location, prepare the pickup positions
+                    targetPositionArm = -380;
+                    wristServo.setPosition(0.72);
+                    palmServo.setPosition(0.19);
+                    taskRunTimeout.reset();
+                    loopTaskCount = 1;
+                }
+                else if (isCenter == Eye.ObjectLocation.LEFT)
+                {
+                    // use mecanum is better, TODO
+                    targetPositionRotator += 5;
+                }
+                else // right, front, back
+                {
+                    targetPositionRotator = -5;
+                }
+            }
+            else
+            {
+                // nothing is found, timeout. Go parking
+                setMissionTo(Mission.MOVE_B2D);
+            }
+        }
+        else if(loopTaskCount == 1)
+        {
+            if (taskRunTimeout.milliseconds() >= 100)
+            {
+                fingerServo.setPosition(0.1);
+                loopTaskCount = 2;
+            }
+        }
+        else if( loopTaskCount == 2)
+        {
+            targetPositionArm = -380;
+            setMissionTo(Mission.MOVE_B2C);
         }
     }
     
