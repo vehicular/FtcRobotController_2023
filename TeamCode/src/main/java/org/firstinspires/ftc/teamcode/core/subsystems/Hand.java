@@ -409,7 +409,7 @@ public class Hand extends Subsystem
         }
         
         // palm servo
-        if (gamepad.y)
+        if (gamepad.a)
         {
             if (!palmServoLeftLock)
             {
@@ -421,7 +421,7 @@ public class Hand extends Subsystem
         {
             palmServoLeftLock = false;
         }
-        if (gamepad.a)
+        if (gamepad.y)
         {
             if (!palmServoRightLock)
             {

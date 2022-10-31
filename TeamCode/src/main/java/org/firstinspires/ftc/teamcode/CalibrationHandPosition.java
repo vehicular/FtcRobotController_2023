@@ -268,72 +268,72 @@ public class CalibrationHandPosition extends LinearOpMode
         PredefinedPosition.InitPosition.LifterMotor = 0;
         PredefinedPosition.InitPosition.RotatorMotor = 0;
         PredefinedPosition.InitPosition.ArmMotor = 0;
-        PredefinedPosition.InitPosition.WristServo = 0.92;
-        PredefinedPosition.InitPosition.PalmServo = 0.95;
+        PredefinedPosition.InitPosition.WristServo = 0.36;
+        PredefinedPosition.InitPosition.PalmServo = 0.45;
         PredefinedPosition.InitPosition.KnuckleServo = 0.33;
-        PredefinedPosition.InitPosition.FingerServo = 0.9;
+        PredefinedPosition.InitPosition.FingerServo = 0.7;
         
         PredefinedPosition.Pickup_up.LifterMotor = 0;
         PredefinedPosition.Pickup_up.RotatorMotor = 0;
-        PredefinedPosition.Pickup_up.ArmMotor = -445;
-        PredefinedPosition.Pickup_up.WristServo = 0.82;
-        PredefinedPosition.Pickup_up.PalmServo = 0.28;
+        PredefinedPosition.Pickup_up.ArmMotor = -435;
+        PredefinedPosition.Pickup_up.WristServo = 0.42;
+        PredefinedPosition.Pickup_up.PalmServo = 0.3;
         PredefinedPosition.Pickup_up.KnuckleServo = 0.33;
-        PredefinedPosition.Pickup_up.FingerServo = 0.9;
+        PredefinedPosition.Pickup_up.FingerServo = 0.7;
         
         PredefinedPosition.Pickup_down.LifterMotor = 0;
         PredefinedPosition.Pickup_down.RotatorMotor = 0;
-        PredefinedPosition.Pickup_down.ArmMotor = -210;//-310 is lowest, add a bit
-        PredefinedPosition.Pickup_down.WristServo = 0.91;
-        PredefinedPosition.Pickup_down.PalmServo = 0.95;
+        PredefinedPosition.Pickup_down.ArmMotor = -122;//-310 is lowest, add a bit
+        PredefinedPosition.Pickup_down.WristServo = 0.54;
+        PredefinedPosition.Pickup_down.PalmServo = 0.7;
         PredefinedPosition.Pickup_down.KnuckleServo = 0.33;
-        PredefinedPosition.Pickup_down.FingerServo = 1;
+        PredefinedPosition.Pickup_down.FingerServo = 0.7;
         
         PredefinedPosition.Pickup_left.LifterMotor = 0;
         PredefinedPosition.Pickup_left.RotatorMotor = 0;
-        PredefinedPosition.Pickup_left.ArmMotor = -210;//-310 is lowest, add a bit
-        PredefinedPosition.Pickup_left.WristServo = 0.91;
-        PredefinedPosition.Pickup_left.PalmServo = 0.95;
+        PredefinedPosition.Pickup_left.ArmMotor = -122;//-310 is lowest, add a bit
+        PredefinedPosition.Pickup_left.WristServo = 0.54;
+        PredefinedPosition.Pickup_left.PalmServo = 0.7;
         PredefinedPosition.Pickup_left.KnuckleServo = 0.0;
-        PredefinedPosition.Pickup_left.FingerServo = 0.9;
+        PredefinedPosition.Pickup_left.FingerServo = 0.7;
         
         PredefinedPosition.Pickup_right.LifterMotor = 0;
         PredefinedPosition.Pickup_right.RotatorMotor = 0;
-        PredefinedPosition.Pickup_right.ArmMotor = -210;//-310 is lowest, add a bit
-        PredefinedPosition.Pickup_right.WristServo = 0.91;
-        PredefinedPosition.Pickup_right.PalmServo = 0.95;
-        PredefinedPosition.Pickup_right.KnuckleServo = 0.7;
-        PredefinedPosition.Pickup_right.FingerServo = 0.9;
+        PredefinedPosition.Pickup_right.ArmMotor = -122;//-310 is lowest, add a bit
+        PredefinedPosition.Pickup_right.WristServo = 0.54;
+        PredefinedPosition.Pickup_right.PalmServo = 0.7;
+        PredefinedPosition.Pickup_right.KnuckleServo = 0.68;
+        PredefinedPosition.Pickup_right.FingerServo = 0.7;
         
         PredefinedPosition.Drop_A_1.LifterMotor = 0;
         PredefinedPosition.Drop_A_1.RotatorMotor = 0;
-        PredefinedPosition.Drop_A_1.ArmMotor = -442;
-        PredefinedPosition.Drop_A_1.WristServo = 0.64;
-        PredefinedPosition.Drop_A_1.PalmServo = 0.48;
+        PredefinedPosition.Drop_A_1.ArmMotor = -450;
+        PredefinedPosition.Drop_A_1.WristServo = 0.51;
+        PredefinedPosition.Drop_A_1.PalmServo = 0.2;
         PredefinedPosition.Drop_A_1.KnuckleServo = 0.33;
         PredefinedPosition.Drop_A_1.FingerServo = 0.1;
         
         PredefinedPosition.Drop_B_2.LifterMotor = 0;
         PredefinedPosition.Drop_B_2.RotatorMotor = 0;
-        PredefinedPosition.Drop_B_2.ArmMotor = 172;
-        PredefinedPosition.Drop_B_2.WristServo = 0.68;
-        PredefinedPosition.Drop_B_2.PalmServo = 0.57;
-        PredefinedPosition.Drop_B_2.KnuckleServo = 0.34;
+        PredefinedPosition.Drop_B_2.ArmMotor = 359;
+        PredefinedPosition.Drop_B_2.WristServo = 0.72;
+        PredefinedPosition.Drop_B_2.PalmServo = 0.2;
+        PredefinedPosition.Drop_B_2.KnuckleServo = 0.33;
         PredefinedPosition.Drop_B_2.FingerServo = 0.1;
         
         PredefinedPosition.Drop_X_3.LifterMotor = 0;
         PredefinedPosition.Drop_X_3.RotatorMotor = 0;
-        PredefinedPosition.Drop_X_3.ArmMotor = 725;
-        PredefinedPosition.Drop_X_3.WristServo = 0.76;
-        PredefinedPosition.Drop_X_3.PalmServo = 0.61;
-        PredefinedPosition.Drop_X_3.KnuckleServo = 0.34;
+        PredefinedPosition.Drop_X_3.ArmMotor = 765;
+        PredefinedPosition.Drop_X_3.WristServo = 0.4;
+        PredefinedPosition.Drop_X_3.PalmServo = 0.6;
+        PredefinedPosition.Drop_X_3.KnuckleServo = 0.33;
         PredefinedPosition.Drop_X_3.FingerServo = 0.1;
         
         PredefinedPosition.Drop_Y_4.LifterMotor = 300;
         PredefinedPosition.Drop_Y_4.RotatorMotor = 0;
-        PredefinedPosition.Drop_Y_4.ArmMotor = 1150;
-        PredefinedPosition.Drop_Y_4.WristServo = 0.91;
-        PredefinedPosition.Drop_Y_4.PalmServo = 0.96;
+        PredefinedPosition.Drop_Y_4.ArmMotor = 1159;
+        PredefinedPosition.Drop_Y_4.WristServo = 0.46;
+        PredefinedPosition.Drop_Y_4.PalmServo = 0.69;
         PredefinedPosition.Drop_Y_4.KnuckleServo = 0.34;
         PredefinedPosition.Drop_Y_4.FingerServo = 0.1;
         
