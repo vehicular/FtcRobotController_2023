@@ -155,26 +155,6 @@ public class Hand extends Subsystem
     @Override
     public void stop()
     {
-        /*
-        // slowly move the arm and lifter down
-        armMotor.setTargetPosition(-220);
-        runtimeArm.reset();
-        armMotor.setPower(0.1);
-        while ((runtimeArm.seconds() < 2) &&
-                (armMotor.isBusy()))
-        {
-        }
-    
-        if (lifterMotor.getCurrentPosition() > 100) // min low limit
-        {
-            lifterMotor.setTargetPosition(50);
-            runtimeManual.reset();
-            lifterMotor.setPower(0.2);
-            while ((runtimeManual.seconds() < 1) &&
-                    (lifterMotor.isBusy()))
-            {
-            }
-        }*/
     }
     
     /**
@@ -224,15 +204,15 @@ public class Hand extends Subsystem
     boolean keylock_b = false;
     boolean keylock_x = false;
     boolean keylock_y = false;
-    
+    boolean keylock_lefttrigger = false;
     private void SetPredefinedHandMotors(Gamepad gamepad)
     {
         // finger servo
         if (gamepad.left_trigger > TRIGGER_THRESHOLD)
         {
-            if (!leftTriggerLock)
+            if (!keylock_lefttrigger)
             {
-                leftTriggerLock = true;
+                keylock_lefttrigger = true;
                 if (gamepad.right_trigger < TRIGGER_THRESHOLD)
                 { // pickup
                     // TODO: to be checked if fingers are down position
@@ -276,7 +256,7 @@ public class Hand extends Subsystem
         else if (gamepad.left_trigger < TRIGGER_THRESHOLD &&
                 gamepad.right_trigger < TRIGGER_THRESHOLD)
         {
-            leftTriggerLock = false;
+            keylock_lefttrigger = false;
         }
         
         
@@ -429,7 +409,7 @@ public class Hand extends Subsystem
         }
         
         // palm servo
-        if (gamepad.right_stick_x > 0.3)
+        if (gamepad.y)
         {
             if (!palmServoLeftLock)
             {
@@ -441,7 +421,7 @@ public class Hand extends Subsystem
         {
             palmServoLeftLock = false;
         }
-        if (gamepad.right_stick_x < -0.3)
+        if (gamepad.a)
         {
             if (!palmServoRightLock)
             {
@@ -531,14 +511,14 @@ public class Hand extends Subsystem
         {
             leftTriggerLock = false;
         }
-        if (gamepad.y)
+        /*if (gamepad.y)
         {
             fingerServo.setPosition(0.8);//open
         }
         if (gamepad.a)
         {
             fingerServo.setPosition(0.2);// close
-        }
+        }*/
         
         
         // arm motor
@@ -596,18 +576,23 @@ public class Hand extends Subsystem
         
         
         // rotator motor
-        double x = -gamepad.left_stick_x;
-        rotatorMotor.setPower(0.15 * x);
-            /*if (gamepad.dpad_left) {
-                rotatorMotor.setPower(0.2);
-            } else if (gamepad.dpad_right) {
-                rotatorMotor.setPower(-0.2);
-            } else {
-                rotatorMotor.setPower(0);
-            }*/
+        //double x = -gamepad.left_stick_x;
+        //rotatorMotor.setPower(0.15 * x);
+        if (gamepad.left_bumper)
+        {
+            rotatorMotor.setPower(0.2);
+        }
+        else if (gamepad.right_bumper)
+        {
+            rotatorMotor.setPower(-0.2);
+        }
+        else
+        {
+            rotatorMotor.setPower(0);
+        }
         
         //lifter motor
-        if (gamepad.left_bumper)
+        if (gamepad.left_stick_button)
         {//up
             if (!lifterHighLock)
             {
@@ -631,7 +616,7 @@ public class Hand extends Subsystem
             lifterHighLock = false;  // We can trigger again now.
         }
         
-        if (gamepad.right_bumper)
+        if (gamepad.right_stick_button)
         {//down
             if (!lifterLowLock)
             {
@@ -661,101 +646,12 @@ public class Hand extends Subsystem
         {
             GetMotorsPosition(CurrentPositionBySet);
             SavePositonsToFile(CurrentPositionBySet);
-            /*
-            if (CurrentPositionBySet == PredefinedPosition.Pickup_up)
-            {
-                GetMotorsPosition(PredefinedPosition.Pickup_up);
-                SavePositonsToFile(PredefinedPosition.Pickup_up);
-            }
-            else if (CurrentPositionBySet == PredefinedPosition.Pickup_down)
-            {
-                GetMotorsPosition(PredefinedPosition.Pickup_down);
-                SavePositonsToFile(PredefinedPosition.Pickup_down);
-            }
-            else if (CurrentPositionBySet == PredefinedPosition.Pickup_left)
-            {
-                GetMotorsPosition(PredefinedPosition.Pickup_left);
-                SavePositonsToFile(PredefinedPosition.Pickup_left);
-            }
-            else if (CurrentPositionBySet == PredefinedPosition.Pickup_right)
-            {
-                GetMotorsPosition(PredefinedPosition.Pickup_right);
-                SavePositonsToFile(PredefinedPosition.Pickup_right);
-            }
-            else if (CurrentPositionBySet == PredefinedPosition.Drop_A_1)
-            {
-                GetMotorsPosition(PredefinedPosition.Drop_A_1);
-                SavePositonsToFile(PredefinedPosition.Drop_A_1);
-            }
-            else if (CurrentPositionBySet == PredefinedPosition.Drop_B_2)
-            {
-                GetMotorsPosition(PredefinedPosition.Drop_B_2);
-                SavePositonsToFile(PredefinedPosition.Drop_B_2);
-            }
-            else if (CurrentPositionBySet == PredefinedPosition.Drop_X_3)
-            {
-                GetMotorsPosition(PredefinedPosition.Drop_X_3);
-                SavePositonsToFile(PredefinedPosition.Drop_X_3);
-            }
-            else if (CurrentPositionBySet == PredefinedPosition.Drop_Y_4)
-            {
-                GetMotorsPosition(PredefinedPosition.Drop_Y_4);
-                SavePositonsToFile(PredefinedPosition.Drop_Y_4);
-            }*/
         }
         else if (CurState == SysState.RECOVER)
         {
             RecoverPositionFile(CurrentPositionBySet.GetPositionName());
             CurrentPositionBySet.SetValue(
                     ReadPositionFromFile(CurrentPositionBySet.GetPositionName()));
-            /*if (CurrentPositionBySet == PredefinedPosition.Pickup_up)
-            {
-                RecoverPositionFile("PickupUpMotorsPosition.json");
-                PredefinedPosition.Pickup_up.SetValue(
-                        ReadPositionFromFile("PickupUpMotorsPosition.json"));
-            }
-            else if (CurrentPositionBySet == PredefinedPosition.Pickup_down)
-            {
-                RecoverPositionFile("PickupDownMotorsPosition.json");
-                PredefinedPosition.Pickup_down.SetValue(
-                        ReadPositionFromFile("PickupDownMotorsPosition.json"));
-            }
-            else if (CurrentPositionBySet == PredefinedPosition.Pickup_left)
-            {
-                RecoverPositionFile("PickupLeftMotorsPosition.json");
-                PredefinedPosition.Pickup_left.SetValue(
-                        ReadPositionFromFile("PickupLeftMotorsPosition.json"));
-            }
-            else if (CurrentPositionBySet == PredefinedPosition.Pickup_right)
-            {
-                RecoverPositionFile("PickupRightMotorsPosition.json");
-                PredefinedPosition.Pickup_right.SetValue(
-                        ReadPositionFromFile("PickupRightMotorsPosition.json"));
-            }
-            else if (CurrentPositionBySet == PredefinedPosition.Drop_A_1)
-            {
-                RecoverPositionFile("DropA1MotorsPosition.json");
-                PredefinedPosition.Drop_A_1.SetValue(
-                        ReadPositionFromFile("DropA1MotorsPosition.json"));
-            }
-            else if (CurrentPositionBySet == PredefinedPosition.Drop_B_2)
-            {
-                RecoverPositionFile("DropB2MotorsPosition.json");
-                PredefinedPosition.Drop_B_2.SetValue(
-                        ReadPositionFromFile("DropB2MotorsPosition.json"));
-            }
-            else if (CurrentPositionBySet == PredefinedPosition.Drop_X_3)
-            {
-                RecoverPositionFile("DropX3MotorsPosition.json");
-                PredefinedPosition.Drop_X_3.SetValue(
-                        ReadPositionFromFile("DropX3MotorsPosition.json"));
-            }
-            else if (CurrentPositionBySet == PredefinedPosition.Drop_Y_4)
-            {
-                RecoverPositionFile("DropY4MotorsPosition.json");
-                PredefinedPosition.Drop_Y_4.SetValue(
-                        ReadPositionFromFile("DropY4MotorsPosition.json"));
-            }*/
         }
     }
     
@@ -951,116 +847,11 @@ public class Hand extends Subsystem
     public void autoInit()
     {
     }
+    
     @Override
     
     public void autoControls(boolean isOpActive)
     {
     
-    }
-    public void HoldLoad()
-    {
-        fingerServo.setPosition(PredefinedPosition.PowerOnHold.FingerServo);
-    }
-    // When PowerOn, fingers holds the preload, and move arm up.
-    public void PoweronSetup()
-    {
-        //RotatorToAngle(PredefinedPosition.PowerOnHold.RotatorMotor, 2);
-        
-        //wristServo.setPosition(PredefinedPosition.PowerOnHold.WristServo);
-        palmServo.setPosition(PredefinedPosition.PowerOnHold.PalmServo);
-        knuckleServo.setPosition(PredefinedPosition.PowerOnHold.KnuckleServo);
-    
-        armPosition = -430;
-        armMotor.setTargetPosition(armPosition);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        runtimeArm.reset();
-        armMotor.setPower(0.3);
-        while ((runtimeArm.seconds() < 1) &&
-                (armMotor.isBusy()))
-        {
-        }
-        
-        wristServo.setPosition(PredefinedPosition.PowerOnHold.WristServo);
-        //palmServo.setPosition(PredefinedPosition.PowerOnHold.PalmServo);
-        //knuckleServo.setPosition(PredefinedPosition.PowerOnHold.KnuckleServo);
-        //runtimeArm.reset();
-        //while (wristServo.getPosition() < PredefinedPosition.PowerOnHold.WristServo)
-        //while ((runtimeArm.milliseconds() < 300))
-        {
-        }
-        
-        armPosition = 500;
-        armMotor.setTargetPosition(armPosition);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        runtimeArm.reset();
-        armMotor.setPower(0.3);
-        while ((runtimeArm.seconds() < 2) &&
-                (armMotor.isBusy()))
-        {
-        }
-    
-        wristServo.setPosition(0.45);//PredefinedPosition.EyeLowPole.WristServo);
-        palmServo.setPosition(0.35);//0.52);//PredefinedPosition.EyeLowPole.PalmServo);
-        knuckleServo.setPosition(0.34);//PredefinedPosition.EyeLowPole.KnuckleServo);
-        //runtimeArm.reset();
-        //while ((runtimeArm.seconds() < 1))
-        {
-        }
-    
-        armPosition = 400;
-        armMotor.setTargetPosition(armPosition);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        runtimeArm.reset();
-        armMotor.setPower(0.1);
-        while ((runtimeArm.seconds() < 2) &&
-                (armMotor.isBusy()))
-        {
-        }
-        
-    }
-    
-    public void EyeOnSideWallSetup()
-    {
-    
-    }
-    
-    public void EyeOnLowPoleSetup()
-    {
-        SetMotorsPosition(PredefinedPosition.EyeLowPole);
-    }
-    
-    ElapsedTime runtimeRotator = new ElapsedTime();
-    public void RotatorToAngle( int targetAngle, int timeoutSecond )
-    {
-        rotatorMotor.setTargetPosition(targetAngle);
-        rotatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        runtimeRotator.reset();
-        rotatorMotor.setPower(0.3);
-        while ((runtimeRotator.seconds() < timeoutSecond) &&
-                (rotatorMotor.isBusy()))
-        {
-        }
-        rotatorMotor.setPower(0);
-    }
-    public void RotatorAngle( int addAngle, int timeoutSecond )
-    {
-        rotatorMotor.setTargetPosition(rotatorMotor.getCurrentPosition() + addAngle);
-        rotatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        runtimeRotator.reset();
-        rotatorMotor.setPower(0.3);
-        while ((runtimeRotator.seconds() < timeoutSecond) &&
-                (rotatorMotor.isBusy()))
-        {
-        }
-        rotatorMotor.setPower(0);
-    }
-    
-    public void DropCone()
-    {
-        //if(CurrentPositionBySet == PredefinedPosition.EyeLowPole)
-        {
-            //SetMotorsPosition(PredefinedPosition.Drop_B_2);
-            fingerServo.setPosition(0.8);//open
-        }
     }
 }
