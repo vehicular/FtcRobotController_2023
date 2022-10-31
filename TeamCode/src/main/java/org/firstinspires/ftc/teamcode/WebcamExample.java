@@ -21,8 +21,6 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import android.util.Log;
-
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -48,39 +46,34 @@ import org.openftc.easyopencv.TimestampedOpenCvPipeline;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * In this sample, we demonstrate how to use the {@link OpenCvPipeline#onViewportTapped()}
- * callback to switch which stage of a pipeline is rendered to the viewport for debugging
- * purposes. We also show how to get data from the pipeline to your OpMode.
- */
 @TeleOp
 public class WebcamExample extends LinearOpMode
 {
     OpenCvWebcam webcam;
     RedConeDectectionPipeline redPipeline;
-    YellowPoleDetector yellowPipeline;
+    YellowPoleDetectionPipeline yellowPipeline;
+    
+    boolean isYellow = true;
     
     @Override
     public void runOpMode()
     {
-        /**
-         * NOTE: Many comments have been omitted from this sample for the
-         * sake of conciseness. If you're just starting out with EasyOpenCv,
-         * you should take a look at {@link InternalCamera1Example} or its
-         * webcam counterpart, {@link WebcamExample} first.
-         */
-        
         int cameraMonitorViewId = hardwareMap.appContext.getResources()
                 .getIdentifier("cameraMonitorViewId", "id", 
                         hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(
                 hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
         
-        //redPipeline = new RedConeDectectionPipeline();
-        //webcam.setPipeline(redPipeline);
-    
-        yellowPipeline = new YellowPoleDetector();
-        webcam.setPipeline(yellowPipeline);
+        if(!isYellow)
+        {
+            redPipeline = new RedConeDectectionPipeline();
+            webcam.setPipeline(redPipeline);
+        }
+        else
+        {
+            yellowPipeline = new YellowPoleDetectionPipeline();
+            webcam.setPipeline(yellowPipeline);
+        }
         
         webcam.setMillisecondsPermissionTimeout(2500); // Timeout for obtaining permission is configurable. Set before opening.
         webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
@@ -117,54 +110,28 @@ public class WebcamExample extends LinearOpMode
             telemetry.addData("Overhead time ms", webcam.getOverheadTimeMs());
             telemetry.addData("Theoretical max FPS", webcam.getCurrentPipelineMaxFps());
             
-            //telemetry.addData("Num contours found", redPipeline.getNumContoursFound());
             
-            telemetry.addData("Pole Position", yellowPipeline.getLocation_leftright());
-            telemetry.addData("top_left", yellowPipeline.top_left_x);
-            telemetry.addData("top_right", yellowPipeline.top_right_x);
-            telemetry.addData("bottom_left", yellowPipeline.bottom_left_x);
-            telemetry.addData("bottom_right", yellowPipeline.bottom_right_x);
-            telemetry.addData("pole angle", yellowPipeline.line_angle);
-            
+            if(isYellow)
+            {
+                telemetry.addData("Pole Position", yellowPipeline.getLocation_leftright());
+                telemetry.addData("top_left", yellowPipeline.top_left_x);
+                telemetry.addData("top_right", yellowPipeline.top_right_x);
+                telemetry.addData("bottom_left", yellowPipeline.bottom_left_x);
+                telemetry.addData("bottom_right", yellowPipeline.bottom_right_x);
+                telemetry.addData("pole angle", yellowPipeline.line_angle);
+            }
+            else
+            {
+                telemetry.addData("Num contours found", redPipeline.getNumContoursFound());
+            }
             
             telemetry.update();
-    
-            /*
-             * NOTE: stopping the stream from the camera early (before the end of the OpMode
-             * when it will be automatically stopped for you) *IS* supported. The "if" statement
-             * below will stop streaming from the camera when the "A" button on gamepad 1 is pressed.
-             */
+            
             if(gamepad1.a)
             {
-                /*
-                 * IMPORTANT NOTE: calling stopStreaming() will indeed stop the stream of images
-                 * from the camera (and, by extension, stop calling your vision pipeline). HOWEVER,
-                 * if the reason you wish to stop the stream early is to switch use of the camera
-                 * over to, say, Vuforia or TFOD, you will also need to call closeCameraDevice()
-                 * (commented out below), because according to the Android Camera API documentation:
-                 *         "Your application should only have one Camera object active at a time for
-                 *          a particular hardware camera."
-                 *
-                 * NB: calling closeCameraDevice() will internally call stopStreaming() if applicable,
-                 * but it doesn't hurt to call it anyway, if for no other reason than clarity.
-                 *
-                 * NB2: if you are stopping the camera stream to simply save some processing power
-                 * (or battery power) for a short while when you do not need your vision pipeline,
-                 * it is recommended to NOT call closeCameraDevice() as you will then need to re-open
-                 * it the next time you wish to activate your vision pipeline, which can take a bit of
-                 * time. Of course, this comment is irrelevant in light of the use case described in
-                 * the above "important note".
-                 */
                 webcam.stopStreaming();
                 //webcam.closeCameraDevice();
             }
-    
-            //YellowPoleDetector.PoleLocation location = yellowPipeline.getLocation();
-            //if (location != YellowPoleDetector.PoleLocation.NONE) {
-                // Move to the left / right
-            //} else {
-                // adjust claw, and drop the cone
-            //}
             
             /*
              * For the purposes of this sample, throttle ourselves to 10Hz loop to avoid burning
@@ -174,14 +141,7 @@ public class WebcamExample extends LinearOpMode
             sleep(100);
         }
     }
-    
-    /*
-     * With this pipeline, we demonstrate how to change which stage of
-     * is rendered to the viewport when the viewport is tapped. This is
-     * particularly useful during pipeline development. We also show how
-     * to get data from the pipeline to your OpMode.
-     */
-    // Good to dectect red cone
+ 
     static class RedConeDectectionPipeline extends TimestampedOpenCvPipeline //OpenCvPipeline
     {
         Point stageTextAnchor;
@@ -540,8 +500,8 @@ public class WebcamExample extends LinearOpMode
         }
     }
     
-    
-    static class YellowPoleDetector extends OpenCvPipeline {
+    static class YellowPoleDetectionPipeline extends OpenCvPipeline
+    {
         enum PoleLocation {
             LEFT,
             RIGHT,
@@ -558,8 +518,8 @@ public class WebcamExample extends LinearOpMode
             RAW_IMAGE,
         }
     
-        private YellowPoleDetector.Stage stageToRenderToViewport = YellowPoleDetector.Stage.HSV_CHAN;
-        private YellowPoleDetector.Stage[] stages = YellowPoleDetector.Stage.values();
+        private YellowPoleDetectionPipeline.Stage stageToRenderToViewport = YellowPoleDetectionPipeline.Stage.HSV_CHAN;
+        private YellowPoleDetectionPipeline.Stage[] stages = YellowPoleDetectionPipeline.Stage.values();
         
         private int width; // width of the image
         int location_leftright = 0;
@@ -591,7 +551,7 @@ public class WebcamExample extends LinearOpMode
         private final double minContourWidth = 40.0;
         private final double minContourHeight = 80.0;
         
-        public YellowPoleDetector() {
+        public YellowPoleDetectionPipeline() {
         
         }
         
