@@ -29,6 +29,20 @@ public class Util
             return false;
         }
     }
+    
+    public static int inBoundary(double myValue, double min, double max)
+    {
+        if(myValue < min )
+        {
+            return -1;
+        }
+        else if (myValue > max)
+        {
+            return 1;
+        }
+        else
+            return 0;
+    }
 
     /**
      * Returns 0 if the number is within a threshold of 0.

@@ -3,9 +3,11 @@ package org.firstinspires.ftc.teamcode.core.subsystems;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.core.Subsystem;
+import org.firstinspires.ftc.teamcode.util.Util;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -33,7 +35,9 @@ public class Eye extends Subsystem
     YellowPoleDetectionPipeline yellowPipeline;
     HardwareMap hardwareMap;
     
-    boolean isAutoContorl = false;
+    private boolean isAutoContorl = false;
+    
+    public boolean IsOpen = true;
     
     public Eye(HardwareMap map)
     {
@@ -57,26 +61,32 @@ public class Eye extends Subsystem
         }
     }
     
-    boolean isYellow = true;// to be removed
+    //boolean isYellow = true;// to be removed
     @Override
     public void autoInit()
     {
-        isAutoContorl = true;
-        
         int cameraMonitorViewId = hardwareMap.appContext.getResources()
                 .getIdentifier("cameraMonitorViewId", "id",
                         hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(
                 hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
-        
-        if(!isYellow)
+    
+        conePipeline = new ConeDetectionPipeline();
+        yellowPipeline = new YellowPoleDetectionPipeline();
+    
+        openEyeToFind(false);
+    }
+    
+    boolean findingCone = false;
+    private void openEyeToFind(boolean forCone)
+    {
+        findingCone = forCone;
+        if(findingCone)
         {
-            conePipeline = new ConeDetectionPipeline();
             webcam.setPipeline(conePipeline);
         }
         else
         {
-            yellowPipeline = new YellowPoleDetectionPipeline();
             webcam.setPipeline(yellowPipeline);
         }
     
@@ -89,7 +99,7 @@ public class Eye extends Subsystem
             {
                 webcam.startStreaming(640, 360, OpenCvCameraRotation.UPSIDE_DOWN);
             }
-            
+        
             @Override
             public void onError(int errorCode)
             {
@@ -98,6 +108,14 @@ public class Eye extends Subsystem
                  */
             }
         });
+        
+        IsOpen = true;
+    }
+    private void closeEye()
+    {
+        IsOpen = false;
+        //webcam.closeCameraDeviceAsync();
+        webcam.stopStreaming();
     }
     
     @Override
@@ -109,7 +127,8 @@ public class Eye extends Subsystem
     @Override
     public void stop()
     {
-    
+        IsOpen = false;
+        webcam.closeCameraDevice();
     }
     
     @Override
@@ -185,37 +204,52 @@ public class Eye extends Subsystem
         return InitPosition.RED_RIGHT;
     }
     
-    int count = 0;
+    int countTotal = 0;
+    int countCENTER = 0;
+    int countRIGHT = 0;
+    int countLEFT = 0;
+    int countFRONT = 0;
+    int countBACK = 0;
     public ObjectLocation CheckLowPoleOnCenter()
     {
+        if(!IsOpen)
+        {
+            openEyeToFind(false);
+        }
         timeout.reset();
-        while(timeout.milliseconds()<200){}
-        if(count < 20)
+        while(timeout.milliseconds()<200)
         {
-            count++;
-            return ObjectLocation.LEFT;
+            countTotal++;
+            if( 0 == Util.inBoundary(YellowPoleDetectionPipeline.pole_angle, 4, 9))
+            {
+                countCENTER++;
+            }
+            if(countCENTER >= countTotal * 0.6)
+            {
+                return ObjectLocation.CENTER;
+            }
+            else
+            {
+                return ObjectLocation.UNKNOWN;
+            }
         }
-        else
-        {
-            count = 0;
-            return ObjectLocation.CENTER;
-        }
+        return ObjectLocation.UNKNOWN;
     }
     
     public ObjectLocation CheckConeOnCenter()
     {
         timeout.reset();
         while(timeout.milliseconds()<200){}
-        if(count < 2)
+        /*if(count < 2)
         {
             count++;
             return ObjectLocation.LEFT;
         }
         else
         {
-            count = 0;
+            count = 0;*/
             return ObjectLocation.CENTER;
-        }
+        
     }
     
     
@@ -602,7 +636,7 @@ public class Eye extends Subsystem
         int location_leftright = 0;
         int location_forwardback = 0;
         
-        public double line_angle = -100;
+        public static double pole_angle = -100;
         
         /*
          * Our working image buffers
@@ -814,8 +848,9 @@ public class Eye extends Subsystem
         
         private int minX, minY = Integer.MAX_VALUE;
         private int maxX, maxY = -1 * Integer.MAX_VALUE;
-        private void filterContours(List<MatOfPoint> contours, List<MatOfPoint> outputContours, double minContourArea, double minContourPerimeter, double minContourWidth,
-                                    double minContourHeight)
+        private void filterContours(List<MatOfPoint> contours, List<MatOfPoint> outputContours,
+                                    double minContourArea, double minContourPerimeter,
+                                    double minContourWidth, double minContourHeight)
         {
             //Log.d("NumContours", contours.size() + "");
             for (MatOfPoint contour : contours)
@@ -854,10 +889,10 @@ public class Eye extends Subsystem
             RotatedRect rotatedRectFitToContour = Imgproc.minAreaRect(contour2f);
             drawRotatedRect(rotatedRectFitToContour, input);
             
-            line_angle = rotatedRectFitToContour.angle;
+            pole_angle = rotatedRectFitToContour.angle;
             
             String lb = String.format("Deg:%d, W:%d, H:%d",
-                    (int) Math.round(line_angle),
+                    (int) Math.round(pole_angle),
                     (int)rotatedRectFitToContour.size.width,
                     (int)rotatedRectFitToContour.size.height);
             drawTagText(rotatedRectFitToContour, lb, input);
